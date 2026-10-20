@@ -1,0 +1,48 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "src/EverythingPal/EverythingPal.csproj",
+        "-c",
+        "Debug",
+        "-p:Platform=x64",
+        "-p:RuntimeIdentifier=win-x64"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "deploy",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/deploy.ps1"
+      ],
+      "dependsOn": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "deploy + restart Command Palette",
+      "type": "shell",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/deploy.ps1",
+        "-RestartCmdPal"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

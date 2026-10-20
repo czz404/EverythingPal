@@ -1,0 +1,29 @@
+# Build output
+bin/
+obj/
+AppPackages/
+artifacts/
+*.msix
+*.msixbundle
+*.appx
+*.appxbundle
+*.appinstaller
+TestResults/
+.vs/
+
+# Signing material must never be committed
+*.pfx
+*.cer
+*.pvk
+
+# VS Code (keep shared config)
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# User / IDE
+*.user
+*.suo
+*.userprefs

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
+  IgnorableNamespaces="uap uap3 rescap desktop6">
+
+  <Identity
+    Name="EverythingPal"
+    Publisher="CN=czz404"
+    Version="0.1.0.0" />
+
+  <Properties>
+    <DisplayName>Everything Search</DisplayName>
+    <PublisherDisplayName>czz404</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-US" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="EverythingPal.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Everything Search"
+        Description="Everything search for Command Palette"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- Out-of-process COM/WinRT server that hosts the extension (CmdPal launches it with -RegisterProcessAsComServer). -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:ExeServer Executable="EverythingPal.exe" Arguments="-RegisterProcessAsComServer" DisplayName="Everything Search for CmdPal">
+              <com:Class Id="a2b723c3-d9d7-4a91-941f-2314f448299d" DisplayName="Everything Search for CmdPal" />
+            </com:ExeServer>
+          </com:ComServer>
+        </com:Extension>
+        <!-- Declares this package as a Command Palette extension. -->
+        <uap3:Extension Category="windows.appExtension">
+          <uap3:AppExtension Name="com.microsoft.commandpalette"
+            Id="ID"
+            PublicFolder="Public"
+            DisplayName="Everything Search"
+            Description="Everything search for Command Palette">
+            <uap3:Properties>
+              <CmdPalProvider>
+                <Activation>
+                  <CreateInstance ClassId="a2b723c3-d9d7-4a91-941f-2314f448299d" />
+                </Activation>
+                <SupportedInterfaces>
+                  <Commands />
+                </SupportedInterfaces>
+              </CmdPalProvider>
+            </uap3:Properties>
+          </uap3:AppExtension>
+        </uap3:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <!-- Required by desktop6:FileSystemWriteVirtualization / RegistryWriteVirtualization = disabled. -->
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+</Package>

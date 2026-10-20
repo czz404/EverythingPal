@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Extension SDK must be <= the Command Palette host SDK (host = 0.13.261013002, NuGet max stable = 0.12.x). -->
+    <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.12.260812002" />
+    <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools.MSIX" Version="1.7.20250829.1" />
+    <PackageVersion Include="Shmuelie.WinRTServer" Version="2.2.1" />
+  </ItemGroup>
+</Project>
+
