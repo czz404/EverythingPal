@@ -12,7 +12,7 @@
 
 ## Findings
 
-### F1 — HIGH (Store risk, OPEN): `unvirtualizedResources` + disabled write virtualization
+### F1 — RESOLVED (was HIGH Store risk): `unvirtualizedResources` + disabled write virtualization
 `src/EverythingPal/Package.appxmanifest:28-29` (`desktop6:FileSystemWriteVirtualization=disabled`, `desktop6:RegistryWriteVirtualization=disabled`) and the `rescap:unvirtualizedResources` capability. Microsoft's own docs (quoted in `docs/research/platform-and-store-research.md` §D.10) say this capability is intended for games / apps with external location, "**not intended to be used for other scenarios**", and it triggers the restricted-capability justification flow. This is the single most likely certification pushback. Options: (a) keep and write a precise justification in Submission options; (b) test removing both properties + capability and verify logging / `%TEMP%` export from `es.exe` still works (packaged full-trust apps can write settings/log via LocalApplicationData without it). Decision is product-level; flagged so it is not forgotten during submission.
 
 ### F2 — WITHDRAWN (not a bug): `MinVersion` 10.0.19041.0 is intentional
@@ -68,13 +68,13 @@ Fix: pass the `CancellationToken` into `BuildItemsAsync`/`DistributeAsync` (or c
 ## Needs on-device verification (0.2.0.0 install) — not statically decidable
 1. F6 zero-result/Everything-not-running status rows on the **home fallback** (and the dedicated command page).
 2. F5 row-count change (3→5→0) without extension reload; whether CmdPal picks it up.
-3. Fallback cold-start: 3 rows render with real shell icons within the host budget after `Reload` (F4 mitigation may be needed).
+3. Fallback cold-start: the default single row renders with real shell icons within the host budget after `Reload` (verified on 0.2.0.0; optional 3-row mode also verified earlier).
 4. Details pane: my capture against the stale 0.1.0.0 build showed 5 real results but an empty details pane even with the first row selected. Confirm on 0.2.0.0; if still empty, check `ListItem.Details` wiring against host settings (details pane enabled?).
 5. No-arg launch dialog: version shows `0.2.0.0`, Command Palette detected, es.exe present, "open Command Palette" works; `--about`/`--diagnostics` show the same dialog.
 6. Trimmed self-contained payload: localized satellite `zh-Hans/EverythingPal.resources.dll` present and used (`EVERYTHINGPAL_LANG=en` vs `zh-Hans`), `System.Drawing.Common`/GDI+ payload present, shell icons render (verification script asserts payload; screenshots assert rendering).
 
 ## QA scope note
-This review is explicitly about the code paths being shipped. Content/marketing risks already tracked elsewhere: Partner Center identity/version rules, privacy-policy URL, support URL (repo still private), `Everything` trademark wording, restricted-capability justifications — see `docs/store/`.
+This review is explicitly about the code paths being shipped. Content/marketing risks already tracked elsewhere: Partner Center identity/version rules, privacy-policy URL and support URL (both public now), `Everything` trademark wording, runFullTrust justification, CmdPal Gallery submission — see `docs/store/`.
 
 ---
 
@@ -86,41 +86,54 @@ end-to-end evidence" for the evidence table and screenshots.
 
 | Finding | Status after reinstall | Notes |
 |---|---|---|
-| F1 unvirtualizedResources | **OPEN (HIGH, Store decision)** | Unchanged. Needs a certification-notes justification or a deliberate removal + retest. Only remaining Store-submission blocker in this review. |
+| F1 unvirtualizedResources | **RESOLVED** | Capability + desktop6 write-virtualization props removed from the manifest and E2E-tested (page search/es.exe temp export, home row, real icons, log writes all OK). Final packages declare `runFullTrust` only; `verify-build.ps1` guards against regression. |
 | F2 MinVersion 19041 | **WITHDRAWN — not a bug** | Lead verified Command Palette officially supports Windows 10 2004 (19041)+ and Windows 11; README aligned. |
 | F3 stale async results (page + fallback) | **FIXED — verified in frozen src** | `EverythingFallbackItem.cs:98-99/126-129/183` check the token before/after distribution and icon upgrade; `EverythingPalPage.cs:68-75/84-88` re-check the token after `BuildItemsAsync` and never reset `IsLoading` for a stale task. |
-| F4 fallback title delayed by icon await | **FIXED — verified on-device** | `EverythingFallbackItem.cs:171-182` fills Title/Subtitle/Command synchronously and only then awaits the icon. Home rows render with real icons and distinct content on 0.2.0.0 (`02-home-inline-rows.png`). Residual caveat is host-side timing: CmdPal shows these rows asynchronously and they were only reliably visible with a ~3–8 s settle after typing; at 1.8 s they were absent and shorter settles were intermittent. That is host render cadence, not the extension's title ordering. |
+| F4 fallback title delayed by icon await | **FIXED — verified on-device** | `EverythingFallbackItem.cs:171-182` fills Title/Subtitle/Command synchronously and only then awaits the icon. Home rows render with real icons and content on 0.2.0.0 (`02-home-inline-result.png`, now the default single row). Residual caveat is host-side timing: CmdPal shows these rows asynchronously and they were only reliably visible with a long settle after typing. That is host render cadence, not the extension's title ordering. |
 | F5 row-count setting needs extension reload | **OPEN (MED, TBD)** | Code still claims otherwise in `EverythingPalCommandsProvider.cs:42-47`; CmdPal caches `FallbackCommands()` and re-reads it only on its own reload message. Not user-tested in this pass (settings navigation not completed) — recommend wording the setting as "reload Command Palette extensions to apply" unless host testing shows otherwise. |
 | F6 fallback status rows / title scoring | **REPLACED by F13 (fix in progress)** | The frozen build intentionally shows NO status row for NoResults (`EverythingFallbackItem.cs:109-113`) — but that leaves blank rows (see F13). Other statuses (`EverythingNotRunning`, `EsExeNotFound`, `Timeout`, `QueryFailed`) go through `ShowStatus`, which sets Title=query + status in the subtitle (`:192-224`); not E2E-verified (would require stopping Everything / breaking es.exe). |
 | F13 (NEW, HIGH user-visible) — zero-result home fallback leaves blank rows with stale icons | **FIX IN PROGRESS by icon-ui (Lead repacking)** | On 0.2.0.0, after a successful search an unmatched word (`zzzqqq`) leaves three blank 回退 rows with the previous file/folder/zip icons and no text. Root cause: `EverythingFallbackItem.cs:109-113` returns after `ClearAll()` for NoResults without a status row, and `Clear()` (`:226-232`) does not reset `Icon`, so empty rows keep stale icons. Evidence: `artifacts/qa/zero-result-blank-rows.png`. Intended fix (agreed with Lead): `Clear()` resets `Icon`; NoResults shows exactly one informative row (Title=query, Subtitle="没有匹配结果 · …", app icon). Re-verification required after the repack. |
 | Details pane empty | **TBD (host-side, not a bug)** | CmdPal 0.13.12862 did not render the details pane even for built-in items after keyboard selection and mouse click (`artifacts/qa/probe-builtin-details.png`). The extension supplies `Details` metadata; whether the pane appears depends on the host/environment. |
-| Home fallback render timing | **OBSERVED HOST BEHAVIOUR (no code action)** | Rows are host-rendered asynchronously; reliably visible with a long settle, flaky at ~1.8–3 s. Store shot 02 was captured with an 8 s settle after retrying until all three rows were present. |
+| Home fallback render timing | **OBSERVED HOST BEHAVIOUR (no code action)** | Rows are host-rendered asynchronously; with the default single row they are reliably visible after a few seconds. Earlier 3-row captures needed an 8 s settle after retrying; the final Store shot 02 uses the 1-row default with a 9 s settle. |
 
-Bottom line: no open functional bug in the extension code after the reinstall other than the
-blank-zero-result-row fix that is being repacked; the only **Store-submission risk that still needs a
-human decision** is F1 (`unvirtualizedResources` + disabled write virtualization).
+Bottom line: no open functional bug in the extension code after the final reinstall and the zero-result
+fix; F1 was resolved by removing the restricted capability, and the remaining work is Partner Center
+admin (identity/version, runFullTrust justification, listing) plus the F5 row-count wording note.
 
 ---
 
-## FINAL closure (after the Lead's final reinstall with the zero-result fix)
+## FINAL closure (after the Lead's final reinstall with the zero-result fix + capability reduction)
 
-**Final verdict: PASS for the QA scope of task-6; one Store-submission decision remains (F1).**
+**Final verdict: PASS for the QA scope of task-6; no open code/Store blockers remain in this review.**
 
-- **F13 (zero-result blank rows) — FIXED and re-verified.** On the final installed build, the sequence
-  `wantai` (matched, 3 rows) → unmatched `zzzqqq` produces exactly ONE informative row (app icon,
-  Title=`zzzqqq`, Subtitle=`没有匹配结果 · 换个关键词，或检查 Everything 的索引设置。`) and no blank/stale-icon rows
-  (`docs/store/screenshots/04-zero-result.png`). The fix is in the frozen src:
-  `src/EverythingPal/Commands/EverythingFallbackItem.cs` — NoResults now calls `ShowNoResults(query)`
+- **F1 (restricted capability) — RESOLVED.** The final manifest is capability-reduced to
+  `runFullTrust` only: `unvirtualizedResources` and the `desktop6:FileSystemWriteVirtualization` /
+  `RegistryWriteVirtualization` overrides were removed (`src/EverythingPal/Package.appxmanifest`; the
+  installed package manifest was inspected and lists `runFullTrust` only). `scripts/verify-build.ps1`
+  now asserts this posture in every bundled package (runFullTrust present, unvirtualizedResources and
+  desktop6 virtualization absent), so a regression fails the verification run. The only remaining
+  Store-submission action is the normal "restricted capability: runFullTrust" justification in
+  Partner Center Submission options — expected for a packaged out-of-process COM server.
+- **F13 (zero-result blank rows) — FIXED and re-verified.** On the final installed build:
+  command page with unmatched `zzzqqq` shows exactly ONE informative row (app icon,
+  `没有匹配结果 · 换个关键词，或检查 Everything 的索引设置。`) and no blank/stale-icon rows
+  (`docs/store/screenshots/04-zero-result.png`); the home-screen equivalent was also probed
+  (`artifacts/qa/home-zero-result-1row-new.png`: one row, query as title + status as subtitle).
+  Fix: `src/EverythingPal/Commands/EverythingFallbackItem.cs` — NoResults calls `ShowNoResults(query)`
   (`:109-114`, `:233-241`) and `Clear()` resets the icon (`:243+`).
-- **Matched-query regression check — PASS.** `docs/store/screenshots/02-home-inline-rows.png` still shows the
-  3 inline rows with real .lnk/folder/.zip icons; page mode still shows 3 real results with icons
+- **Default home fallback rows = 1 (new final default).** `docs/store/screenshots/02-home-inline-result.png`
+  intentionally shows exactly ONE inline result (`wantai  D:\`); the setting remains 0–5. The earlier
+  3-row screenshot was removed (old default 3).
+- **Matched-query regression check — PASS.** Home screen shows the one configured inline result with a
+  real folder icon; page mode still shows 3 real results with real .lnk/.zip icons
   (`01-search-page.png`); context menu unchanged (`03-context-menu.png`).
-- **Packaging re-verified on the final source tree:** `scripts/verify-build.ps1` → 26 PASS / 0 FAIL / 2 TBD
-  (`docs/qa/verification.md`); final unsigned Store bundle for upload sha256
-  `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12`.
-- Remaining open item: **F1 only** — restricted capability `unvirtualizedResources` +
-  `desktop6:*WriteVirtualization=disabled` (`Package.appxmanifest:28-29`). This needs a submission-options
-  justification or a deliberate removal + retest before/at Store submission; it is a product/certification
-  decision, not a code defect. F5 (row-count reload UX) stays as a documentation/wording item; the rest are
-  host-side TBDs (details pane, not-running status row) or fixed.
+- **Packaging re-verified on the final source tree:** `scripts/verify-build.ps1` → see
+  `docs/qa/verification.md`; final unsigned Store bundle for upload sha256
+  `73B71AF9B1570FC592DFFAB1522F177F1CCACD65878BBF0E8187B0DFEAAAF8E4` (22,349,272 bytes), per
+  `artifacts/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`.
+- Remaining non-blocking notes: F5 (row-count change wording/reload expectation) stays a docs/UX
+  note; details-pane and Everything-not-running status are host-side/unverified TBDs (see
+  `docs/qa/verification.md`).
+
+
 

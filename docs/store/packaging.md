@@ -68,9 +68,9 @@ Debug symbols（`*.pdb`）在打包前被剔除，不进入 MSIX。
 | --- | --- | --- |
 | `publish-x64`（self-contained, trimmed） | 25.3 MB | — |
 | `publish-arm64`（self-contained, trimmed） | 26.7 MB | — |
-| `EverythingPal_0.2.0.0_x64.msix` | 10.81 MB（11,337,460 B） | `38DD872D983A4ACC39F3608456DFBCF4772F5932142E68C51DF061B51D1C9B7D` |
-| `EverythingPal_0.2.0.0_arm64.msix` | 10.5 MB（11,009,785 B） | `45D2F91044ED23A7404BC237ADB069AAF38D894F2D7522114035BB1CF454B708` |
-| `EverythingPal_0.2.0.0_x64_arm64.msixbundle`（实际提交物） | **21.31 MB（22,349,218 B）** | `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12` |
+| `EverythingPal_0.2.0.0_x64.msix` | 10.81 MB（11,337,491 B） | `BDA70B17F7C2FCAE14F4AD8F15608D5518CA4624944A9EF1DF126C04A0F5269C` |
+| `EverythingPal_0.2.0.0_arm64.msix` | 10.5 MB（11,009,811 B） | `9726E55F884CA58CF0F2E508EA9C9B10694DE8B98DFFEED3A7BAE91E5C63F236` |
+| `EverythingPal_0.2.0.0_x64_arm64.msixbundle`（实际提交物） | **21.31 MB（22,349,272 B）** | `73B71AF9B1570FC592DFFAB1522F177F1CCACD65878BBF0E8187B0DFEAAAF8E4` |
 
 > SHA256 每次重新打包都会变化（不是可复现构建）；以 `pack-store.ps1` 本次输出 / `artifacts/store` 里的文件为准。
 > 上传前用 `Get-FileHash <file> -Algorithm SHA256` 复核。
@@ -113,7 +113,7 @@ publish 会更久，主要是下载 runtime pack + 首次 trim）。trim 期间 
 
 ## 3. Partner Center 一次性流程
 
-1. 注册 Microsoft Partner Center 开发者账号（个人约 $19 一次性）→ **Apps and Games** → **New product** → **MSIX or PWA app**。
+1. 注册 Microsoft Partner Center 开发者账号（新 onboarding 流程下个人开发者注册免费；仍需 Microsoft 账户/身份验证）→ **Apps and Games** → **New product** → **MSIX or PWA app**。
 2. 预留产品名（Store listing 名称，例如 "Everything Search for Command Palette"）。**listing 名称和 `Identity/@Name` 不必相同**。
 3. 创建后进入 **Product management → Product identity**，抄下 4 个值：
    - `Package/Identity/Name`（如 `12345ABCDE6789.5F6E7D8C9B0A1F2E`）
@@ -242,7 +242,20 @@ pwsh -File scripts/pack-store.ps1 -Untrimmed
 - [ ] `Properties/PublisherDisplayName` = Partner Center 值；`Properties/DisplayName` 与 listing 一致；
 - [ ] `Dependencies` 只有 `Windows.Desktop`（`MinVersion 10.0.19041.0` / `MaxVersionTested 10.0.26100.0`）；
 - [ ] 版本符合第 6 节；`TargetDeviceFamily` 的 MinVersion（10.0.19041.0）覆盖要支持的 Windows 11 版本；
-- [ ] `rescap:runFullTrust`、`rescap:unvirtualizedResources` 还在（能力说明见 certification notes）。
+- [ ] 能力只有 `rescap:runFullTrust`（打包 out-of-process COM server / FullTrust 必需）；**没有**
+      `unvirtualizedResources`，也没有 `desktop6:FileSystemWriteVirtualization` / `RegistryWriteVirtualization`
+      属性（移除原因见下方说明）。
+
+> **为什么移除 `unvirtualizedResources`**：这是 **restricted capability**，官方定位是"某些桌面游戏 / 外链安装（external
+> location）场景"用来关闭 MSIX 的文件/注册表写虚拟化（`desktop6:*WriteVirtualization`）；Store 文档明确表示它不是给普通
+> 应用用的，声明后需要在 Submission options 里单独说明，增加认证被问询/延迟的风险。EverythingPal **不需要**它：
+> - 设置和日志写在 `%LOCALAPPDATA%\EverythingPal`（每用户可写路径，不受包写虚拟化影响）；
+> - `es.exe` 的 `-export-json` 临时文件写在 `%TEMP%`（同样可写）；
+> - 包不写 Program Files / HKLM 等需要"unvirtualized"的路径。
+>
+> 实测（0.2.0.0，manifest 只剩 `runFullTrust`）：CmdPal 页搜索返回真实结果、主页 fallback 行显示真实图标、
+> `%LOCALAPPDATA%\EverythingPal\Logs\extension.log` 正常写入、es.exe 临时导出正常，无功能回退。若未来发现某个写入路径
+> 确实被虚拟化影响，再考虑加回（会重新触发 restricted capability 审核，需要同步恢复 certification notes 里的说明）。
 
 ---
 
@@ -324,15 +337,18 @@ pwsh -File scripts/deploy.ps1 -Configuration Release -RestartCmdPal
 
 - **Store ID / 真实 Identity 值**：需要 Partner Center 账号预留 app 后才能拿到；本文用占位符。
 - **Headless 扩展的认证风险**：CmdPal 扩展是 full-trust 后台 COM server，没有主窗口；Store 政策 10.1.2 / 设备兼容性条款可能要求"设备不满足条件时启动给出提示"。缓解方案（另开工单）是在无参数启动时弹出 requirements/About 窗口，并把测试步骤写进 **Notes for certification**（见 [certification-notes.md](certification-notes.md)）。
-- **受限能力**：`runFullTrust` + `unvirtualizedResources` 需要在 Submission options 里写理由，可能延长/影响认证（见 [certification-notes.md](certification-notes.md)）。
+- **受限能力**：现在只剩 `runFullTrust`（打包 out-of-process COM server 必需）需要在 Submission options 里写理由；
+  `unvirtualizedResources` 已移除、`desktop6:*WriteVirtualization` 已删除，不再需要为"关闭写虚拟化"做说明（见第 8 节移除说明）。
 - **es.exe 再分发条款**：MIT 允许再分发，但 voidtools Everything 本体许可另算；需确认把 `es.exe` 放进 Store 包的分发许可（研究中，未最终确认）。
 - **`.msixupload` 结构**：未在本仓库实测（当前用 `.msixbundle` 即可）。
 - **Store 包大小上限**：远超我们预计的 ~50 MB 量级，未专门核对当前上限。
 - **认证对 `TargetDeviceFamily` 的要求**：当前只声明 `Windows.Desktop`（桌面 COM server 扩展的诚实声明）；若认证反馈要求调整再单独评审。
-- **商店发现性 / 建议同时发布 WinGet**：CmdPal 内**不能**浏览/搜索 Store-only 扩展（平台限制），Store 用户必须走商店链接
-  （可用 `ms-windows-store://assoc/?Tags=AppExtension-com.microsoft.commandpalette` 做关联页）。建议 Store 首发后同时提交 **WinGet**
-  （`winget install ...` 是 Microsoft 自家 CmdPal 扩展的分发方式），Store 负责自动更新，WinGet 负责"在包管理器里可发现"。详情见
-  [docs/research/platform-and-store-research.md](../research/platform-and-store-research.md) D.9 / E.13。
+- **商店发现性 / Gallery**：CmdPal 0.13+ 设置里有内置 **Gallery/库**（Settings → Extensions → Gallery），内容来自
+  `microsoft/CmdPal-Extensions` 社区目录，**链接到扩展的安装来源（WinGet 或 Microsoft Store）**。因此 Store 上架后把本扩展
+  提交到 <https://github.com/microsoft/CmdPal-Extensions>（按其 Contributing Guide 提 PR）即可在 Gallery 中被浏览/安装；
+  **WinGet 发布可选但推荐**（Gallery 的安装/更新可走 WinGet，且便于包管理器用户）。参考
+  [Making your extension discoverable](https://learn.microsoft.com/en-us/windows/powertoys/command-palette/extension-gallery)。
+  旧研究文档 D.9 "Store-only 不可发现" 的结论已被 Gallery 功能取代（见 research 文档第 8 节更正）。
 
 ---
 

@@ -42,7 +42,7 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
         Namespaced(nameof(FallbackRows)),
         Strings.SettingsFallbackRowsLabel,
         Strings.SettingsFallbackRowsDescription,
-        "3");
+        "1");
 
     private readonly ChoiceSetSetting _sort = new(
         Namespaced(nameof(Sort)),

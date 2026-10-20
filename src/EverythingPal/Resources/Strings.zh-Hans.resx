@@ -105,6 +105,9 @@
   <data name="Fallback.RowTitleFormat" xml:space="preserve">
     <value>Everything 搜索 · 主页结果 {0}/{1}</value>
   </data>
+  <data name="Fallback.RowTitleSingle" xml:space="preserve">
+    <value>Everything 搜索 · 主页结果</value>
+  </data>
   <data name="Fallback.TimeoutTitle" xml:space="preserve">
     <value>Everything 查询超时</value>
   </data>
@@ -235,7 +238,7 @@
     <value>es.exe 路径</value>
   </data>
   <data name="Settings.FallbackRowsDescription" xml:space="preserve">
-    <value>0–5，默认 3。0 表示关闭主页 fallback。主页每一行结果都是一个独立的 Command Palette 回退命令（平台限制：一行 = 一个回退命令），所以这里会看到 N 个开关；全部开启才会显示 N 行。修改行数后需要重新加载 Command Palette 扩展。注：第三方 fallback 默认不进全局结果，需要在 CmdPal 的『回退命令』里启用并勾选『包含在全局结果中』。</value>
+    <value>0–5，默认 1。0 表示关闭主页 fallback。主页每一行结果都是一个独立的 Command Palette 回退命令（平台限制：一行 = 一个回退命令），所以这里会看到 N 个开关；全部开启才会显示 N 行。修改行数后需要重新加载 Command Palette 扩展。注：第三方 fallback 默认不进全局结果，需要在 CmdPal 的『回退命令』里启用并勾选『包含在全局结果中』。</value>
   </data>
   <data name="Settings.FallbackRowsLabel" xml:space="preserve">
     <value>主页搜索内联结果行数</value>
@@ -298,3 +301,4 @@
     <value>未知错误</value>
   </data>
 </root>
+

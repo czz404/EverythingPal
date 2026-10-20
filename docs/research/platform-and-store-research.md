@@ -570,3 +570,29 @@ $t=[Text.Encoding]::Unicode.GetString([IO.File]::ReadAllBytes("<host>\Microsoft.
 * [Community CmdPal extension directory](https://microsoft.github.io/CmdPal-Extensions/)
 * [PowerToys PR #50188 — "CmdPal: Icons (8/n) — Add icon protocols and defer app icon extraction"](https://github.com/microsoft/PowerToys/pull/50188)
 * [PowerToys PR #50191 — "CmdPal: Icons (11/n) — plain and theme-aware SVG icon protocols"](https://github.com/microsoft/PowerToys/pull/50191)
+---
+
+## 8. Post-research corrections (2026-10-20, verified after implementation)
+
+These supersede parts of the sections above:
+
+1. **CmdPal extension Gallery exists (Store discoverability is no longer a blocker).** The installed
+   CmdPal 0.13 host contains the Gallery/库 UI (Settings → Extensions → Gallery) with a gallery feed;
+   Microsoft Learn "Finding and installing Command Palette extensions" describes browsing by name/
+   author/category, and the Gallery links to the extension's install source - WinGet or Microsoft
+   Store. Community directory: https://github.com/microsoft/CmdPal-Extensions. Therefore the earlier
+   claim that Store-only extensions cannot be discovered inside Command Palette is outdated; after
+   Store publication, submit the extension to that gallery (WinGet publishing is optional but
+   recommended because Gallery installs go through WinGet).
+2. **Partner Center individual registration is free now.** Learn "Free developer registration for
+   individual developers" and "Open a developer account" (new onboarding, 2025) state the former
+   $19 fee is waived; no registration fee for either account type in the new flow.
+3. **unvirtualizedResources was removed and tested** (owner decision): writing settings/logs to
+   %LOCALAPPDATA%\EverythingPal and exporting es.exe JSON to %TEMP% both still work with the default
+   MSIX write virtualization; the packaged COM server only needs runFullTrust. The final manifest
+   therefore declares runFullTrust only. This removes the biggest restricted-capability certification
+   risk noted in D.10/E.13.
+4. **Fallback UX decision:** the home fallback now defaults to **1 row** (configurable 0-5). Both
+   prior community Everything extensions (lin-ycv/EverythingCommandPalette and
+   goucey/EverythingExtension) register exactly one fallback item, so a single row / single toggle is
+   the familiar UX; multiple rows remain an opt-in power feature (one fallback command per row).

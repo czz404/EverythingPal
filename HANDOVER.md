@@ -34,12 +34,14 @@
 
 - **Store 上传包（未签名，最终）**：
   `artifacts/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
-  size 22,349,218 B，SHA256 `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12`
+  size 22,349,272 B，SHA256 `73B71AF9B1570FC592DFFAB1522F177F1CCACD65878BBF0E8187B0DFEAAAF8E4`
   （x64/ARM64 各 ~10.8/10.5 MB；`artifacts/store/` 下还有两个 per-arch .msix 与 manifests）。
   该 bundle 由 `scripts/pack-store.ps1` 生成，未签名（Store 重签）；本地安装验证用
   `scripts/deploy.ps1 -Configuration Release` 出来的自包含签名包。
 - 本机已安装验证：`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`（Developer 签名，自包含）。
-  CmdPal 中：命令页/主页 3 行 fallback 均可见，真实图标（.lnk 箭头、文件夹、zip 图标）已确认。
+  CmdPal 中：命令页、主页 fallback 均可见，真实图标（.lnk 箭头、文件夹、zip 图标）已确认。
+  **主页 fallback 默认 1 行**（可 0–5）：为了和旧的两个 Everything 插件（lin-ycv ECP、goucey
+  EverythingExtension 都只注册一个 fallback item）一致，设置页默认只出现一个开关；多行是可选设置。
 - 打包校验（脚本自动）：自包含 runtime、PE arch、zh-Hans satellite、GDI/System.Drawing、
   Tools\es.exe、LICENSE + THIRD-PARTY-NOTICES、无 PDB、无 AppxSignature（unsigned）、
   bundle 两架构同 identity、Windows.Desktop-only、`en-US`+`zh-Hans` 资源语言。
@@ -47,7 +49,7 @@
 
 ## 上架还差什么（按顺序）
 
-1. **Partner Center 注册 + 预留应用名**（用户个人账号 $19）：拿到 `Package/Identity/Name`、
+1. **Partner Center 注册 + 预留应用名**（个人开发者注册费已取消、免费；仍需 Microsoft 账户/身份验证）：拿到 `Package/Identity/Name`、
    `Package/Identity/Publisher`（`CN=<GUID>`）、`Package/Properties/PublisherDisplayName`、Store ID。
    当前源码里的 `Identity Name=EverythingPal / Publisher=CN=czz404` 只是 dev 身份，**不要**直接提交。
 2. **用 Store 身份重打**（不改进源码 manifest）：
@@ -61,17 +63,20 @@
 3. **公开支持/隐私 URL**：✅ 已解决——仓库已转 public：
    - 隐私政策：https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md
    - 支持：https://github.com/czz404/EverythingPal/issues
-4. **决定 `unvirtualizedResources`**（认证风险 R2）：manifest 里保留了两条 `desktop6:*WriteVirtualization
-   disabled` + `unvirtualizedResources`。微软文档说该能力面向游戏/external-location，“不面向其他场景”，
-   审核可能要求 justification 或拒绝。建议做一次移除实验（设置/日志会落到包 LocalCache；es.exe 的
-   `%TEMP%` 导出仍需回归）——`docs/store/certification-notes.md` 已写了两套说法。
-5. **提交认证**：上传未签名 bundle（Store 重签）；Submission options 解释 `runFullTrust`
-   （打包 COM server 必需）；列表按 `docs/store/listing.md`；Notes for certification 用
+4. **`unvirtualizedResources`：✅ 已移除并实测通过**。manifest 现在只有 `runFullTrust`；两条
+   `desktop6:*WriteVirtualization` 也已删除。删除后已装包实测：命令页搜索（es.exe 的 `%TEMP%`
+   JSON 导出）、主页 fallback、图标、日志写入 `%LOCALAPPDATA%\EverythingPal\Logs` 全部正常。
+   认证时只需解释 `runFullTrust`（打包 COM server 必需）。
+5. **提交认证**：上传未签名 bundle（Store 重签）；Submission options 解释 `runFullTrust`；
+   列表按 `docs/store/listing.md`；Notes for certification 用
    `docs/store/certification-notes.md` 的英文短版（PowerToys + Everything 前提、Win+Alt+Space 测试步骤、
    fallback 开启方法、无网络）。审核通常 1–3 个工作日。
 6. **发布后**：PFN 会从 `EverythingPal_b32a3jmekh2ja` 变 Partner Center 的 PFN → CmdPal 里该扩展的
    per-fallback 开关/pin/alias 等设置会丢（settings 以 ProviderId=PFN!ExtensionId 为键），发版说明里写清。
-   另外 **Store-only 的 CmdPal 扩展在命令面板里不可发现**，建议同时发 WinGet + 商店 assoc tag。
+7. **让扩展可被发现**：CmdPal 0.13 设置里有内置 **Gallery/库**（Settings → Extensions → Gallery，
+   由 `microsoft/CmdPal-Extensions` 社区目录 + WinGet 提供），可以浏览/安装 WinGet 或 Microsoft Store
+   上架的扩展。因此**Store 上架后**把本扩展提交到 <https://github.com/microsoft/CmdPal-Extensions>
+   （Profile/提交 PR）即可出现在库里；WinGet 发布可选但推荐（库的安装走 WinGet）。
 
 ## 重跑验证
 
@@ -129,5 +134,6 @@ scripts/capture-screenshots.ps1    自动截 CmdPal 窗口（商店截图，≥1
 scripts/generate-icons.py          多 scale 图标生成（Pillow）
 docs/store/                        商店材料；docs/qa/ QA 报告；docs/research/ 平台研究
 ```
+
 
 

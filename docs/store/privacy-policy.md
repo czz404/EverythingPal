@@ -1,6 +1,6 @@
 # Everything Search for Command Palette — 隐私政策 / Privacy Policy
 
-> 状态：**草稿 v1（2026-10-20）**。上架前必须托管到公开 URL 并在 Partner Center 填写；托管地址 **TBD**。
+> 状态：**v1.0（2026-10-20）**。已随公开仓库发布，Store 隐私政策 URL：<https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md>。
 > 适用产品：Microsoft Store 应用 `Everything Search for Command Palette`（包名/身份以最终提交为准；下文简称“本应用”）。
 > 这是一份**如实反映当前实现**的隐私政策：无网络能力、无遥测、无数据收集。若后续版本新增任何联网/收集行为，必须更新本文并提前告知用户。
 
@@ -118,8 +118,9 @@ This policy is updated with the app. If data handling changes materially (e.g. a
 
 ---
 
-## 托管说明（内部，发布前删除）
+## 托管与提交说明（内部）
 
-- 建议托管方式：GitHub Pages（仓库 public 后 `https://czz404.github.io/EverythingPal/privacy-policy.html`）或公开 Gist/独立静态页；**必须是可直接访问的公开 HTTPS 页面**，不能是登录后可见的私有仓库文件。
-- 隐私政策 URL 与支持 URL 在 Partner Center 的 *Privacy policy* / *Support info* 中填写；未托管 = 阻塞提交。
-- 若作者实体名/邮箱在提交前确定，替换文中的 **TBD** 并同步 `listing.md` §7。
+- **当前托管**：直接作为公开仓库文件发布：<https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md>（仓库已 public，可直接用作 Partner Center 的 Privacy policy URL）。GitHub Pages（`https://czz404.github.io/EverythingPal/...`）可选，不是必须。
+- 支持 URL：<https://github.com/czz404/EverythingPal/issues>。
+- 若作者实体名/邮箱确定，替换文中 **TBD** 并同步 `listing.md` §7/§8。
+- 若未来新增任何联网/收集行为，先更新本文件并发布新版本（同时更新“生效日期”）。

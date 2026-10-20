@@ -226,7 +226,9 @@ internal static class Strings
     /// <summary>"Everything Search · home result 1/3" / "Everything 搜索 · 主页结果 1/3" for the CmdPal fallback list.</summary>
     [SuppressMessage("Performance", "CA1863", Justification = "The format string is a localized resource resolved per call; these are low-frequency UI paths, not hot loops.")]
     internal static string FormatFallbackRowTitle(int rowNumber, int totalRows) =>
-        string.Format(CultureInfo.CurrentCulture, Get("Fallback.RowTitleFormat"), rowNumber, totalRows);
+        totalRows <= 1
+            ? Get("Fallback.RowTitleSingle")
+            : string.Format(CultureInfo.CurrentCulture, Get("Fallback.RowTitleFormat"), rowNumber, totalRows);
 
     /// <summary>Formats one localized resource; used by the typed format helpers above.</summary>
     [SuppressMessage("Performance", "CA1863", Justification = "The format string is a localized resource resolved per call; these are low-frequency UI paths, not hot loops.")]

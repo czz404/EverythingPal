@@ -1,7 +1,7 @@
 {
   "tool": "scripts/capture-screenshots.ps1",
-  "capturedAt": "2026-10-20T16:44:00+08:00",
-  "purpose": "Microsoft Store desktop screenshots (PNG, >= 1366x768) of the final installed EverythingPal 0.2.0.0 CmdPal extension",
+  "capturedAt": "2026-10-20T17:47:00+08:00",
+  "purpose": "Microsoft Store desktop screenshots (PNG, >= 1366x768) of the final installed EverythingPal 0.2.0.0 CmdPal extension (capability-reduced manifest, default fallback rows = 1)",
   "environment": {
     "os": "Microsoft Windows 10.0.28000 (Windows 11 26H1)",
     "screenWidth": 2560,
@@ -32,26 +32,26 @@
       "fullScreenFallback": "docs/store/screenshots/01-search-page-fullscreen.png"
     },
     {
-      "file": "docs/store/screenshots/02-home-inline-rows.png",
+      "file": "docs/store/screenshots/02-home-inline-result.png",
       "width": 1366,
       "height": 768,
       "meetsStoreMinimum": true,
-      "sha256": "FCA8AF44D93251B809E01D02C90B563F8BF19A92A6614AA2457D9B0C5A5856CF",
+      "sha256": "69ECF5D37EF98CCD2C17CB34829C5176B6464594F40D347D78C946D0EF652A28",
       "mode": "home",
       "query": "wantai",
       "preQuery": null,
-      "settleMs": 10000,
+      "settleMs": 9000,
       "backdrop": true,
-      "captionZh": "在命令面板主页直接搜索文件名，前 3 条结果即时显示（需在 CmdPal 设置中启用第三方回退命令）",
-      "captionEn": "Search file names right from the Command Palette home screen — top 3 results inline (enable third-party fallback rows in Command Palette settings).",
-      "fullScreenFallback": "docs/store/screenshots/02-home-inline-rows-fullscreen.png"
+      "captionZh": "在命令面板主页直接搜索文件名，内联显示 Everything 结果（默认 1 行，0–5 可配；需在 CmdPal 设置中启用第三方回退命令）",
+      "captionEn": "Search file names right from the Command Palette home screen with an inline Everything result (default 1 row, 0-5 configurable; enable third-party fallback rows in Command Palette settings).",
+      "fullScreenFallback": "docs/store/screenshots/02-home-inline-result-fullscreen.png"
     },
     {
       "file": "docs/store/screenshots/03-context-menu.png",
       "width": 1366,
       "height": 768,
       "meetsStoreMinimum": true,
-      "sha256": "1EF58E6CCDDC254F2B73F226224806B01EEC65885A9E386572030F5032296079",
+      "sha256": "55BD9263586F9644B1E42598B90A941B832DD4E4A6743EED7C57B04E24AA5349",
       "mode": "page",
       "query": "wantai",
       "preQuery": null,
@@ -66,23 +66,24 @@
       "width": 1366,
       "height": 768,
       "meetsStoreMinimum": true,
-      "sha256": "132D98AD3B7D8838D20B302F3515D1FDA0F3557D2CC084DF2F6E52A96F986E80",
-      "mode": "home",
+      "sha256": "0E6D772C874493FDD0C560E29A8A353E1726B0D5D87E76668F8FCF689CF854F6",
+      "mode": "page",
       "query": "zzzqqq",
-      "preQuery": "wantai",
-      "settleMs": 9000,
+      "preQuery": null,
+      "settleMs": 2500,
       "backdrop": true,
       "captionZh": "没有匹配结果时给出一行可读提示，而不是空白行",
-      "captionEn": "A readable no-results row instead of blank rows when nothing matches.",
+      "captionEn": "A readable one-line no-results message instead of blank rows when nothing matches.",
       "fullScreenFallback": "docs/store/screenshots/04-zero-result-fullscreen.png"
     }
   ],
   "notes": [
     "Window captures use DWMWA_EXTENDED_FRAME_BOUNDS and a neutral topmost backdrop, so no personal desktop content appears in the window PNGs.",
-    "Home-mode fallback rows are rendered by the host asynchronously; they needed a ~3-10 s settle on CmdPal 0.13.12862. Shot 02 was retried until all three rows (wantai D:\\\\, wantai.lnk, wantai.zip) were present.",
-    "Shot 04 was captured after a preceding successful search (preQuery=wantai) then an unmatched query (zzzqqq): exactly one informative row (title=query, subtitle='没有匹配结果 · ...', app icon) with no blank/stale-icon rows.",
-    "The details pane did not render on this host build even for built-in commands (host behaviour, not an EverythingPal defect); the extension still supplies Details metadata.",
+    "Final installed build default: 1 home-screen fallback row (0-5 configurable). Shot 02 therefore shows exactly one inline Everything result ('wantai  D:\\\\'), not three; this is the new default and must not be retried for 3 rows.",
+    "Home fallback rows are host-rendered asynchronously; shot 02 was captured with a 9 s settle after typing.",
+    "Shot 04 is the extension command page in its no-results state: one readable row ('没有匹配结果 · 换个关键词，或检查 Everything 的索引设置。') instead of blank rows. Verified on the final build.",
+    "The details pane did not render on CmdPal 0.13.12862 even for built-in commands (host behaviour, not an EverythingPal defect); the extension still supplies Details metadata.",
     "Full-screen fallback images are reference only; do not upload them to the Store.",
-    "Final unsigned Store bundle built by the Lead/pack-store: sha256 512B9998E3A5BFF0240F41DCD573DF74DECE159A8B3704727EF90B98C9A4D8DB. The QA verification rebuild produced a different hash because it is a separate build run."
+    "Package capability posture of this build: runFullTrust only (unvirtualizedResources and desktop6 write-virtualization removed)."
   ]
 }

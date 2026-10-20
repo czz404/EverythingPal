@@ -1,10 +1,9 @@
 # Everything Search for Command Palette — 支持与常见问题 / Support & FAQ
 
 > 状态：**草稿 v1（2026-10-20）**。此文件同时用作 Store 支持信息页的内容来源与用户 FAQ。
-> 支持渠道：**GitHub Issues**（仓库当前 private，上架前必须 public 或换成公开支持页）：
-> <https://github.com/czz404/EverythingPal/issues>
+> 支持渠道：**GitHub Issues**（仓库已 public）：<https://github.com/czz404/EverythingPal/issues>
 > 支持邮箱：**TBD**（如无邮箱，把 Store 支持联系方式指向 GitHub Issues）。
-> 适用版本：v0.1.x（当前开发版）～ v0.2.x（Store 首发）。回复时间：尽力而为，无 SLA（TBD）。
+> 适用版本：v0.2.x（Store 首发；当前开发版）。回复时间：尽力而为，无 SLA（TBD）。
 
 ---
 
@@ -19,7 +18,7 @@
 | 搜索超时 / 结果迟迟不出现 | Everything 索引尚未就绪（刚启动或正在重建索引） | 等 Everything 索引完成后重试；在 Everything 里确认索引正常 |
 | 结果为空但文件确实存在 | Everything 未索引该磁盘/目录，或查询语法与 Everything 不同 | 在 Everything 本体里确认能搜到；检查 Everything 的索引设置（NTFS 卷/文件夹） |
 | 同名程序/扩展冲突 | 已安装其他 Everything CmdPal 扩展（如旧插件） | 只保留一个，避免重复结果/快捷键冲突 |
-| 界面是中文，商店是英文 | 当前 UI 文案为中文；本地化仍在进行（TBD） | 见 §5 语言说明 |
+| 界面语言与商店语言不一致 | UI 跟随系统显示语言（中文系统显示中文，其它系统显示 English）；商店列表语言独立 | 在 Windows 设置 → 时间和语言 → 语言 中调整显示语言后重启 CmdPal；商店列表语言与 UI 语言不必一致 |
 
 ---
 
@@ -35,8 +34,8 @@
 这是 Command Palette 的平台行为：第三方扩展的 fallback（回退）命令默认**不进入全局结果**。开启方式：
 1. 打开 Command Palette 设置（齿轮）；
 2. **扩展 → Everything Search → 回退命令**（Fallback commands）；
-3. 打开需要的行（默认 3 行），并勾选 **Include in the Global result**（“在全局结果中显示 / Show results on queries without direct activation command”）；
-4. 返回命令面板主页，输入文件名即可看到内联结果（行数可在扩展设置页调整为 0–5）。
+3. 打开需要的行（默认 1 行；可在扩展设置页把主页行数调为 0–5），并勾选 **Include in the Global result**（“在全局结果中显示 / Show results on queries without direct activation command”）；
+4. 返回命令面板主页，输入文件名即可看到内联结果（行数可在扩展设置页调整为 0–5，默认 1）。
 
 ### Q4. 为什么搜索结果和 Everything 本体不完全一样？
 扩展把查询交给 `es.exe`，并在此基础上做轻量排序（精确名 > 前缀 > 包含 > 文件夹/更短名称），结果条数、排序方式、超时都在设置里可调。Everything 本体的全部高级语法/筛选器不保证等价；若结果与预期不符，请先在 Everything 本体验证同一查询。
@@ -68,8 +67,14 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 ### Q12. 会与其它 Everything CmdPal 扩展冲突吗？
 会。若同时安装多个查询 Everything 的 CmdPal 扩展，可能出现重复结果或快捷键/设置混淆。建议只保留一个。
 
-### Q13. 为什么 CmdPal 设置里的回退命令会显示 3 个「Everything 搜索 · 主页结果 1/3、2/3、3/3」？
-不是三个不同的功能，而是**主页那 3 行内联结果各占一个「回退命令」**。CmdPal 的扩展接口规定“一个回退命令只能显示一行”，所以想让主页出现 3 行，就必须注册 3 个回退命令，设置页也就列出 3 个开关（`1/3` 表示第 1 行、共 3 行）。三个开关全开 = 3 行；关掉某个 = 那一行不再出现。把「主页搜索内联结果行数」改成 1，就只会注册 1 个开关；改成 0 则完全关闭。行的显示顺序与是否进入全局结果由 CmdPal 管理（可在“管理回退顺序”里拖动排序）。
+### Q13. 为什么 CmdPal 设置里的回退命令显示「Everything 搜索 · 主页结果」（或 `1/3`、`2/3`…）？
+不是多个不同的功能，而是**主页内联结果每一行各占一个「回退命令」**。CmdPal 的扩展接口规定“一个回退命令只能显示一行”，所以主页要显示 N 行，就必须注册 N 个回退命令，设置页也就列出 N 个开关。**默认只注册 1 行**（与旧版 Everything 插件一致），单行时标题显示为「Everything 搜索 · 主页结果」；把「主页搜索内联结果行数」改成 2–5 才会出现多个开关（标题带 `1/3`、`2/3`…），改成 0 则完全关闭。**修改行数后需要重新加载 Command Palette 扩展**才会生效。行的显示顺序与是否进入全局结果由 CmdPal 管理（可在“管理回退顺序”里拖动排序）。
+
+### Q14. 怎么找到/安装这个扩展？CmdPal 里有 Gallery/库吗？
+- **Store 安装**：在 Microsoft Store 搜索应用名（上架后），或使用商店链接安装。
+- **命令面板内 Gallery**：CmdPal 0.13+ 的设置里有 **Settings → Extensions → Gallery（扩展 → 库）**，由 `microsoft/CmdPal-Extensions` 社区目录驱动，安装/更新会走 WinGet 或 Microsoft Store。**本扩展在 Store 上架后会提交到该社区目录**，之后即可在 Gallery 中浏览、一键安装（提交完成前 Gallery 可能搜不到，属正常）。
+- **WinGet**：可选（推荐）。若发布 WinGet 包，可用 `winget install` 安装；Gallery 的安装/更新同样会走 WinGet。
+- 如果 Gallery 里看不到：先更新 PowerToys/CmdPal 到较新版本，并在 Gallery 刷新；或直接用 Store 安装。
 
 ---
 
@@ -78,7 +83,7 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 1. 按 `Win + Alt + Space` 打开 Command Palette。
 2. 打开 **设置**（左下角齿轮）→ **扩展** → 找到 **Everything Search**。
 3. 展开 **回退命令 / Fallback commands**。
-4. 打开第 1–3 行的开关，并勾选每行的 **Include in the Global result**。
+4. 打开需要的行（默认 1 行；可在扩展设置页把主页行数调为 0–5），并勾选 **Include in the Global result**。
 5. 返回主页，输入任意本机文件名（例如 `report` 或 `winver`）。
 6. 若仍不显示：确认 Everything 正在运行，并在 CmdPal 中执行 *Reload Command Palette extensions*。
 
@@ -115,9 +120,9 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 
 ## 5. 语言说明 / Language
 
-- 当前开发版 UI 文案为**中文**；英文/双语本地化正在推进（**TBD**，由 core-i18n 任务负责）。Store 列表同时提供中文与英文文案（见 `listing.md`）。
-- 若你使用非中文系统，功能不受影响；错误提示中的技术细节（Everything/es.exe 状态）保持英文可读。
-- 如语言显示异常，请提供系统语言与区域设置反馈。
+- UI 已提供 **中文（zh-Hans）与 English** 两套文案，跟随 Windows 显示语言（`CultureInfo.CurrentUICulture`）：中文系统显示中文，其它系统显示英文；包内清单包含 `en-US` + `zh-Hans` 资源语言。
+- Store 列表同时提供中文与英文文案（见 `listing.md`）；如语言显示异常，请提供系统显示语言与区域设置反馈。
+- 错误提示中的技术细节（Everything/es.exe 状态）保持英文可读。
 
 ---
 
@@ -125,7 +130,8 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 
 - **What it is:** a third-party PowerToys Command Palette extension that searches your local files through the bundled MIT `es.exe` and your running Everything index. It is not affiliated with voidtools or Microsoft.
 - **Requirements:** Windows 11, or Windows 10 version 2004 (build 19041)+, x64/ARM64; PowerToys with Command Palette enabled; Everything 1.4/1.5 running.
-- **Home-screen inline rows:** Command Palette does not include third-party fallback rows in global results by default. Enable them in Command Palette settings → Extensions → Everything Search → Fallback commands (check "Include in the Global result").
+- **Home-screen inline rows:** Command Palette does not include third-party fallback rows in global results by default. Enable them in Command Palette settings → Extensions → Everything Search → Fallback commands (check "Include in the Global result"). Default is **one row**; 0–5 configurable in the extension settings.
+- **Finding the extension:** install from the Microsoft Store; after the Store release it is also submitted to the `microsoft/CmdPal-Extensions` community Gallery (Command Palette Settings → Extensions → Gallery), which installs via WinGet or the Microsoft Store. WinGet publishing is optional/recommended.
 - **Privacy:** no telemetry, no network capability, no data collection; settings and logs stay on your device (`%LOCALAPPDATA%\EverythingPal`).
 - **Support / logs:** open an issue at <https://github.com/czz404/EverythingPal/issues> and include your Windows/PowerToys/Everything versions, reproduction steps and a redacted `extension.log`.
 - **Uninstall:** Windows Settings → Apps → Everything Search for Command Palette → Uninstall; delete `%LOCALAPPDATA%\EverythingPal` to remove leftover logs.

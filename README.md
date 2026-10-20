@@ -19,9 +19,10 @@ only need Everything itself installed and running — no separate ES download or
 ## Features
 
 - **Live search page**: type a query, results stream in from Everything (150 ms debounce).
-- **Home-search fallback with multiple rows**: type a name on the Command Palette home screen and the
-  top results appear directly (default 3 rows, 0–5 in settings). Enter opens the item; the context
-  menu can reveal it in Explorer, copy the path, or locate it in Everything.
+- **Home-search fallback**: type a name on the Command Palette home screen and the best result
+  appears directly (default 1 row, 0–5 in settings — each row is one CmdPal fallback command, so
+  N rows means N switches under Fallback commands). Enter opens the item; the context menu can
+  reveal it in Explorer, copy the path, or locate it in Everything.
 - **Real paths, not shortcuts**: results are the actual files/folders (drive roots such as
   `D:\wantai` included), unlike Recent-items shortcuts.
 - **Real file-type icons**: each result shows the shell's registered icon for its type (folder,
@@ -122,7 +123,7 @@ reachable from the `Everything 搜索` command's context menu):
 | `everythingPal.EsExePath` | *(empty = auto)* | `es.exe` path or directory. Auto-detect: explicit setting → bundled `Tools\es.exe` → Everything install dirs → PATH. |
 | `everythingPal.MaxResults` | `50` | Result limit (`-n`), clamped to 1–500. |
 | `everythingPal.Sort` | `name-ascending` | ES `-sort`: `name-ascending`, `date-modified-descending`, `path`, `run-count-descending`, ... |
-| `everythingPal.FallbackRows` | `3` | Home-search inline rows (0–5; 0 disables the fallback). Each row is a separate CmdPal fallback command, so Command Palette shows three switches under **Fallback commands**; enable the rows you want and tick *Include in the global result* (third-party fallbacks default to *not* included). Changing the count requires reloading the Command Palette extensions. |
+| `everythingPal.FallbackRows` | `1` | Home-search inline rows (0–5). Each row is a separate CmdPal fallback command (one row = one command = one switch under **Fallback commands**); enable the rows you want and tick *Include in the global result* (third-party fallbacks default to *not* included). Changing the count requires reloading the Command Palette extensions. |
 
 ## Project layout
 
@@ -176,8 +177,9 @@ docs/research/                     CmdPal API + Store requirement research
 - [x] Store packaging scripts + Partner Center listing/privacy/certification materials (`docs/store/`)
 - [ ] reserve the Partner Center product and inject the real Store identity (publish/build is ready;
       Store build version must be `1.0.0.0`-style with a non-zero major)
-- [ ] publish to Microsoft Store + WinGet (Store-only CmdPal extensions are not discoverable inside
-      Command Palette, so WinGet matters)
+- [ ] publish to Microsoft Store, then submit to the CmdPal community Gallery
+      (`microsoft/CmdPal-Extensions`) so it is discoverable in Command Palette's built-in Gallery;
+      WinGet publishing is optional but recommended
 
 ## License
 

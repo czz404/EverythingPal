@@ -470,7 +470,31 @@ function Invoke-UnitTests {
 
 $unitTestSummary = $null
 if ($SkipTests) {
-    Add-Result -Id "TEST-01" -Category "Unit tests" -Name "Elevated dotnet test" -Status "SKIP" -Detail "-SkipTests"
+    # Reuse the most recent elevated test result when present (re-verifying packaging only), so the
+    # report still records the test evidence instead of a bare SKIP.
+    $reusedTrx = Get-ChildItem -LiteralPath $testResultsDir -Filter "*.trx" -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($reusedTrx) {
+        try {
+            $trx = [xml](Get-Content -LiteralPath $reusedTrx.FullName -Raw)
+            $counters = $trx.TestRun.ResultSummary.Counters
+            $unitTestSummary = [pscustomobject]@{
+                Total = [int]$counters.total; Passed = [int]$counters.passed
+                Failed = [int]$counters.failed; Skipped = [int]$counters.skipped
+                Trx = $reusedTrx.FullName
+            }
+            $status = if ($unitTestSummary.Failed -eq 0) { "PASS" } else { "FAIL" }
+            Add-Result -Id "TEST-01" -Category "Unit tests" -Name "Elevated dotnet test (reused result)" -Status $status `
+                -Detail ("{0}/{1} passed, {2} skipped, {3} failed — reused TRX from {4:HH:mm:ss} (-SkipTests)" -f $unitTestSummary.Passed, $unitTestSummary.Total, $unitTestSummary.Skipped, $unitTestSummary.Failed, $reusedTrx.LastWriteTime) `
+                -Evidence @("trx: $($reusedTrx.FullName)")
+        }
+        catch {
+            Add-Result -Id "TEST-01" -Category "Unit tests" -Name "Elevated dotnet test" -Status "SKIP" -Detail "-SkipTests (existing TRX could not be parsed: $($_.Exception.Message))"
+        }
+    }
+    else {
+        Add-Result -Id "TEST-01" -Category "Unit tests" -Name "Elevated dotnet test" -Status "SKIP" -Detail "-SkipTests"
+    }
 }
 else {
     Write-Step "Unit tests (elevated: testhost needs it on this machine)"
@@ -616,8 +640,20 @@ foreach ($arch in $selectedArchs) {
             if ($expectedPublisherDisplayName -and $publisherDisplayNameNode.InnerText.Trim() -ne $expectedPublisherDisplayName) {
                 throw "PublisherDisplayName '$($publisherDisplayNameNode.InnerText.Trim())' != expected '$expectedPublisherDisplayName'"
             }
+            # Final Store capability posture: runFullTrust only. unvirtualizedResources and the
+            # desktop6 write-virtualization overrides were removed to avoid restricted-capability risk.
+            $capabilityNames = @($document.SelectNodes("//*[local-name()='Capability']") | ForEach-Object { $_.GetAttribute("Name") })
+            if ($capabilityNames -notcontains "runFullTrust") {
+                throw "runFullTrust capability missing; the packaged out-of-process COM server requires it."
+            }
+            if ($capabilityNames -contains "unvirtualizedResources") {
+                throw "unvirtualizedResources capability is still present; the final Store manifest must be capability-reduced (runFullTrust only)."
+            }
+            if ($document.SelectNodes("//*[local-name()='FileSystemWriteVirtualization' or local-name()='RegistryWriteVirtualization']").Count -gt 0) {
+                throw "desktop6 write-virtualization properties are still present; the final Store manifest must not disable write virtualization."
+            }
             $script:expectedVersion = $version
-            return @("Name=$name; Publisher=$publisher; Version=$version; Arch=$processorArchitecture; DisplayName=$($displayNameNode.InnerText.Trim()); PublisherDisplayName=$($publisherDisplayNameNode.InnerText.Trim())")
+            return @("Name=$name; Publisher=$publisher; Version=$version; Arch=$processorArchitecture; DisplayName=$($displayNameNode.InnerText.Trim()); PublisherDisplayName=$($publisherDisplayNameNode.InnerText.Trim()); Capabilities=$($capabilityNames -join ',')")
         }
         finally { $archive.Dispose() }
     }
@@ -626,9 +662,17 @@ foreach ($arch in $selectedArchs) {
         $archive = Open-ZipArchive -Path $msixPath
         try {
             $entries = Get-ZipEntryNames -Archive $archive
-            $required = @("EverythingPal.exe", "EverythingPal.dll", "EverythingPal.runtimeconfig.json", "hostfxr.dll", "hostpolicy.dll", "coreclr.dll", "Tools/es.exe", "THIRD-PARTY-NOTICES.md", "Assets/StoreLogo.png", "Assets/Square150x150Logo.png", "Assets/Square44x44Logo.png", "Public/.gitkeep")
+            $required = @("EverythingPal.exe", "EverythingPal.dll", "EverythingPal.runtimeconfig.json", "hostfxr.dll", "hostpolicy.dll", "coreclr.dll", "Tools/es.exe", "THIRD-PARTY-NOTICES.md", "LICENSE", "Assets/StoreLogo.png", "Assets/Square150x150Logo.png", "Assets/Square44x44Logo.png", "Public/.gitkeep")
             foreach ($relative in $required) {
                 if ($entries -notcontains $relative) { throw "package payload is missing '$relative'" }
+            }
+            # GDI+ / System.Drawing is needed for real shell icons (trimming can silently drop it).
+            foreach ($gdiAssembly in @("System.Drawing.Common.dll", "System.Private.Windows.GdiPlus.dll")) {
+                if ($entries -notcontains $gdiAssembly) { throw "package payload is missing '$gdiAssembly' (real shell icons would fall back to glyphs)" }
+            }
+            # Localized satellite assembly: without it the UI silently falls back to English.
+            if (($entries | Where-Object { $_ -like "zh-Hans/EverythingPal.resources.dll" }).Count -eq 0) {
+                throw "package payload is missing the zh-Hans satellite assembly 'zh-Hans/EverythingPal.resources.dll'"
             }
             $pdbEntries = @($entries | Where-Object { $_ -like "*.pdb" })
             if ($pdbEntries.Count -gt 0) { throw ("package contains {0} PDB(s), e.g. {1}" -f $pdbEntries.Count, ($pdbEntries[0])) }

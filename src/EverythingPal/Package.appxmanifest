@@ -6,8 +6,7 @@
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
-  IgnorableNamespaces="uap uap3 rescap desktop6">
+  IgnorableNamespaces="uap uap3 rescap">
 
   <!--
     Identity/@Name and Identity/@Publisher still use the local dev identity. For a Microsoft Store
@@ -25,8 +24,6 @@
     <DisplayName>Everything Search</DisplayName>
     <PublisherDisplayName>EverythingPal</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
-    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
-    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
   </Properties>
 
   <!--
@@ -91,8 +88,7 @@
   </Applications>
 
   <Capabilities>
+    <!-- Required to host the packaged out-of-process COM server (CmdPal activation). -->
     <rescap:Capability Name="runFullTrust" />
-    <!-- Required by desktop6:FileSystemWriteVirtualization / RegistryWriteVirtualization = disabled. -->
-    <rescap:Capability Name="unvirtualizedResources" />
   </Capabilities>
 </Package>
