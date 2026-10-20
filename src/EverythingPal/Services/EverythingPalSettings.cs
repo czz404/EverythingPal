@@ -37,6 +37,12 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
         "1–500，默认 50。传给 es.exe 的 -n 参数。",
         DefaultMaxResults.ToString(CultureInfo.InvariantCulture));
 
+    private readonly TextSetting _fallbackRows = new(
+        Namespaced(nameof(FallbackRows)),
+        "主页搜索内联结果行数",
+        "0–5，默认 3。0 表示关闭主页 fallback；CmdPal 需要开启该 fallback 的 IncludeInGlobalResults。",
+        "3");
+
     private readonly ChoiceSetSetting _sort = new(
         Namespaced(nameof(Sort)),
         "排序方式",
@@ -56,6 +62,7 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
         Settings.Add(_esExePath);
         Settings.Add(_maxResults);
         Settings.Add(_sort);
+        Settings.Add(_fallbackRows);
 
         Settings.SettingsChanged += (_, _) => SaveSettings();
     }
@@ -65,6 +72,8 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
     internal string EsExePath => _esExePath.Value?.Trim() ?? string.Empty;
 
     internal int MaxResults => int.TryParse(_maxResults.Value, out var value) ? Math.Clamp(value, 1, 500) : DefaultMaxResults;
+    internal int FallbackRows => int.TryParse(_fallbackRows.Value, out var value) ? Math.Clamp(value, 0, 5) : 3;
+
 
     internal string Sort => string.IsNullOrWhiteSpace(_sort.Value) ? "name-ascending" : _sort.Value;
 
@@ -75,4 +84,5 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
         Sort = Sort,
     };
 }
+
 

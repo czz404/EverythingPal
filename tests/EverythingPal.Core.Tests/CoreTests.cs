@@ -180,3 +180,72 @@ public class ResultRankerTests
     }
 }
 
+
+public class EsDiscoveryTests
+{
+    [Fact]
+    public void FindEsExe_prefers_bundled_copy_inside_the_package()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "ep-discovery-" + Guid.NewGuid().ToString("N"));
+        var tools = Path.Combine(root, "Tools");
+        Directory.CreateDirectory(tools);
+        var bundled = Path.Combine(tools, "es.exe");
+        File.WriteAllText(bundled, "stub");
+
+        try
+        {
+            Assert.Equal(bundled, EverythingSearch.FindEsExe(configured: null, baseDirectory: root));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void FindEsExe_accepts_configured_directory_and_file()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "ep-discovery-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var configured = Path.Combine(root, "es.exe");
+        File.WriteAllText(configured, "stub");
+
+        try
+        {
+            Assert.Equal(configured, EverythingSearch.FindEsExe(configured: configured, baseDirectory: root));
+            Assert.Equal(configured, EverythingSearch.FindEsExe(configured: root, baseDirectory: root));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void FindEsExe_returns_null_when_nothing_is_available()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "ep-discovery-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            // On a dev machine ES may exist in PATH; only assert on the isolated base directory.
+            var previous = Environment.GetEnvironmentVariable("EVERYTHINGPAL_ES");
+            Environment.SetEnvironmentVariable("EVERYTHINGPAL_ES", null);
+            try
+            {
+                var found = EverythingSearch.FindEsExe(configured: null, baseDirectory: root);
+                Assert.True(found is null || File.Exists(found));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("EVERYTHINGPAL_ES", previous);
+            }
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+}
+

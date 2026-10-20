@@ -11,8 +11,9 @@ namespace EverythingPal;
 public partial class EverythingPalCommandsProvider : CommandProvider
 {
     private readonly ICommandItem[] _commands;
-    private readonly IFallbackCommandItem[] _fallbacks;
+    private IFallbackCommandItem[] _fallbacks;
     private readonly EverythingPalPage _page = new();
+    private EverythingFallbackGroup? _fallbackGroup;
 
     public EverythingPalCommandsProvider()
     {
@@ -29,11 +30,14 @@ public partial class EverythingPalCommandsProvider : CommandProvider
                 MoreCommands = [new CommandContextItem(Settings.SettingsPage)],
             },
         ];
-        _fallbacks = [new EverythingFallbackItem()];
+        var rows = EverythingPalSettings.Instance.FallbackRows;
+        _fallbackGroup = rows > 0 ? new EverythingFallbackGroup(rows) : null;
+        _fallbacks = _fallbackGroup?.Items ?? [];
     }
 
     public override ICommandItem[] TopLevelCommands() => _commands;
 
     public override IFallbackCommandItem[] FallbackCommands() => _fallbacks;
 }
+
 

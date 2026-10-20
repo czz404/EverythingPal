@@ -1,50 +1,41 @@
 // EverythingPal - Everything search for PowerToys Command Palette.
 // SPDX-License-Identifier: MIT
 
-using Microsoft.CommandPalette.Extensions;
-using Microsoft.CommandPalette.Extensions.Toolkit;
 using EverythingPal.Commands;
 using EverythingPal.Core;
 using EverythingPal.Services;
+using Microsoft.CommandPalette.Extensions;
+using Microsoft.CommandPalette.Extensions.Toolkit;
 
 namespace EverythingPal;
 
 /// <summary>
-/// Fallback item shown on the Command Palette home search when nothing else matches.
+/// Coordinates the home-search fallback rows.
 ///
-/// CmdPal's fallback model is one row per extension (the built-in file-search fallback works the
-/// same way), so this row surfaces the best Everything match: Enter opens it directly, and the
-/// context menu offers reveal / copy path / locate in Everything. Typing "wantai" on the home
-/// screen therefore surfaces the real folder D:\wantai instead of a stale Recent shortcut.
+/// CmdPal's fallback model is one row per fallback command, so we register several
+/// <see cref="EverythingFallbackItem"/>s and distribute the top N results across them. This gives
+/// inline multi-result search on the home screen while staying within the SDK contract.
 /// </summary>
-internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDisposable
+internal sealed partial class EverythingFallbackGroup : IDisposable
 {
-    private const string CommandId = "czz404.everythingpal.fallback";
-    private const int MaxResults = 10;
     private const int DebounceMilliseconds = 150;
 
-    private static readonly NoOpCommand BaseCommand = new() { Id = CommandId };
-    private static readonly IconInfo FolderIcon = new("\uE8B7");
-    private static readonly IconInfo FileIcon = new("\uE8A5");
-    private static readonly IconInfo AppIcon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
-
     private readonly EverythingSearch _search = new();
+    private readonly EverythingFallbackItem[] _items;
     private CancellationTokenSource? _cts;
     private string _query = string.Empty;
 
-    internal EverythingFallbackItem()
-        : base(BaseCommand, "Everything 搜索", CommandId)
+    public EverythingFallbackGroup(int rowCount)
     {
-        Title = string.Empty;
-        Subtitle = string.Empty;
-        Icon = AppIcon;
+        rowCount = Math.Clamp(rowCount, 1, 5);
+        _items = Enumerable.Range(0, rowCount).Select(index => new EverythingFallbackItem(this, index)).ToArray();
     }
 
-    public override void UpdateQuery(string query)
-    {
-        _query = query?.Trim() ?? string.Empty;
+    public IFallbackCommandItem[] Items => _items;
 
-        AppLog.Write($"fallback UpdateQuery: '{_query}'");
+    internal void OnUpdateQuery(string? query)
+    {
+        _query = QueryNormalizer.Normalize(query);
 
         _cts?.Cancel();
         _cts?.Dispose();
@@ -53,7 +44,7 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
 
         if (_query.Length == 0)
         {
-            Clear();
+            ClearAll();
             return;
         }
 
@@ -65,9 +56,9 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = _search.Search(_query, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: MaxResults));
+                    var outcome = _search.Search(_query, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length));
                     token.ThrowIfCancellationRequested();
-                    Apply(outcome);
+                    Distribute(outcome);
                 }
                 catch (OperationCanceledException)
                 {
@@ -75,62 +66,36 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
                 }
                 catch (Exception ex)
                 {
-                    AppLog.Write($"EverythingFallbackItem failed: {ex}");
+                    AppLog.Write($"EverythingFallbackGroup failed: {ex}");
                 }
             },
             token);
     }
 
-    private void Apply(SearchOutcome outcome)
+    private void Distribute(SearchOutcome outcome)
     {
-        var topSuffix = outcome.Results.Count > 0 ? $", top='{outcome.Results[0].FullPath}'" : string.Empty;
-        AppLog.Write($"fallback result: {outcome.Status}, {outcome.Results.Count} item(s){topSuffix}");
-        if (outcome.Status is SearchStatus.EverythingNotRunning or SearchStatus.EsExeNotFound)
+        AppLog.Write($"fallback result: {outcome.Status}, {outcome.Results.Count} item(s)");
+
+        ClearAll();
+
+        if (outcome.Status != SearchStatus.Ok)
         {
-            Title = "Everything 不可用";
-            Subtitle = outcome.Error ?? "请检查 Everything 是否运行";
-            Icon = AppIcon;
-            Command = BaseCommand;
-            MoreCommands = [];
+            _items[0].ShowStatus(outcome.Status, outcome.Error);
             return;
         }
 
-        if (outcome.Status != SearchStatus.Ok || outcome.Results.Count == 0)
+        for (var i = 0; i < _items.Length && i < outcome.Results.Count; i++)
         {
-            Clear();
-            return;
+            _items[i].ShowResult(outcome.Results[i], outcome.Results.Count);
         }
-
-        var best = outcome.Results[0];
-        var extra = outcome.Results.Count > 1 ? $"（共 {outcome.Results.Count} 个结果，Enter 打开第一个）" : string.Empty;
-
-        Title = best.Name;
-        Subtitle = $"{best.Directory}{extra}";
-        Icon = best.IsFolder ? FolderIcon : FileIcon;
-        Command = new OpenItemCommand(best.FullPath, best.IsFolder);
-        MoreCommands =
-        [
-            new CommandContextItem(new RevealInExplorerCommand(best.FullPath, best.IsFolder))
-            {
-                Title = "在资源管理器中显示",
-            },
-            new CommandContextItem(new CopyItemPathCommand(best.FullPath))
-            {
-                Title = "复制路径",
-            },
-            new CommandContextItem(new OpenInEverythingCommand(best.FullPath))
-            {
-                Title = "在 Everything 中定位",
-            },
-        ];
     }
 
-    private void Clear()
+    private void ClearAll()
     {
-        Title = string.Empty;
-        Subtitle = string.Empty;
-        Command = BaseCommand;
-        MoreCommands = [];
+        foreach (var item in _items)
+        {
+            item.Clear();
+        }
     }
 
     public void Dispose()
@@ -141,6 +106,71 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
     }
 }
 
+/// <summary>One home-search row, showing the N-th Everything result.</summary>
+internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup group, int index)
+    : FallbackCommandItem(new NoOpCommand { Id = "czz404.everythingpal.fallback" }, "Everything 搜索", $"czz404.everythingpal.fallback.{index}")
+{
+    private static readonly IconInfo AppIcon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
 
+    public override void UpdateQuery(string query) => group.OnUpdateQuery(query);
 
+    internal void ShowResult(EverythingResult result, int totalCount)
+    {
+        var extra = totalCount > 1 && index == 0 ? $"（共 {totalCount} 个结果）" : string.Empty;
+
+        Title = result.Name;
+        Subtitle = $"{result.Directory}{extra}";
+        Icon = result.IsFolder ? Icons.Folder : Icons.File;
+        Command = new OpenItemCommand(result.FullPath, result.IsFolder);
+        MoreCommands =
+        [
+            new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = "在资源管理器中显示" },
+            new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = "复制路径" },
+            new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = "在 Everything 中定位" },
+        ];
+    }
+
+    internal void ShowStatus(SearchStatus status, string? error)
+    {
+        Title = status switch
+        {
+            SearchStatus.EverythingNotRunning => "Everything 没有运行",
+            SearchStatus.EsExeNotFound => "找不到 es.exe",
+            SearchStatus.Timeout => "Everything 查询超时",
+            _ => "Everything 查询失败",
+        };
+
+        Subtitle = status switch
+        {
+            SearchStatus.EverythingNotRunning => "请启动 Everything（或安装它），然后重新输入",
+            SearchStatus.EsExeNotFound => "插件自带的 es.exe 缺失，请重新安装插件",
+            _ => error ?? "请稍后重试",
+        };
+
+        Icon = AppIcon;
+        Command = status == SearchStatus.EverythingNotRunning
+            ? new StartEverythingCommand()
+            : new OpenEverythingDownloadPageCommand();
+        MoreCommands =
+        [
+            new CommandContextItem(new StartEverythingCommand()) { Title = "启动 Everything" },
+            new CommandContextItem(new OpenEverythingDownloadPageCommand()) { Title = "下载 Everything" },
+        ];
+    }
+
+    internal void Clear()
+    {
+        Title = string.Empty;
+        Subtitle = string.Empty;
+        Command = new NoOpCommand { Id = "czz404.everythingpal.fallback" };
+        MoreCommands = [];
+    }
+}
+
+/// <summary>Icons shared by the list page and the fallback rows.</summary>
+internal static class Icons
+{
+    internal static readonly IconInfo Folder = new("\uE8B7");
+    internal static readonly IconInfo File = new("\uE8A5");
+}
 

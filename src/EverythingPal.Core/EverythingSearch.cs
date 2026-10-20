@@ -26,9 +26,14 @@ public sealed class EverythingSearch
     ];
 
     /// <summary>
-    /// Locates es.exe: explicit setting/environment override, well-known install dirs, then PATH.
+    /// Locates es.exe, in this order:
+    ///   1. explicit setting or EVERYTHINGPAL_ES environment variable;
+    ///   2. the copy shipped inside the MSIX (<c>Tools\es.exe</c> next to the extension exe);
+    ///   3. well-known Everything install locations;
+    ///   4. PATH.
+    /// The bundled copy is what makes the extension work without users installing ES separately.
     /// </summary>
-    public static string? FindEsExe(string? configured = null)
+    public static string? FindEsExe(string? configured = null, string? baseDirectory = null)
     {
         configured = string.IsNullOrWhiteSpace(configured)
             ? Environment.GetEnvironmentVariable("EVERYTHINGPAL_ES")
@@ -47,6 +52,12 @@ public sealed class EverythingSearch
             {
                 return inDirectory;
             }
+        }
+
+        var bundled = Path.Combine(baseDirectory ?? AppContext.BaseDirectory, "Tools", "es.exe");
+        if (File.Exists(bundled))
+        {
+            return bundled;
         }
 
         foreach (var candidate in EsCandidates)
@@ -161,3 +172,4 @@ public sealed class EverythingSearch
         }
     }
 }
+

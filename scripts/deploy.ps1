@@ -51,6 +51,36 @@ if ($manifestText -notmatch 'ProcessorArchitecture=') {
 }
 
 # ---------------------------------------------------------------------------
+# Bundle es.exe so users only need Everything itself (ES is MIT licensed, see THIRD-PARTY-NOTICES.md).
+# ---------------------------------------------------------------------------
+$esCache = Join-Path $artifacts "es\$Platform"
+$esExe = Join-Path $esCache "es.exe"
+if (-not (Test-Path $esExe)) {
+    Write-Host "Downloading latest ES ($Platform) from github.com/voidtools/ES..." -ForegroundColor Cyan
+    New-Item -ItemType Directory -Force -Path $esCache | Out-Null
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/voidtools/ES/releases/latest" `
+        -Headers @{ "User-Agent" = "EverythingPal-build" } -TimeoutSec 120
+    $suffix = if ($Platform -eq "ARM64") { "ARM64.zip" } else { "x64.zip" }
+    $asset = $release.assets | Where-Object { $_.name -like "*.$suffix" } | Select-Object -First 1
+    if (-not $asset) { throw "No ES asset '*.$suffix' in release $($release.tag_name)" }
+
+    $zip = Join-Path $esCache "es.zip"
+    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -TimeoutSec 300
+    $extract = Join-Path $esCache "extract"
+    if (Test-Path $extract) { Remove-Item $extract -Recurse -Force }
+    Expand-Archive -Path $zip -DestinationPath $extract -Force
+    $found = Get-ChildItem $extract -Recurse -Filter "es.exe" | Select-Object -First 1
+    if (-not $found) { throw "es.exe not found in $($asset.name)" }
+    Copy-Item $found.FullName $esExe -Force
+    Write-Host "Bundled ES $($release.tag_name)" -ForegroundColor DarkGray
+}
+
+$toolsDir = Join-Path $layout "Tools"
+New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
+Copy-Item $esExe (Join-Path $toolsDir "es.exe") -Force
+Copy-Item (Join-Path $root "THIRD-PARTY-NOTICES.md") (Join-Path $layout "THIRD-PARTY-NOTICES.md") -Force
+
+# ---------------------------------------------------------------------------
 # Packaging tools (makeappx/signtool). Prefer the installed Windows SDK; the tools shipped in the
 # SDK.BuildTools NuGet package can sign PE files but not MSIX (no AppX SIP), so they are a fallback.
 # ---------------------------------------------------------------------------
