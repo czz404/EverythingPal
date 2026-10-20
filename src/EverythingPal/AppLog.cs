@@ -29,7 +29,6 @@ internal static class AppLog
     public static void Write(string message)
     {
         var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [pid {Environment.ProcessId}] {message}{Environment.NewLine}";
-        var errors = new StringBuilder();
 
         foreach (var path in LogPaths)
         {
@@ -41,9 +40,9 @@ internal static class AppLog
                     File.AppendAllText(path, line, Encoding.UTF8);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                errors.Append($"{path}: {ex.Message}; ");
+                // Logging must never take the extension down.
             }
         }
     }

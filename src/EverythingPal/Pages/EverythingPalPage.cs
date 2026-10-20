@@ -12,11 +12,9 @@ namespace EverythingPal;
 /// <summary>
 /// Main search page: type a query, get live results from Everything via the bundled es.exe.
 /// </summary>
-internal sealed partial class EverythingPalPage : DynamicListPage
+internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
 {
     private const int DebounceMilliseconds = 150;
-
-    private readonly EverythingSearch _search = new();
     private IListItem[] _items = [];
     private string _query = string.Empty;
     private CancellationTokenSource? _cts;
@@ -30,6 +28,12 @@ internal sealed partial class EverythingPalPage : DynamicListPage
     }
 
     public override IListItem[] GetItems() => _items;
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
 
     public override void UpdateSearchText(string oldSearch, string newSearch)
     {
@@ -57,7 +61,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = _search.Search(_query, EverythingPalSettings.Instance.ToSearchOptions());
+                    var outcome = EverythingSearch.Search(_query, EverythingPalSettings.Instance.ToSearchOptions());
                     token.ThrowIfCancellationRequested();
 
                     _items = BuildItems(outcome);
@@ -166,7 +170,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage
         return unit == 0 ? $"{bytes} B" : $"{value:0.##} {units[unit]}";
     }
 
-    private static IListItem StatusItem(string title, string subtitle, ICommand command, params IContextItem[] moreCommands) =>
+    private static ListItem StatusItem(string title, string subtitle, ICommand command, params IContextItem[] moreCommands) =>
         new ListItem(command)
         {
             Title = title,
@@ -175,5 +179,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage
             MoreCommands = moreCommands,
         };
 }
+
+
 
 

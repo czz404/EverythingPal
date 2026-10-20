@@ -92,7 +92,7 @@ public sealed class EverythingSearch
     /// Runs one ES query. Never throws: failures are returned as <see cref="SearchStatus"/>.
     /// Intended to be called off the UI thread.
     /// </summary>
-    public SearchOutcome Search(string query, SearchOptions? options = null)
+    public static SearchOutcome Search(string query, SearchOptions? options = null)
     {
         options ??= new SearchOptions();
 
@@ -172,4 +172,5 @@ public sealed class EverythingSearch
         }
     }
 }
+
 

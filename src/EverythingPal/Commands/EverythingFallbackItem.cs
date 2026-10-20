@@ -19,8 +19,6 @@ namespace EverythingPal;
 internal sealed partial class EverythingFallbackGroup : IDisposable
 {
     private const int DebounceMilliseconds = 150;
-
-    private readonly EverythingSearch _search = new();
     private readonly EverythingFallbackItem[] _items;
     private CancellationTokenSource? _cts;
     private string _query = string.Empty;
@@ -56,7 +54,7 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = _search.Search(_query, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length));
+                    var outcome = EverythingSearch.Search(_query, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length));
                     token.ThrowIfCancellationRequested();
                     Distribute(outcome);
                 }
@@ -173,4 +171,5 @@ internal static class Icons
     internal static readonly IconInfo Folder = new("\uE8B7");
     internal static readonly IconInfo File = new("\uE8A5");
 }
+
 
