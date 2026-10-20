@@ -94,8 +94,10 @@ jobs:
 
             $manifest = Join-Path $layout "AppxManifest.xml"
             Copy-Item "src/EverythingPal/Package.appxmanifest" $manifest -Force
+            # MSIX expects the lowercase architecture token (x64 / arm64), while the MSBuild platform is ARM64.
+            $archToken = if ($platform -eq "ARM64") { "arm64" } else { $platform }
             $text = Get-Content $manifest -Raw
-            $text = $text -replace '(<Identity\s+)', ('$1ProcessorArchitecture="' + $platform + '" ')
+            $text = $text -replace '(<Identity\s+)', ('$1ProcessorArchitecture="' + $archToken + '" ')
             $text = $text -replace '(<Identity[^>]*Version=")\d+\.\d+\.\d+\.\d+(")', ('${1}' + $version + '${2}')
             Set-Content $manifest -Value $text -Encoding UTF8
 

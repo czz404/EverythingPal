@@ -46,7 +46,8 @@ Copy-Item (Join-Path $root 'src\EverythingPal\Package.appxmanifest') $manifest -
 # A signed package manifest must carry the concrete architecture.
 $manifestText = Get-Content $manifest -Raw
 if ($manifestText -notmatch 'ProcessorArchitecture=') {
-    $manifestText = $manifestText -replace '(<Identity\s+)', "`$1ProcessorArchitecture=`"$Platform`" "
+    $archToken = if ($Platform -eq "ARM64") { "arm64" } else { $Platform }
+    $manifestText = $manifestText -replace '(<Identity\s+)', "`$1ProcessorArchitecture=`"$archToken`" "
     Set-Content -Path $manifest -Value $manifestText -Encoding UTF8
 }
 
@@ -170,3 +171,4 @@ if ($RestartCmdPal) {
 }
 
 Write-Host "Next: in Command Palette run 'Reload' -> 'Reload Command Palette extensions'." -ForegroundColor Yellow
+
