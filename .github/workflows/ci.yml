@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  test-core:
+    name: Unit tests (.NET 10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tests/EverythingPal.Core.Tests/EverythingPal.Core.Tests.csproj
+
+      - name: Test
+        run: >
+          dotnet test tests/EverythingPal.Core.Tests/EverythingPal.Core.Tests.csproj
+          --configuration Release --no-restore
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: ignore
+
+  build-extension:
+    name: Build extension (Windows x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore src/EverythingPal/EverythingPal.csproj -p:Platform=x64 -p:RuntimeIdentifier=win-x64
+
+      - name: Build (Debug)
+        run: >
+          dotnet build src/EverythingPal/EverythingPal.csproj
+          --configuration Release --no-restore
+          -p:Platform=x64 -p:RuntimeIdentifier=win-x64 -p:WindowsPackageType=None
+
+      - name: Stage MSIX layout
+        shell: pwsh
+        run: |
+          $layout = "artifacts/layout"
+          $bin = Get-ChildItem "src/EverythingPal/bin/x64/Release" -Recurse -Directory -Filter "*win-x64*" |
+                 Select-Object -First 1 -ExpandProperty FullName
+          if (-not $bin) { throw "build output not found" }
+          New-Item -ItemType Directory -Force -Path $layout | Out-Null
+          Copy-Item (Join-Path $bin "*") $layout -Recurse -Force
+          $manifest = Join-Path $layout "AppxManifest.xml"
+          Copy-Item "src/EverythingPal/Package.appxmanifest" $manifest -Force
+          $text = Get-Content $manifest -Raw
+          $text = $text -replace '(<Identity\s+)', '$1ProcessorArchitecture="x64" '
+          Set-Content $manifest -Value $text -Encoding UTF8
+
+      - name: Pack unsigned MSIX
+        shell: pwsh
+        run: |
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter makeappx.exe |
+                      Where-Object { $_.FullName -match '\\x64\\' } |
+                      Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $makeappx) { throw "makeappx.exe not found" }
+          & $makeappx.FullName pack /d artifacts/layout /p artifacts/EverythingPal-unsigned.msix /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
+
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EverythingPal-unsigned-msix
+          path: artifacts/EverythingPal-unsigned.msix
+          if-no-files-found: error

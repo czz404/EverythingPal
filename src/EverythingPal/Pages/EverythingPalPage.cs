@@ -4,6 +4,7 @@
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 using EverythingPal.Commands;
+using EverythingPal.Core;
 using EverythingPal.Services;
 
 namespace EverythingPal;
@@ -60,7 +61,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = _search.Search(_query);
+                    var outcome = _search.Search(_query, EverythingPalSettings.Instance.ToSearchOptions());
                     token.ThrowIfCancellationRequested();
 
                     _items = BuildItems(outcome);
@@ -136,5 +137,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage
             Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png"),
         };
 }
+
+
 
 

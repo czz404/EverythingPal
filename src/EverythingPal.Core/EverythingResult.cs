@@ -1,10 +1,10 @@
 // EverythingPal - Everything search for PowerToys Command Palette.
 // SPDX-License-Identifier: MIT
 
-namespace EverythingPal.Services;
+namespace EverythingPal.Core;
 
 /// <summary>A single result returned by Everything's ES CLI.</summary>
-internal sealed class EverythingResult
+public sealed class EverythingResult
 {
     public required string FullPath { get; init; }
 
@@ -23,23 +23,4 @@ internal sealed class EverythingResult
 
     /// <summary>Parent directory, used as the subtitle.</summary>
     public string Directory => Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(FullPath)) ?? string.Empty;
-}
-
-internal enum SearchStatus
-{
-    Ok,
-    NoResults,
-    EverythingNotRunning,
-    EsExeNotFound,
-    QueryFailed,
-    Timeout,
-}
-
-internal sealed class SearchOutcome
-{
-    public required SearchStatus Status { get; init; }
-
-    public IReadOnlyList<EverythingResult> Results { get; init; } = [];
-
-    public string? Error { get; init; }
 }

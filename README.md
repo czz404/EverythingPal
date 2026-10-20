@@ -92,10 +92,11 @@ scripts/deploy.ps1                  build -> layout -> makeappx -> signtool -> A
 - [x] `es.exe` live search, open/reveal/copy actions
 - [x] home-search fallback
 - [x] settings page
-- [ ] unit tests for query normalization / ranking / root paths
-- [ ] CI (windows-latest build + MSIX artifact)
+- [x] unit tests for query normalization / ranking / root paths (`tests/EverythingPal.Core.Tests`, 25 tests)
+- [x] CI: `.github/workflows/ci.yml` (ubuntu unit tests + windows x64 build & unsigned MSIX artifact)
 - [ ] release packaging / optional Store or winget distribution
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+

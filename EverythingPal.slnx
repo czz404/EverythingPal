@@ -1,2 +1,8 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/EverythingPal.Core/EverythingPal.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EverythingPal.Core.Tests/EverythingPal.Core.Tests.csproj" />
+  </Folder>
 </Solution>

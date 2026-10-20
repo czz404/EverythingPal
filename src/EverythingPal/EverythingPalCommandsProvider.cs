@@ -3,6 +3,7 @@
 
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
+using EverythingPal.Core;
 using EverythingPal.Services;
 
 namespace EverythingPal;
@@ -35,3 +36,4 @@ public partial class EverythingPalCommandsProvider : CommandProvider
 
     public override IFallbackCommandItem[] FallbackCommands() => _fallbacks;
 }
+

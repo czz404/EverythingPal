@@ -4,6 +4,7 @@
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 using EverythingPal.Commands;
+using EverythingPal.Core;
 using EverythingPal.Services;
 
 namespace EverythingPal;
@@ -64,7 +65,7 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = _search.Search(_query, MaxResults);
+                    var outcome = _search.Search(_query, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: MaxResults));
                     token.ThrowIfCancellationRequested();
                     Apply(outcome);
                 }
@@ -139,5 +140,7 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
         GC.SuppressFinalize(this);
     }
 }
+
+
 
 

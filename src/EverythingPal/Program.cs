@@ -4,6 +4,7 @@
 using Microsoft.CommandPalette.Extensions;
 using Shmuelie.WinRTServer;
 using Shmuelie.WinRTServer.CsWinRT;
+using EverythingPal.Core;
 using EverythingPal.Services;
 
 namespace EverythingPal;
@@ -66,5 +67,6 @@ public class Program
         }
     }
 }
+
 
 

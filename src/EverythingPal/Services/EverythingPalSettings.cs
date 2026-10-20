@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Globalization;
+using EverythingPal.Core;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 
 namespace EverythingPal.Services;
@@ -66,4 +67,12 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
     internal int MaxResults => int.TryParse(_maxResults.Value, out var value) ? Math.Clamp(value, 1, 500) : DefaultMaxResults;
 
     internal string Sort => string.IsNullOrWhiteSpace(_sort.Value) ? "name-ascending" : _sort.Value;
+
+    internal SearchOptions ToSearchOptions(int? maxResultsOverride = null) => new()
+    {
+        EsExePath = string.IsNullOrWhiteSpace(EsExePath) ? null : EsExePath,
+        MaxResults = Math.Clamp(maxResultsOverride ?? MaxResults, 1, 500),
+        Sort = Sort,
+    };
 }
+
