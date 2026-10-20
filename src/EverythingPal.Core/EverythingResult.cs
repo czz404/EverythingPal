@@ -16,10 +16,24 @@ public sealed class EverythingResult
 
     public uint Attributes { get; init; }
 
-    /// <summary>File or folder name without the parent path.</summary>
-    public string Name => IsFolder
-        ? Path.GetFileName(Path.TrimEndingDirectorySeparator(FullPath))
-        : Path.GetFileName(FullPath);
+    /// <summary>
+    /// File or folder name without the parent path.
+    ///
+    /// Drive roots are special: <see cref="Path.GetFileName(string)"/> returns an empty string for
+    /// <c>D:\</c> / <c>D:</c> (a root has no file name), which used to leave the list item title
+    /// blank. Roots fall back to the volume name, e.g. <c>D:</c>.
+    /// </summary>
+    public string Name
+    {
+        get
+        {
+            var path = IsFolder ? Path.TrimEndingDirectorySeparator(FullPath) : FullPath;
+            var name = Path.GetFileName(path);
+            return name.Length > 0
+                ? name
+                : path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+    }
 
     /// <summary>Parent directory, used as the subtitle.</summary>
     public string Directory => Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(FullPath)) ?? string.Empty;

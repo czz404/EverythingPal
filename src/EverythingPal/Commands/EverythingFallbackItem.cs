@@ -3,6 +3,7 @@
 
 using EverythingPal.Commands;
 using EverythingPal.Core;
+using EverythingPal.Localization;
 using EverythingPal.Services;
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
@@ -12,13 +13,20 @@ namespace EverythingPal;
 /// <summary>
 /// Coordinates the home-search fallback rows.
 ///
-/// CmdPal's fallback model is one row per fallback command, so we register several
-/// <see cref="EverythingFallbackItem"/>s and distribute the top N results across them. This gives
-/// inline multi-result search on the home screen while staying within the SDK contract.
+/// CmdPal's fallback model is one row per fallback command, so we register one
+/// <see cref="EverythingFallbackItem"/> per row and distribute the top N results across them.
+/// That also means the CmdPal "回退命令" settings list shows N entries; each item therefore has a
+/// distinct <see cref="FallbackCommandItem.DisplayTitle"/> ("第 1/2/3 行") while the persisted IDs
+/// stay stable, so existing fallback settings keep working. The group only runs one search per
+/// query: every row receives the same UpdateQuery call, and repeated identical queries are ignored.
 /// </summary>
 internal sealed partial class EverythingFallbackGroup : IDisposable
 {
-    private const int DebounceMilliseconds = 150;
+    // CmdPal detaches/ignores inline fallback updates that do not arrive within its ~200 ms budget.
+    // The home path is therefore kept short: 50 ms debounce (still coalesces keystrokes) + one
+    // es.exe call (~40 ms warm) puts Title assignment comfortably under 200 ms. The main search page
+    // keeps its own, longer, 150 ms debounce.
+    private const int DebounceMilliseconds = 50;
     private readonly EverythingFallbackItem[] _items;
     private CancellationTokenSource? _cts;
     private string _query = string.Empty;
@@ -33,18 +41,31 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
 
     internal void OnUpdateQuery(string? query)
     {
-        _query = QueryNormalizer.Normalize(query);
+        var normalized = QueryNormalizer.Normalize(query);
+
+        // CmdPal calls UpdateQuery once per fallback row for the same keystroke. The first call has
+        // already started the debounced search (or cleared the rows), so the remaining rows must not
+        // restart it; and a re-sent unchanged query keeps the current results.
+        if (string.Equals(normalized, _query, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _query = normalized;
+        var searchQuery = _query;
 
         _cts?.Cancel();
         _cts?.Dispose();
-        _cts = new CancellationTokenSource();
-        var token = _cts.Token;
+        _cts = null;
 
-        if (_query.Length == 0)
+        if (searchQuery.Length == 0)
         {
             ClearAll();
             return;
         }
+
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
 
         _ = Task.Run(
             async () =>
@@ -54,9 +75,9 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = EverythingSearch.Search(_query, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length));
+                    var outcome = EverythingSearch.Search(searchQuery, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length));
                     token.ThrowIfCancellationRequested();
-                    Distribute(outcome);
+                    await DistributeAsync(outcome, searchQuery, token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -70,22 +91,48 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
             token);
     }
 
-    private void Distribute(SearchOutcome outcome)
+    private async Task DistributeAsync(SearchOutcome outcome, string query, CancellationToken token)
     {
         AppLog.Write($"fallback result: {outcome.Status}, {outcome.Results.Count} item(s)");
 
+        // Do not touch the rows on behalf of a query that was already superseded.
+        token.ThrowIfCancellationRequested();
         ClearAll();
 
-        if (outcome.Status != SearchStatus.Ok)
+        // A successful search with zero hits (or Core's NoResults) keeps one informative row instead
+        // of blank rows: the query stays the title so CmdPal's live re-scoring keeps it, with the
+        // localized "no results" status in the subtitle. (Older Core versions return Ok/0.)
+        var status = outcome.Status == SearchStatus.Ok && outcome.Results.Count == 0
+            ? SearchStatus.NoResults
+            : outcome.Status;
+
+        if (status == SearchStatus.NoResults)
         {
-            _items[0].ShowStatus(outcome.Status, outcome.Error);
+            token.ThrowIfCancellationRequested();
+            _items[0].ShowNoResults(query);
             return;
         }
 
-        for (var i = 0; i < _items.Length && i < outcome.Results.Count; i++)
+        if (status != SearchStatus.Ok)
         {
-            _items[i].ShowResult(outcome.Results[i], outcome.Results.Count);
+            token.ThrowIfCancellationRequested();
+            _items[0].ShowStatus(status, outcome.Error, query);
+            return;
         }
+
+        var visible = Math.Min(_items.Length, outcome.Results.Count);
+        var tasks = new Task[visible];
+        for (var i = 0; i < visible; i++)
+        {
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            tasks[i] = _items[i].ShowResultAsync(outcome.Results[i], outcome.Results.Count, token);
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
     private void ClearAll()
@@ -100,50 +147,71 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
     {
         _cts?.Cancel();
         _cts?.Dispose();
+        _cts = null;
         GC.SuppressFinalize(this);
     }
 }
 
 /// <summary>One home-search row, showing the N-th Everything result.</summary>
 internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup group, int index)
-    : FallbackCommandItem(new NoOpCommand { Id = "czz404.everythingpal.fallback" }, "Everything 搜索", $"czz404.everythingpal.fallback.{index}")
+    : FallbackCommandItem(
+        new NoOpCommand { Id = "czz404.everythingpal.fallback" },
+        Strings.FormatFallbackRowTitle(index + 1),
+        $"czz404.everythingpal.fallback.{index}")
 {
     private static readonly IconInfo AppIcon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
 
     public override void UpdateQuery(string query) => group.OnUpdateQuery(query);
 
-    internal void ShowResult(EverythingResult result, int totalCount)
+    internal async Task ShowResultAsync(EverythingResult result, int totalCount, CancellationToken token)
     {
-        var extra = totalCount > 1 && index == 0 ? $"（共 {totalCount} 个结果）" : string.Empty;
+        var extra = totalCount > 1 && index == 0 ? Strings.FormatResultCount(totalCount) : string.Empty;
 
+        // Fill the row immediately: CmdPal only keeps inline fallback rows for a short budget, so
+        // the row content must not wait for shell icon extraction. The icon is upgraded below.
         Title = result.Name;
         Subtitle = $"{result.Directory}{extra}";
         Icon = result.IsFolder ? Icons.Folder : Icons.File;
         Command = new OpenItemCommand(result.FullPath, result.IsFolder);
         MoreCommands =
         [
-            new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = "在资源管理器中显示" },
-            new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = "复制路径" },
-            new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = "在 Everything 中定位" },
+            new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = Strings.RevealInExplorerAction },
+            new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = Strings.CopyPathAction },
+            new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = Strings.LocateInEverythingAction },
         ];
+
+        var icon = await ShellIconProvider.GetIconAsync(result.FullPath, result.IsFolder).ConfigureAwait(false);
+        if (token.IsCancellationRequested)
+        {
+            // A newer query owns the row; never overwrite its icon from this stale result.
+            return;
+        }
+
+        Icon = icon ?? (result.IsFolder ? Icons.Folder : Icons.File);
     }
 
-    internal void ShowStatus(SearchStatus status, string? error)
+    internal void ShowStatus(SearchStatus status, string? error, string query)
     {
-        Title = status switch
+        var statusTitle = status switch
         {
-            SearchStatus.EverythingNotRunning => "Everything 没有运行",
-            SearchStatus.EsExeNotFound => "找不到 es.exe",
-            SearchStatus.Timeout => "Everything 查询超时",
-            _ => "Everything 查询失败",
+            SearchStatus.EverythingNotRunning => Strings.EverythingNotRunningTitle,
+            SearchStatus.EsExeNotFound => Strings.EsExeNotFoundTitle,
+            SearchStatus.Timeout => Strings.FallbackTimeoutTitle,
+            _ => Strings.FallbackQueryFailedTitle,
         };
 
-        Subtitle = status switch
+        var detail = status switch
         {
-            SearchStatus.EverythingNotRunning => "请启动 Everything（或安装它），然后重新输入",
-            SearchStatus.EsExeNotFound => "插件自带的 es.exe 缺失，请重新安装插件",
-            _ => error ?? "请稍后重试",
+            SearchStatus.EverythingNotRunning => Strings.FallbackEverythingNotRunningSubtitle,
+            SearchStatus.EsExeNotFound => Strings.FallbackEsExeNotFoundSubtitle,
+            _ => error ?? Strings.FallbackRetryHint,
         };
+
+        // CmdPal re-scores global fallback rows against the typed query, so a status-only title is
+        // filtered out of the home results. The query therefore becomes the title (the row keeps
+        // matching what the user typed) and the localized status + detail go in the subtitle.
+        Title = query.Length == 0 ? statusTitle : query;
+        Subtitle = query.Length == 0 ? detail : $"{statusTitle} · {detail}";
 
         Icon = AppIcon;
         Command = status == SearchStatus.EverythingNotRunning
@@ -151,25 +219,43 @@ internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup gro
             : new OpenEverythingDownloadPageCommand();
         MoreCommands =
         [
-            new CommandContextItem(new StartEverythingCommand()) { Title = "启动 Everything" },
-            new CommandContextItem(new OpenEverythingDownloadPageCommand()) { Title = "下载 Everything" },
+            new CommandContextItem(new StartEverythingCommand()) { Title = Strings.StartEverythingAction },
+            new CommandContextItem(new OpenEverythingDownloadPageCommand()) { Title = Strings.DownloadEverythingAction },
         ];
+    }
+
+    /// <summary>
+    /// Zero-hit row. There is no action to offer, but leaving the rows fully blank made CmdPal render
+    /// empty rows that still carried the previous result's icon under 回退. Keep the query as the
+    /// title (scoreable against what the user typed) and the localized "no results" status in the
+    /// subtitle; rows 2..N stay fully cleared.
+    /// </summary>
+    internal void ShowNoResults(string query)
+    {
+        var statusTitle = Strings.NoResultsTitle;
+        Title = query.Length == 0 ? statusTitle : query;
+        Subtitle = $"{statusTitle} · {Strings.NoResultsSubtitle}";
+        Icon = AppIcon;
+        Command = new NoOpCommand { Id = "czz404.everythingpal.fallback" };
+        MoreCommands = [];
     }
 
     internal void Clear()
     {
         Title = string.Empty;
         Subtitle = string.Empty;
+
+        // Also drop the previous result's icon, otherwise a cleared fallback row renders as a blank
+        // row with a stale file icon.
+        Icon = null;
         Command = new NoOpCommand { Id = "czz404.everythingpal.fallback" };
         MoreCommands = [];
     }
 }
 
-/// <summary>Icons shared by the list page and the fallback rows.</summary>
+/// <summary>Icons shared by the list page and the fallback rows (fallback glyphs when no shell icon).</summary>
 internal static class Icons
 {
     internal static readonly IconInfo Folder = new("\uE8B7");
     internal static readonly IconInfo File = new("\uE8A5");
 }
-
-

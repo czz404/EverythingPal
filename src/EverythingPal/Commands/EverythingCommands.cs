@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 using System.Diagnostics;
+using EverythingPal.Localization;
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 
@@ -10,7 +11,7 @@ namespace EverythingPal.Commands;
 /// <summary>Starts the Everything GUI if it is installed but not running.</summary>
 internal sealed partial class StartEverythingCommand : InvokableCommand
 {
-    public override string Name => "启动 Everything";
+    public override string Name => Strings.StartEverythingAction;
 
     public override IconInfo Icon => new("\uE768");
 
@@ -19,18 +20,18 @@ internal sealed partial class StartEverythingCommand : InvokableCommand
         var exe = EverythingLocator.Find();
         if (exe is null)
         {
-            return CommandResult.ShowToast("没有找到 Everything，请先安装：https://www.voidtools.com/downloads/");
+            return CommandResult.ShowToast(Strings.EverythingNotInstalledToast);
         }
 
         try
         {
             Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
-            return CommandResult.ShowToast("正在启动 Everything，稍后再试一次");
+            return CommandResult.ShowToast(Strings.StartEverythingToast);
         }
         catch (Exception ex)
         {
             AppLog.Write($"StartEverythingCommand failed: {ex.Message}");
-            return CommandResult.ShowToast("启动 Everything 失败");
+            return CommandResult.ShowToast(Strings.StartEverythingFailedToast);
         }
     }
 }
@@ -38,7 +39,7 @@ internal sealed partial class StartEverythingCommand : InvokableCommand
 /// <summary>Opens the Everything download page.</summary>
 internal sealed partial class OpenEverythingDownloadPageCommand : InvokableCommand
 {
-    public override string Name => "下载 Everything";
+    public override string Name => Strings.DownloadEverythingAction;
 
     public override IconInfo Icon => new("\uE896");
 

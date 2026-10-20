@@ -15,15 +15,23 @@ namespace EverythingPal.Core;
 public sealed class EverythingSearch
 {
     private const string EsDefaultRelativePath = @"Microsoft\WindowsApps\es.exe";
+    private const string EsExeFileName = "es.exe";
 
     private static readonly string[] EsCandidates =
     [
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), EsDefaultRelativePath),
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything", "es.exe"),
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything 1.5a", "es.exe"),
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Everything", "es.exe"),
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Everything 1.5a", "es.exe"),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything", EsExeFileName),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything 1.5a", EsExeFileName),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Everything", EsExeFileName),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Everything 1.5a", EsExeFileName),
     ];
+
+    /// <summary>
+    /// Last successful es.exe lookup. PATH may contain dozens of directories and is otherwise
+    /// re-scanned for every debounced keystroke; the cache is keyed by the configured path and only
+    /// stores hits (a missing es.exe is retried on the next query).
+    /// </summary>
+    private static readonly EsExePathCache Cache = new();
 
     /// <summary>
     /// Locates es.exe, in this order:
@@ -32,13 +40,34 @@ public sealed class EverythingSearch
     ///   3. well-known Everything install locations;
     ///   4. PATH.
     /// The bundled copy is what makes the extension work without users installing ES separately.
+    /// Successful lookups are cached until the configured path changes (or the file disappears).
     /// </summary>
     public static string? FindEsExe(string? configured = null, string? baseDirectory = null)
     {
-        configured = string.IsNullOrWhiteSpace(configured)
+        var effectiveConfigured = string.IsNullOrWhiteSpace(configured)
             ? Environment.GetEnvironmentVariable("EVERYTHINGPAL_ES")
             : configured;
 
+        // baseDirectory is a test seam, so it is part of the key to keep temporary layouts apart.
+        var cacheKey = $"{effectiveConfigured}\u0000{baseDirectory}";
+
+        var cached = Cache.Get(cacheKey);
+        if (cached is not null && File.Exists(cached))
+        {
+            return cached;
+        }
+
+        var found = FindEsExeUncached(effectiveConfigured, baseDirectory);
+        if (found is not null)
+        {
+            Cache.Set(cacheKey, found);
+        }
+
+        return found;
+    }
+
+    private static string? FindEsExeUncached(string? configured, string? baseDirectory)
+    {
         if (!string.IsNullOrWhiteSpace(configured))
         {
             if (File.Exists(configured))
@@ -47,14 +76,14 @@ public sealed class EverythingSearch
             }
 
             // Allow pointing at the containing directory as well.
-            var inDirectory = Path.Combine(configured, "es.exe");
+            var inDirectory = Path.Combine(configured, EsExeFileName);
             if (File.Exists(inDirectory))
             {
                 return inDirectory;
             }
         }
 
-        var bundled = Path.Combine(baseDirectory ?? AppContext.BaseDirectory, "Tools", "es.exe");
+        var bundled = Path.Combine(baseDirectory ?? AppContext.BaseDirectory, "Tools", EsExeFileName);
         if (File.Exists(bundled))
         {
             return bundled;
@@ -73,7 +102,7 @@ public sealed class EverythingSearch
         {
             try
             {
-                var candidate = Path.Combine(directory.Trim('"'), "es.exe");
+                var candidate = Path.Combine(directory.Trim('"'), EsExeFileName);
                 if (File.Exists(candidate))
                 {
                     return candidate;
@@ -146,21 +175,11 @@ public sealed class EverythingSearch
             var stderr = process.StandardError.ReadToEnd();
             var exitCode = process.ExitCode;
 
-            return exitCode switch
-            {
-                0 => new SearchOutcome { Status = SearchStatus.Ok, Results = EsResultParser.ParseFile(tempFile, normalized) },
-                9 => new SearchOutcome { Status = SearchStatus.NoResults },
-                8 => new SearchOutcome
-                {
-                    Status = SearchStatus.EverythingNotRunning,
-                    Error = "Everything is not running (ES IPC not found).",
-                },
-                _ => new SearchOutcome
-                {
-                    Status = SearchStatus.QueryFailed,
-                    Error = $"es.exe exited with {exitCode}: {stderr.Trim()}",
-                },
-            };
+            // Only parse the export for exit 0; other codes produce no usable JSON. Exit 0 with zero
+            // parsed items means "no matches" because of -no-result-error (see SearchOutcomeMapper).
+            var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, normalized) : null;
+
+            return SearchOutcomeMapper.FromExitCode(exitCode, stderr, parsed);
         }
         catch (Exception ex)
         {
@@ -172,5 +191,3 @@ public sealed class EverythingSearch
         }
     }
 }
-
-

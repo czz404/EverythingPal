@@ -3,6 +3,7 @@
 
 using System.Globalization;
 using EverythingPal.Core;
+using EverythingPal.Localization;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 
 namespace EverythingPal.Services;
@@ -18,35 +19,35 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
 
     private static readonly List<ChoiceSetSetting.Choice> SortChoices =
     [
-        new("名称升序（默认）", "name-ascending"),
-        new("修改时间倒序", "date-modified-descending"),
-        new("修改时间升序", "date-modified-ascending"),
-        new("路径", "path"),
-        new("运行次数倒序", "run-count-descending"),
+        new(Strings.SettingsSortNameAscending, "name-ascending"),
+        new(Strings.SettingsSortDateModifiedDescending, "date-modified-descending"),
+        new(Strings.SettingsSortDateModifiedAscending, "date-modified-ascending"),
+        new(Strings.SettingsSortPath, "path"),
+        new(Strings.SettingsSortRunCountDescending, "run-count-descending"),
     ];
 
     private readonly TextSetting _esExePath = new(
         Namespaced(nameof(EsExePath)),
-        "es.exe 路径",
-        "留空则自动探测：%LOCALAPPDATA%\\Microsoft\\WindowsApps、Everything 安装目录、PATH",
+        Strings.SettingsEsExePathLabel,
+        Strings.SettingsEsExePathDescription,
         string.Empty);
 
     private readonly TextSetting _maxResults = new(
         Namespaced(nameof(MaxResults)),
-        "结果条数上限",
-        "1–500，默认 50。传给 es.exe 的 -n 参数。",
+        Strings.SettingsMaxResultsLabel,
+        Strings.SettingsMaxResultsDescription,
         DefaultMaxResults.ToString(CultureInfo.InvariantCulture));
 
     private readonly TextSetting _fallbackRows = new(
         Namespaced(nameof(FallbackRows)),
-        "主页搜索内联结果行数",
-        "0–5，默认 3。0 表示关闭主页 fallback；CmdPal 需要开启该 fallback 的 IncludeInGlobalResults。",
+        Strings.SettingsFallbackRowsLabel,
+        Strings.SettingsFallbackRowsDescription,
         "3");
 
     private readonly ChoiceSetSetting _sort = new(
         Namespaced(nameof(Sort)),
-        "排序方式",
-        "传给 es.exe 的 -sort 参数；插件会在返回后再按相关性微调顺序。",
+        Strings.SettingsSortLabel,
+        Strings.SettingsSortDescription,
         SortChoices);
 
     internal static readonly EverythingPalSettings Instance = new();

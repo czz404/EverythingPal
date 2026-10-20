@@ -3,6 +3,7 @@
 
 using EverythingPal.Commands;
 using EverythingPal.Core;
+using EverythingPal.Localization;
 using EverythingPal.Services;
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
@@ -22,9 +23,9 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
     public EverythingPalPage()
     {
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
-        Title = "Everything 搜索";
-        Name = "搜索";
-        PlaceholderText = "输入文件名或路径片段（Everything 语法可用）";
+        Title = Strings.PageTitle;
+        Name = Strings.PageName;
+        PlaceholderText = Strings.PagePlaceholderText;
     }
 
     public override IListItem[] GetItems() => _items;
@@ -64,18 +65,30 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
                     var outcome = EverythingSearch.Search(_query, EverythingPalSettings.Instance.ToSearchOptions());
                     token.ThrowIfCancellationRequested();
 
-                    _items = BuildItems(outcome);
+                    var items = await BuildItemsAsync(outcome, token).ConfigureAwait(false);
+
+                    // A newer keystroke may have started while icons were resolving: never overwrite
+                    // the newer query's results / loading state from this stale task.
+                    token.ThrowIfCancellationRequested();
+
+                    _items = items;
                     IsLoading = false;
                     RaiseItemsChanged(_items.Length);
                 }
                 catch (OperationCanceledException)
                 {
-                    // A newer keystroke superseded this query.
+                    // A newer keystroke superseded this query; it owns the UI state.
                 }
                 catch (Exception ex)
                 {
+                    if (token.IsCancellationRequested)
+                    {
+                        // Stale failure: the newer query owns the UI state.
+                        return;
+                    }
+
                     AppLog.Write($"EverythingPalPage search failed: {ex}");
-                    _items = [StatusItem("搜索失败", ex.Message, new NoOpCommand())];
+                    _items = [StatusItem(Strings.SearchFailedTitle, ex.Message, new NoOpCommand())];
                     IsLoading = false;
                     RaiseItemsChanged(_items.Length);
                 }
@@ -83,52 +96,62 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
             token);
     }
 
-    private static IListItem[] BuildItems(SearchOutcome outcome)
+    private static async Task<IListItem[]> BuildItemsAsync(SearchOutcome outcome, CancellationToken token)
     {
+        token.ThrowIfCancellationRequested();
+
         switch (outcome.Status)
         {
             case SearchStatus.Ok:
-                return [.. outcome.Results.Select(BuildItem)];
+                // Icon extraction is off the UI thread (this method runs inside Task.Run) and cached
+                // per file type; resolving the page in parallel keeps the cold path at a few ms.
+                return await Task.WhenAll(outcome.Results.Select(result => BuildItemAsync(result, token))).ConfigureAwait(false);
             case SearchStatus.NoResults:
-                return [StatusItem("没有匹配结果", "换个关键词，或检查 Everything 的索引设置。", new NoOpCommand())];
+                return [StatusItem(Strings.NoResultsTitle, Strings.NoResultsSubtitle, new NoOpCommand())];
             case SearchStatus.EverythingNotRunning:
                 return
                 [
                     StatusItem(
-                        "Everything 没有运行",
-                        "请启动 Everything（或安装它），然后重新输入。",
+                        Strings.EverythingNotRunningTitle,
+                        Strings.EverythingNotRunningSubtitle,
                         new StartEverythingCommand(),
-                        new CommandContextItem(new StartEverythingCommand()) { Title = "启动 Everything" },
-                        new CommandContextItem(new OpenEverythingDownloadPageCommand()) { Title = "下载 Everything" }),
+                        new CommandContextItem(new StartEverythingCommand()) { Title = Strings.StartEverythingAction },
+                        new CommandContextItem(new OpenEverythingDownloadPageCommand()) { Title = Strings.DownloadEverythingAction }),
                 ];
             case SearchStatus.EsExeNotFound:
                 return
                 [
                     StatusItem(
-                        "找不到 es.exe",
-                        "插件自带的 es.exe 缺失，请重新安装插件，或在设置里指定 es.exe 路径。",
+                        Strings.EsExeNotFoundTitle,
+                        Strings.EsExeNotFoundSubtitle,
                         new OpenEverythingDownloadPageCommand()),
                 ];
             case SearchStatus.Timeout:
-                return [StatusItem("查询超时", "Everything 可能正忙或索引未加载完成，请稍后重试。", new NoOpCommand())];
+                return [StatusItem(Strings.TimeoutTitle, Strings.TimeoutSubtitle, new NoOpCommand())];
             default:
-                return [StatusItem("查询失败", outcome.Error ?? "未知错误", new NoOpCommand())];
+                return [StatusItem(Strings.QueryFailedTitle, outcome.Error ?? Strings.UnknownError, new NoOpCommand())];
         }
     }
 
-    private static IListItem BuildItem(EverythingResult result)
+    private static async Task<IListItem> BuildItemAsync(EverythingResult result, CancellationToken token)
     {
+        var icon = await ShellIconProvider.GetIconAsync(result.FullPath, result.IsFolder).ConfigureAwait(false);
+
+        // The query may have been superseded while the icon was resolving; abort before building
+        // (and handing back) a stale list.
+        token.ThrowIfCancellationRequested();
+
         return new ListItem(new OpenItemCommand(result.FullPath, result.IsFolder))
         {
             Title = result.Name,
             Subtitle = result.Directory,
-            Icon = result.IsFolder ? Icons.Folder : Icons.File,
+            Icon = icon ?? (result.IsFolder ? Icons.Folder : Icons.File),
             Details = BuildDetails(result),
             MoreCommands =
             [
-                new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = "在资源管理器中显示" },
-                new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = "复制路径" },
-                new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = "在 Everything 中定位" },
+                new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = Strings.RevealInExplorerAction },
+                new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = Strings.CopyPathAction },
+                new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = Strings.LocateInEverythingAction },
             ],
         };
     }
@@ -137,20 +160,20 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
     {
         var metadata = new List<IDetailsElement>
         {
-            new DetailsElement { Key = "名称", Data = new DetailsLink { Text = result.Name, Link = new Uri(result.FullPath) } },
-            new DetailsElement { Key = "完整路径", Data = new DetailsLink { Text = result.FullPath, Link = new Uri(result.FullPath) } },
+            new DetailsElement { Key = Strings.DetailsName, Data = new DetailsLink { Text = result.Name, Link = new Uri(result.FullPath) } },
+            new DetailsElement { Key = Strings.DetailsFullPath, Data = new DetailsLink { Text = result.FullPath, Link = new Uri(result.FullPath) } },
             new DetailsElement { Data = new DetailsSeparator() },
-            new DetailsElement { Key = "类型", Data = new DetailsLink { Text = result.IsFolder ? "文件夹" : "文件" } },
+            new DetailsElement { Key = Strings.DetailsType, Data = new DetailsLink { Text = result.IsFolder ? Strings.DetailsFolder : Strings.DetailsFile } },
         };
 
         if (!result.IsFolder)
         {
-            metadata.Add(new DetailsElement { Key = "大小", Data = new DetailsLink { Text = FormatSize(result.Size) } });
+            metadata.Add(new DetailsElement { Key = Strings.DetailsSize, Data = new DetailsLink { Text = FormatSize(result.Size) } });
         }
 
         if (result.DateModified is { } modified)
         {
-            metadata.Add(new DetailsElement { Key = "修改时间", Data = new DetailsLink { Text = modified.LocalDateTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture) } });
+            metadata.Add(new DetailsElement { Key = Strings.DetailsModified, Data = new DetailsLink { Text = modified.LocalDateTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture) } });
         }
 
         return new Details { Metadata = [.. metadata] };

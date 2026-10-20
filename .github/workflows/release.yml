@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to build (e.g. 0.2.0.0); defaults to the tag or 0.0.0.0"
+        description: "Version to build (e.g. 1.0.0.0); defaults to the tag or the manifest version"
         required: false
         default: ""
 
@@ -20,7 +20,7 @@ env:
 
 jobs:
   release:
-    name: Build & publish signed MSIX
+    name: Build unsigned Store bundle (signed sideload build when secrets are set)
     runs-on: windows-latest
     env:
       SIGNING_PFX_BASE64: ${{ secrets.SIGNING_PFX_BASE64 }}
@@ -36,88 +36,33 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $ref = "${{ github.ref_name }}"
           $version = "${{ inputs.version }}"
           if (-not $version) {
+            $ref = "${{ github.ref_name }}"
             $version = $ref -replace '^v', ''
           }
-          if ($version -notmatch '^\d+\.\d+\.\d+\.\d+$') {
-            $version = "$version.0"
-          }
+          # Leave it empty when it does not look like a package version: scripts/pack-store.ps1 then
+          # falls back to Identity/@Version in Package.appxmanifest.
+          if ($version -notmatch '^\d+(\.\d+){1,3}$') { $version = "" }
           "value=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Package version: $version"
 
-      - name: Download latest ES (x64 + ARM64)
+      # One source of truth for packaging: the same script used locally and by CI. It publishes
+      # self-contained (x64 + ARM64), bundles the MIT es.exe, creates an UNSIGNED per-arch .msix +
+      # .msixbundle and validates identity/version/architecture + self-contained payload.
+      - name: Publish, pack, bundle and validate (scripts/pack-store.ps1)
         shell: pwsh
-        run: |
-          $headers = @{ "Authorization" = "Bearer $env:GITHUB_TOKEN"; "User-Agent" = "EverythingPal-release" }
-          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/voidtools/ES/releases/latest" -Headers $headers
-          Write-Host "Latest ES: $($release.tag_name)"
-          foreach ($arch in @("x64", "ARM64")) {
-            $asset = $release.assets | Where-Object { $_.name -like "*.$arch.zip" } | Select-Object -First 1
-            if (-not $asset) { throw "No ES asset for $arch" }
-            $zip = "es-$arch.zip"
-            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -TimeoutSec 300
-            Expand-Archive $zip -DestinationPath "es-$arch" -Force
-            New-Item -ItemType Directory -Force -Path "tools/$arch" | Out-Null
-            $found = Get-ChildItem "es-$arch" -Recurse -Filter es.exe | Select-Object -First 1
-            Copy-Item $found.FullName "tools/$arch/es.exe" -Force
-          }
-          Get-ChildItem tools -Recurse -Filter es.exe | Select-Object FullName, Length
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build, stage and pack (per architecture)
-        shell: pwsh
         run: |
-          $version = "${{ steps.version.outputs.value }}"
-          $artifacts = "artifacts"
-          New-Item -ItemType Directory -Force -Path $artifacts | Out-Null
+          $parameters = @{}
+          if ("${{ steps.version.outputs.value }}") { $parameters["Version"] = "${{ steps.version.outputs.value }}" }
+          ./scripts/pack-store.ps1 @parameters
 
-          foreach ($arch in @(@{ Platform = "x64"; Rid = "win-x64" }, @{ Platform = "ARM64"; Rid = "win-arm64" })) {
-            $platform = $arch.Platform
-            $rid = $arch.Rid
-            Write-Host "=== $platform ==="
-
-            dotnet build src/EverythingPal/EverythingPal.csproj -c Release `
-              -p:Platform=$platform -p:RuntimeIdentifier=$rid -p:WindowsPackageType=None
-            if ($LASTEXITCODE -ne 0) { throw "build failed for $platform" }
-
-            $bin = Get-ChildItem "src/EverythingPal/bin/$platform/Release" -Recurse -Directory -Filter "*$rid*" |
-                   Select-Object -First 1 -ExpandProperty FullName
-            if (-not $bin) { throw "build output not found for $platform" }
-
-            $layout = Join-Path $artifacts "layout-$platform"
-            if (Test-Path $layout) { Remove-Item $layout -Recurse -Force }
-            New-Item -ItemType Directory -Force -Path $layout | Out-Null
-            Copy-Item (Join-Path $bin "*") $layout -Recurse -Force
-
-            $manifest = Join-Path $layout "AppxManifest.xml"
-            Copy-Item "src/EverythingPal/Package.appxmanifest" $manifest -Force
-            # MSIX expects the lowercase architecture token (x64 / arm64), while the MSBuild platform is ARM64.
-            $archToken = if ($platform -eq "ARM64") { "arm64" } else { $platform }
-            $text = Get-Content $manifest -Raw
-            $text = $text -replace '(<Identity\s+)', ('$1ProcessorArchitecture="' + $archToken + '" ')
-            $text = $text -replace '(<Identity[^>]*Version=")\d+\.\d+\.\d+\.\d+(")', ('${1}' + $version + '${2}')
-            Set-Content $manifest -Value $text -Encoding UTF8
-
-            # Bundle the MIT-licensed ES client so users do not have to install it.
-            New-Item -ItemType Directory -Force -Path (Join-Path $layout "Tools") | Out-Null
-            Copy-Item "tools/$platform/es.exe" (Join-Path $layout "Tools/es.exe") -Force
-            Copy-Item "THIRD-PARTY-NOTICES.md" (Join-Path $layout "THIRD-PARTY-NOTICES.md") -Force
-
-            $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter makeappx.exe |
-                        Where-Object { $_.FullName -match '\\x64\\' } |
-                        Sort-Object FullName -Descending | Select-Object -First 1
-            if (-not $makeappx) { throw "makeappx.exe not found" }
-
-            $msix = Join-Path $artifacts "EverythingPal_${version}_${platform}.msix"
-            & $makeappx.FullName pack /d $layout /p $msix /o
-            if ($LASTEXITCODE -ne 0) { throw "makeappx failed for $platform" }
-          }
-
-          Get-ChildItem $artifacts -Filter *.msix | Select-Object Name, Length
-
+      # Optional: sign for GitHub/sideload distribution. NEVER upload a signed package to the Store -
+      # the Store re-signs the unsigned bundle and rejects a mismatched publisher. When no signing
+      # secrets are configured the artifacts stay unsigned (which is what Store submission wants).
+      # SignTool recursively signs the packages inside a bundle, so the bundle goes first.
       - name: Sign packages (optional)
         if: ${{ env.SIGNING_PFX_BASE64 != '' }}
         shell: pwsh
@@ -126,27 +71,45 @@ jobs:
           $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
                       Where-Object { $_.FullName -match '\\x64\\' } |
                       Sort-Object FullName -Descending | Select-Object -First 1
-          foreach ($msix in Get-ChildItem "artifacts" -Filter *.msix) {
-            & $signtool.FullName sign /fd SHA256 /f cert.pfx /p $env:SIGNING_PFX_PASSWORD $msix.FullName
-            if ($LASTEXITCODE -ne 0) { throw "signing failed: $($msix.Name)" }
-            & $signtool.FullName verify /pa $msix.FullName
+          if (-not $signtool) { throw "signtool.exe not found" }
+          try {
+            $bundle = Get-ChildItem "artifacts/store" -Filter *.msixbundle | Select-Object -First 1
+            if (-not $bundle) { throw "no .msixbundle produced" }
+            & $signtool.FullName sign /fd SHA256 /f cert.pfx /p $env:SIGNING_PFX_PASSWORD $bundle.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signing failed: $($bundle.Name)" }
+            & $signtool.FullName verify /pa $bundle.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signature verification failed: $($bundle.Name)" }
+            foreach ($msix in Get-ChildItem "artifacts/store" -Filter *.msix) {
+              & $signtool.FullName sign /fd SHA256 /f cert.pfx /p $env:SIGNING_PFX_PASSWORD $msix.FullName
+              if ($LASTEXITCODE -ne 0) { throw "signing failed: $($msix.Name)" }
+              & $signtool.FullName verify /pa $msix.FullName
+              if ($LASTEXITCODE -ne 0) { throw "signature verification failed: $($msix.Name)" }
+            }
           }
-          Remove-Item cert.pfx -Force
+          finally {
+            Remove-Item cert.pfx -Force -ErrorAction SilentlyContinue
+          }
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
           generate_release_notes: true
-          files: artifacts/*.msix
+          files: |
+            artifacts/store/*.msixbundle
+            artifacts/store/*.msix
           body: |
             Everything Search for PowerToys Command Palette.
 
+            - **Self-contained**: the .NET 10 runtime is bundled, nothing else to install.
             - Bundled `es.exe` (MIT, from https://github.com/voidtools/ES) — no separate ES install needed.
             - Requires Windows 11 x64/ARM64, PowerToys with Command Palette, and **Everything installed and running**.
-            - `es.exe` version is downloaded at build time from the latest official ES release.
+            - The `EverythingPal_<version>_x64_arm64.msixbundle` contains both the x64 and the ARM64 package.
 
-            Unsigned builds are provided when no signing certificate is configured; sign locally with
-            `signtool sign /fd SHA256 /f <cert.pfx> /p <password> <file.msix>` before installing.
+            **Microsoft Store**: upload the **unsigned** `.msixbundle` to Partner Center; the Store
+            re-signs it. Signed assets in this release (when a signing certificate is configured) are
+            for manual sideloading only — sign/trust the certificate first.
 
-
+            Unsigned per-arch `.msix` files can be installed on a machine with Developer Mode enabled,
+            or signed locally with
+            `signtool sign /fd SHA256 /f <cert.pfx> /p <password> <file.msix>`.

@@ -83,6 +83,13 @@ public static class EsResultParser
 
     public static List<EverythingResult> ParseFile(string path, string query)
     {
+        // With -no-result-error ES may exit 0 without creating the export file at all; an absent
+        // file means "no matches", not a failure.
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
         using var stream = File.OpenRead(path);
         return Parse(stream, query);
     }

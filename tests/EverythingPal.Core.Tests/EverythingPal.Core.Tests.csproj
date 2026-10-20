@@ -25,5 +25,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\EverythingPal.Core\EverythingPal.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      i18n parity check: the test project does not reference the WinRT extension, so the resource
+      files (and the typed accessor source) are copied as plain data and validated as XML/text.
+    -->
+    <None Include="..\..\src\EverythingPal\Resources\Strings.resx" Link="Localization\Strings.resx" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\EverythingPal\Resources\Strings.zh-Hans.resx" Link="Localization\Strings.zh-Hans.resx" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\EverythingPal\Localization\Strings.cs" Link="Localization\Strings.cs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
 

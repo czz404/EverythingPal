@@ -6,6 +6,7 @@ using Shmuelie.WinRTServer;
 using Shmuelie.WinRTServer.CsWinRT;
 using EverythingPal.Core;
 using EverythingPal.Services;
+using EverythingPal.Ui;
 
 namespace EverythingPal;
 
@@ -31,6 +32,28 @@ public class Program
             if (outcome.Error is not null)
             {
                 Console.WriteLine($"error: {outcome.Error}");
+            }
+
+            return;
+        }
+
+        // Launched with no arguments (the Start-menu tile does this) or by a support request:
+        // this MSIX is a Command Palette extension, not a standalone app. Explain that, show the
+        // environment diagnostics and offer the useful actions instead of exiting silently - a
+        // dead-looking tile is a Store certification risk (policy 10.1.2 "fully functional" /
+        // "detect an incompatible device at launch and display a message").
+        // This runs before any COM server state is created and on its own STA thread, so the
+        // [MTAThread] COM server path below is unaffected.
+        if (args.Length == 0 || IsDiagnosticsRequest(args))
+        {
+            try
+            {
+                LaunchDialog.Show();
+            }
+            catch (Exception ex)
+            {
+                // The launch path must never take the process down; AppLog is the only evidence.
+                AppLog.Write($"Launch dialog failed: {ex}");
             }
 
             return;
@@ -66,6 +89,11 @@ public class Program
             throw;
         }
     }
+
+    /// <summary>True for the explicit diagnostics entry points (same dialog as a no-argument launch).</summary>
+    private static bool IsDiagnosticsRequest(string[] args) =>
+        string.Equals(args[0], "--about", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(args[0], "--diagnostics", StringComparison.OrdinalIgnoreCase);
 }
 
 

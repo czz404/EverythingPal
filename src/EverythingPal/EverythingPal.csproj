@@ -51,6 +51,12 @@
     <PackageReference Include="Microsoft.Windows.CsWinRT" />
     <PackageReference Include="Shmuelie.WinRTServer" />
 
+    <!--
+      Used by ShellIconProvider to render shell HICONs to PNG (and required by the Command Palette
+      toolkit's own System.Drawing-based helper, which its NuGet package does not declare).
+    -->
+    <PackageReference Include="System.Drawing.Common" />
+
     <!-- MSIX packaging targets (makeappx/signtool/pri tooling) for release builds. -->
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX">
       <PrivateAssets>all</PrivateAssets>

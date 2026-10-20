@@ -43,7 +43,7 @@ jobs:
           if-no-files-found: ignore
 
   build-extension:
-    name: Build extension (Windows x64)
+    name: Build Store bundle (Windows x64 + ARM64, unsigned)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,44 +52,22 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Restore
-        run: dotnet restore src/EverythingPal/EverythingPal.csproj -p:Platform=x64 -p:RuntimeIdentifier=win-x64
-
-      - name: Build (Debug)
-        run: >
-          dotnet build src/EverythingPal/EverythingPal.csproj
-          --configuration Release --no-restore
-          -p:Platform=x64 -p:RuntimeIdentifier=win-x64 -p:WindowsPackageType=None
-
-      - name: Stage MSIX layout
+      # This is the exact same pipeline the Store release uses: self-contained Release publish for
+      # both architectures, bundled es.exe + notices, per-arch .msix, then .msixbundle, then a full
+      # unpack/identity/architecture/unsigned validation. Running it on every push keeps the Store
+      # packaging path green.
+      - name: Publish, pack, bundle and validate (scripts/pack-store.ps1)
         shell: pwsh
-        run: |
-          $layout = "artifacts/layout"
-          $bin = Get-ChildItem "src/EverythingPal/bin/x64/Release" -Recurse -Directory -Filter "*win-x64*" |
-                 Select-Object -First 1 -ExpandProperty FullName
-          if (-not $bin) { throw "build output not found" }
-          New-Item -ItemType Directory -Force -Path $layout | Out-Null
-          Copy-Item (Join-Path $bin "*") $layout -Recurse -Force
-          $manifest = Join-Path $layout "AppxManifest.xml"
-          Copy-Item "src/EverythingPal/Package.appxmanifest" $manifest -Force
-          $text = Get-Content $manifest -Raw
-          $text = $text -replace '(<Identity\s+)', '$1ProcessorArchitecture="x64" '
-          Set-Content $manifest -Value $text -Encoding UTF8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/pack-store.ps1 -OutputDir artifacts/store
 
-      - name: Pack unsigned MSIX
-        shell: pwsh
-        run: |
-          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter makeappx.exe |
-                      Where-Object { $_.FullName -match '\\x64\\' } |
-                      Sort-Object FullName -Descending | Select-Object -First 1
-          if (-not $makeappx) { throw "makeappx.exe not found" }
-          & $makeappx.FullName pack /d artifacts/layout /p artifacts/EverythingPal-unsigned.msix /o
-          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
-
-      - name: Upload MSIX artifact
+      - name: Upload unsigned Store bundle + per-arch packages
         uses: actions/upload-artifact@v4
         with:
-          name: EverythingPal-unsigned-msix
-          path: artifacts/EverythingPal-unsigned.msix
+          name: EverythingPal-unsigned-store-bundle
+          path: |
+            artifacts/store/*.msixbundle
+            artifacts/store/*.msix
+            artifacts/store/manifests/*
           if-no-files-found: error
-

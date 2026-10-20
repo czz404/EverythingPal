@@ -1,9 +1,10 @@
 # Build + package + sign + install the extension (per-user sideload).
 #
 # The dev loop is:
-#   1. dotnet build (packaging targets disabled, no Windows SDK needed)
-#   2. assemble the MSIX layout ourselves + inject the concrete architecture
-#   3. makeappx pack  (tool downloaded from Microsoft.Windows.SDK.BuildTools NuGet)
+#   1. dotnet publish: SELF-CONTAINED Release/Debug build, same MSIX flags as scripts/pack-store.ps1
+#      (the .NET runtime is inside the package, so this is the exact payload shape the Store build uses)
+#   2. assemble the MSIX layout ourselves + inject the concrete architecture (PDBs stripped)
+#   3. makeappx pack  (tool from the installed Windows SDK)
 #   4. signtool sign  (self-signed dev cert; auto-created and trusted for the current user)
 #   5. Add-AppxPackage the signed .msix
 #
@@ -12,11 +13,20 @@
 # A properly signed + installed package does not have that problem.
 #
 # Usage:
-#   pwsh -File scripts/deploy.ps1                 # build Debug + package + install
+#   pwsh -File scripts/deploy.ps1                 # self-contained publish + package + install
 #   pwsh -File scripts/deploy.ps1 -RestartCmdPal  # also restart Command Palette
+#   pwsh -File scripts/deploy.ps1 -Configuration Release   # exactly the Store-style payload config
+#   pwsh -File scripts/deploy.ps1 -SkipBuild      # reinstall the existing self-contained publish output
+#   pwsh -File scripts/deploy.ps1 -Untrimmed      # disable IL trimming (debugging trim issues)
+#
+# Stale state: unless -SkipBuild is passed, artifacts/publish/<Platform>, artifacts/layout and
+# artifacts/EverythingPal.msix are deleted and re-created, so the installed package always comes from
+# the current source tree + freshly published (self-contained) output.
 param(
     [string]$Configuration = "Debug",
     [string]$Platform = "x64",
+    [switch]$SkipBuild,
+    [switch]$Untrimmed,
     [switch]$RestartCmdPal
 )
 
@@ -25,21 +35,38 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $root "src\EverythingPal\EverythingPal.csproj"
 $artifacts = Join-Path $root "artifacts"
+$publish = Join-Path $artifacts "publish\$Platform"
 $layout = Join-Path $artifacts "layout"
 $msix = Join-Path $artifacts "EverythingPal.msix"
-$bin = Join-Path $root "src\EverythingPal\bin\$Platform\$Configuration\net10.0-windows10.0.26100.0\win-$Platform"
+$rid = if ($Platform -eq "ARM64") { "win-arm64" } else { "win-$Platform" }
 $certSubject = "CN=czz404"
 
-Write-Host "Building ($Configuration/$Platform)..." -ForegroundColor Cyan
-dotnet build $project -c $Configuration -p:Platform=$Platform -p:RuntimeIdentifier=win-$Platform -p:WindowsPackageType=None
-if ($LASTEXITCODE -ne 0) { throw "dotnet build failed with exit code $LASTEXITCODE" }
+if (-not $SkipBuild) {
+    Write-Host "Publishing self-contained ($Configuration/$Platform)..." -ForegroundColor Cyan
+    if (Test-Path $publish) { Remove-Item $publish -Recurse -Force }
+    New-Item -ItemType Directory -Force -Path $publish | Out-Null
+    # Same flags as scripts/pack-store.ps1: EnableMsixTooling=false avoids MSB3030 (missing .pri),
+    # PublishProfile= avoids NETSDK1198, trimming keeps the payload near the Store build size.
+    $trimValue = if ($Untrimmed) { "false" } else { "true" }
+    dotnet publish $project -c $Configuration -r $rid --self-contained true `
+        "-p:Platform=$Platform" "-p:WindowsPackageType=None" `
+        "-p:EnableMsixPackaging=false" "-p:EnableMsixTooling=false" `
+        "-p:PublishProfile=" "-p:PublishTrimmed=$trimValue" -o $publish
+    if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE" }
+}
 
-if (-not (Test-Path $bin)) { throw "build output not found: $bin" }
+if (-not (Test-Path $publish)) { throw "publish output not found: $publish (run without -SkipBuild)" }
+if (-not (Test-Path (Join-Path $publish "hostfxr.dll")) -or -not (Test-Path (Join-Path $publish "coreclr.dll"))) {
+    throw "publish output is not self-contained (hostfxr.dll/coreclr.dll missing): $publish"
+}
+Write-Host ("Using publish output: {0} (published {1:HH:mm:ss})" -f $publish, (Get-Item (Join-Path $publish "EverythingPal.exe")).LastWriteTime) -ForegroundColor DarkGray
 
 Write-Host "Assembling layout..." -ForegroundColor Cyan
 if (Test-Path $layout) { Remove-Item $layout -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $layout | Out-Null
-Copy-Item (Join-Path $bin '*') $layout -Recurse -Force
+Copy-Item (Join-Path $publish '*') $layout -Recurse -Force
+# Debug symbols are not needed in an installed package and would bloat it.
+Get-ChildItem $layout -Recurse -Filter "*.pdb" -File | Remove-Item -Force
 $manifest = Join-Path $layout 'AppxManifest.xml'
 Copy-Item (Join-Path $root 'src\EverythingPal\Package.appxmanifest') $manifest -Force
 
@@ -80,6 +107,7 @@ $toolsDir = Join-Path $layout "Tools"
 New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
 Copy-Item $esExe (Join-Path $toolsDir "es.exe") -Force
 Copy-Item (Join-Path $root "THIRD-PARTY-NOTICES.md") (Join-Path $layout "THIRD-PARTY-NOTICES.md") -Force
+Copy-Item (Join-Path $root "LICENSE") (Join-Path $layout "LICENSE") -Force
 
 # ---------------------------------------------------------------------------
 # Packaging tools (makeappx/signtool). Prefer the installed Windows SDK; the tools shipped in the
@@ -155,19 +183,45 @@ Write-Host "Signing..." -ForegroundColor Cyan
 & $signtool sign /fd SHA256 /sha1 $cert.Thumbprint $msix | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "signtool sign failed (try deleting stale CN=czz404 certs and re-running)" }
 
+$manifestXml = [xml](Get-Content (Join-Path $layout 'AppxManifest.xml') -Raw)
+$expectedVersion = [string]$manifestXml.Package.Identity.Version
+
+if ($RestartCmdPal) {
+    # Stop the host (and the extension COM server) first: they can hold the old package open and
+    # CmdPal would otherwise keep serving the previously loaded extension build.
+    Write-Host "Stopping Command Palette..." -ForegroundColor DarkGray
+    Get-Process Microsoft.CmdPal.UI -ErrorAction SilentlyContinue | Stop-Process -Force
+    Start-Sleep -Milliseconds 1000
+}
+Get-Process EverythingPal -ErrorAction SilentlyContinue | Stop-Process -Force
+
 Write-Host "Installing..." -ForegroundColor Cyan
 Get-AppxPackage EverythingPal | Remove-AppxPackage -ErrorAction SilentlyContinue
 Add-AppxPackage -Path $msix
 
-$installed = Get-AppxPackage EverythingPal
+$installed = Get-AppxPackage EverythingPal | Select-Object -First 1
+if (-not $installed) { throw "Installation did not register an EverythingPal package." }
 Write-Host ("Installed: {0} (SignatureKind={1})" -f $installed.PackageFullName, $installed.SignatureKind) -ForegroundColor Green
+if ($expectedVersion -and ([version]$installed.Version) -ne ([version]$expectedVersion)) {
+    throw "Installed version $($installed.Version) does not match the freshly packed version $expectedVersion - stale package?"
+}
 
 if ($RestartCmdPal) {
-    Write-Host "Restarting Command Palette..." -ForegroundColor Cyan
-    Get-Process Microsoft.CmdPal.UI -ErrorAction SilentlyContinue | Stop-Process -Force
-    Start-Sleep -Milliseconds 800
+    Write-Host "Starting Command Palette..." -ForegroundColor Cyan
     Start-Process "shell:AppsFolder\Microsoft.CommandPalette_8wekyb3d8bbwe!App"
-    Start-Sleep -Seconds 4
+    $deadline = (Get-Date).AddSeconds(20)
+    $cmdPal = $null
+    do {
+        Start-Sleep -Milliseconds 500
+        $cmdPal = Get-Process Microsoft.CmdPal.UI -ErrorAction SilentlyContinue | Select-Object -First 1
+    } while (-not $cmdPal -and (Get-Date) -lt $deadline)
+    if ($cmdPal) {
+        Start-Sleep -Seconds 2
+        Write-Host ("Command Palette restarted (PID {0})." -f $cmdPal.Id) -ForegroundColor Green
+    }
+    else {
+        Write-Warning "Command Palette process was not detected; start it manually (Win+Alt+Space or the PowerToys tray icon)."
+    }
 }
 
 Write-Host "Next: in Command Palette run 'Reload' -> 'Reload Command Palette extensions'." -ForegroundColor Yellow

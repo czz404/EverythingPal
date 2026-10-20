@@ -10,8 +10,11 @@ JSON export.
 **The MSIX bundles the MIT-licensed `es.exe`** (from <https://github.com/voidtools/ES>), so users
 only need Everything itself installed and running — no separate ES download or PATH setup.
 
-> Status: **working preview** — live search page, multi-row home-search fallback, details pane and
-> settings page are in place; CI/CD builds signed-or-unsigned MSIX for x64 and ARM64.
+> Status: **release candidate 0.2.0** — live search page, multi-row home-search fallback, real
+> shell file-type icons, details pane, bilingual (zh-Hans / en) UI and a launch diagnostics dialog
+> are in place. CI/CD produces a self-contained, unsigned x64+ARM64 `.msixbundle` ready for Microsoft
+> Store submission (Store identity values are injected at build time; see
+> `docs/store/packaging.md`).
 
 ## Features
 
@@ -21,6 +24,18 @@ only need Everything itself installed and running — no separate ES download or
   menu can reveal it in Explorer, copy the path, or locate it in Everything.
 - **Real paths, not shortcuts**: results are the actual files/folders (drive roots such as
   `D:\wantai` included), unlike Recent-items shortcuts.
+- **Real file-type icons**: each result shows the shell's registered icon for its type (folder,
+  image, archive, executable, ...) instead of a generic page/folder glyph. Icons are resolved per
+  extension and cached, so searching stays fast; no thumbnail generation on the search path.
+- **Clear no-result / error states**: an empty query result says "no matching results"; if Everything
+  is not running the fallback row and the search page both offer *Start Everything* / *Download
+  Everything* instead of failing silently.
+- **Bilingual UI**: Simplified Chinese and English strings follow the Windows display language
+  (`EVERYTHINGPAL_LANG` can force a language for testing); the Store listing is bilingual too.
+- **Launch diagnostics**: launching the installed package from the Start menu (no arguments) opens
+  a small dialog that explains this is a Command Palette extension, checks PowerToys / Everything /
+  the bundled `es.exe`, and can open Command Palette — it is not a dead tile. `--about` /
+  `--diagnostics` show the same dialog.
 - **Details pane**: size, modified time and clickable full path for each result.
 - **Actionable errors**: if Everything is not running you get a *Start Everything* action; if the
   bundled `es.exe` is missing you are told to reinstall; timeouts explain that the index may still be
@@ -30,7 +45,8 @@ only need Everything itself installed and running — no separate ES download or
 
 ## Requirements
 
-- Windows 11 (x64 or ARM64), PowerToys with Command Palette (`Microsoft.CommandPalette` 0.13+)
+- Windows 11, or Windows 10 version 2004 (build 19041) or later, on x64 or ARM64
+- PowerToys with Command Palette (`Microsoft.CommandPalette` 0.13+)
 - **Everything 1.4 or 1.5a installed and running** (the extension only queries it)
 - For development: .NET 10 SDK, Windows SDK 10.0.26100 (MSIX packaging/signing), Developer Mode
 
@@ -38,13 +54,13 @@ only need Everything itself installed and running — no separate ES download or
 
 ### From a release
 
-Download `EverythingPal_<version>_x64.msix` (or `_ARM64.msix`) from the
-[releases page](https://github.com/czz404/EverythingPal/releases).
+Download `EverythingPal_<version>_x64_arm64.msixbundle` (or an architecture-specific `.msix`) from
+the [releases page](https://github.com/czz404/EverythingPal/releases).
 
-- If the release is **signed**, install it normally: `Add-AppxPackage .\EverythingPal_..._x64.msix`.
-  The signing certificate must be trusted on the machine.
-- If the release is **unsigned**, it can only be installed on a machine with Developer Mode enabled,
-  and must be signed first for normal sideloading (see below).
+- Store submission packages are **unsigned**: the Microsoft Store re-signs them, and for local
+  testing you must sign them with your own certificate first (see below).
+- A signed sideload build installs normally: `Add-AppxPackage .\EverythingPal_..._x64.msix`. The
+  signing certificate must be trusted on the machine.
 
 ### Build from source (developer loop)
 
@@ -62,14 +78,26 @@ Re-run after every change, then run `Reload` → **Reload Command Palette extens
 
 ## CI / CD
 
-- `.github/workflows/ci.yml` — on every push/PR: unit tests (Windows) + Release x64 build and an
-  **unsigned MSIX artifact**.
+- `.github/workflows/ci.yml` — on every push/PR: elevated unit tests (Windows) + `scripts/pack-store.ps1`
+  (self-contained x64 and ARM64 publish, per-architecture MSIX, unsigned `.msixbundle`) with the
+  packages uploaded as artifacts.
 - `.github/workflows/release.yml` — on `v*` tags (or manual dispatch):
   1. resolves the package version from the tag,
-  2. downloads the **latest `es.exe`** for x64 and ARM64 from <https://github.com/voidtools/ES>,
-  3. builds both architectures, bundles `Tools\es.exe` + `THIRD-PARTY-NOTICES.md`,
-  4. signs the MSIX when signing secrets are configured,
-  5. creates a **draft GitHub release** with the `.msix` assets.
+  2. `scripts/pack-store.ps1` publishes **self-contained** x64 and ARM64 builds (the .NET runtime is
+     inside the package, so clean Store machines do not need a .NET installation), downloads the
+     latest `es.exe` for both architectures, stages the layouts and bundles `Tools\es.exe`,
+     `THIRD-PARTY-NOTICES.md` and `LICENSE`,
+  3. optionally signs the bundle when signing secrets are configured,
+  4. creates a **draft GitHub release** with the unsigned `.msixbundle` + per-architecture `.msix`.
+
+### Store packaging
+
+`pwsh -File scripts/pack-store.ps1` produces an **unsigned** x64+ARM64 `.msixbundle` for Partner
+Center. Partner Center identity values (Identity Name / Publisher `CN=...` / PublisherDisplayName)
+are passed as parameters and injected only into the staged manifest, never into the source
+`Package.appxmanifest`. The complete Partner Center checklist (identity values, version rules,
+unsigned submission, `.msixupload`, screenshots/listing assets, certification notes) is in
+[`docs/store/`](docs/store/).
 
 ### Optional signing
 
@@ -94,16 +122,21 @@ reachable from the `Everything 搜索` command's context menu):
 | `everythingPal.EsExePath` | *(empty = auto)* | `es.exe` path or directory. Auto-detect: explicit setting → bundled `Tools\es.exe` → Everything install dirs → PATH. |
 | `everythingPal.MaxResults` | `50` | Result limit (`-n`), clamped to 1–500. |
 | `everythingPal.Sort` | `name-ascending` | ES `-sort`: `name-ascending`, `date-modified-descending`, `path`, `run-count-descending`, ... |
-| `everythingPal.FallbackRows` | `3` | Home-search inline rows (0–5; 0 disables the fallback). Requires enabling `IncludeInGlobalResults` in Command Palette's fallback settings (third-party fallbacks default to *not* included). |
+| `everythingPal.FallbackRows` | `3` | Home-search inline rows (0–5; 0 disables the fallback). Each row is a separate CmdPal fallback command, so Command Palette shows three switches under **Fallback commands**; enable the rows you want and tick *Include in the global result* (third-party fallbacks default to *not* included). Changing the count requires reloading the Command Palette extensions. |
 
 ## Project layout
 
 ```
-src/EverythingPal/                 CmdPal extension (MSIX, COM server, UI pages)
+src/EverythingPal/                 CmdPal extension (MSIX, COM server, UI pages, i18n, diagnostics)
 src/EverythingPal.Core/            pure search logic (no WinRT): ES arguments, JSON parsing,
-                                   ranking, query normalization, es.exe discovery — unit tested
-tests/EverythingPal.Core.Tests/    28 xUnit tests
-scripts/deploy.ps1                 build -> fetch ES -> layout -> makeappx -> signtool -> install
+                                   ranking, query normalization, es.exe/Everything discovery — unit tested
+tests/EverythingPal.Core.Tests/    67 xUnit tests (incl. resx parity + discovery)
+scripts/deploy.ps1                 self-contained publish -> layout -> makeappx -> signtool -> install
+scripts/pack-store.ps1             self-contained x64+ARM64 publish -> MSIX -> unsigned Store .msixbundle
+scripts/verify-build.ps1           independent release verification (tests, bundle, headless search)
+scripts/capture-screenshots.ps1    automated Store screenshots (CmdPal window, >=1366x768)
+docs/store/                        Partner Center listing, privacy policy, certification notes, price
+docs/research/                     CmdPal API + Store requirement research
 ```
 
 ## Design notes
@@ -119,14 +152,32 @@ scripts/deploy.ps1                 build -> fetch ES -> layout -> makeappx -> si
   substring, then folders and shorter names.
 - **Path handling**: drive-root paths such as `D:` are handled explicitly; URIs are built with
   `new Uri(fullPath)`, never by concatenating `file:///`.
+- **Empty results**: ES is called with `-no-result-error`, so a successful run with an empty export
+  means "no matches" and is mapped to the UI's no-results state (not an empty list).
+- **Icons**: the shell icon for a file type is extracted once per extension with
+  `SHGetFileInfo(SHGFI_USEFILEATTRIBUTES)` on a synthetic name, rendered to a small PNG and cached;
+  no disk/thumbnail work happens per result. A missing shell icon falls back to a Segoe glyph.
+- **Localization**: user-visible strings live in `Resources/Strings.resx` (en) and
+  `Strings.zh-Hans.resx`, resolved through `Localization/Strings.cs` with
+  `CultureInfo.CurrentUICulture`; `EVERYTHINGPAL_LANG` forces a culture for tests/screenshots.
+- **Packaging**: the MSIX is published **self-contained** (the .NET runtime ships inside), because a
+  Store user is not guaranteed to have the matching .NET runtime installed; `PublishTrimmed` keeps
+  the per-architecture package ~11 MB.
+- **Launch behavior**: the Start-menu tile is not a standalone UI — with no arguments (or
+  `--about`/`--diagnostics`) the process shows a Win32 diagnostics dialog instead of exiting silently,
+  which also satisfies the Store policy that an incompatible device must be told what is missing.
 
 ## Roadmap
 
 - [x] live search page, multi-row fallback, details pane, settings
 - [x] bundled `es.exe` (auto-updated from voidtools/ES at build time)
 - [x] unit tests + CI + tag-driven release workflow
-- [ ] code signing for public distribution (trusted certificate / Store)
-- [ ] optional Store or winget publishing
+- [x] real shell file-type icons, bilingual UI, launch diagnostics, self-contained x64+ARM64 bundle
+- [x] Store packaging scripts + Partner Center listing/privacy/certification materials (`docs/store/`)
+- [ ] reserve the Partner Center product and inject the real Store identity (publish/build is ready;
+      Store build version must be `1.0.0.0`-style with a non-zero major)
+- [ ] publish to Microsoft Store + WinGet (Store-only CmdPal extensions are not discoverable inside
+      Command Palette, so WinGet matters)
 
 ## License
 

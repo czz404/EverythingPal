@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App.CommandSubtitle" xml:space="preserve">
+    <value>用 Everything 搜索文件和文件夹</value>
+  </data>
+  <data name="App.DisplayName" xml:space="preserve">
+    <value>Everything 搜索</value>
+  </data>
+  <data name="Action.CopyFailedToast" xml:space="preserve">
+    <value>复制失败</value>
+  </data>
+  <data name="Action.CopyPath" xml:space="preserve">
+    <value>复制路径</value>
+  </data>
+  <data name="Action.CopyPathToast" xml:space="preserve">
+    <value>路径已复制</value>
+  </data>
+  <data name="Action.DownloadEverything" xml:space="preserve">
+    <value>下载 Everything</value>
+  </data>
+  <data name="Action.EverythingExeNotFoundToast" xml:space="preserve">
+    <value>未找到 Everything.exe</value>
+  </data>
+  <data name="Action.EverythingNotInstalledToast" xml:space="preserve">
+    <value>没有找到 Everything，请先安装：https://www.voidtools.com/downloads/</value>
+  </data>
+  <data name="Action.LocateInEverything" xml:space="preserve">
+    <value>在 Everything 中定位</value>
+  </data>
+  <data name="Action.LocateInEverythingFailedToast" xml:space="preserve">
+    <value>无法在 Everything 中定位</value>
+  </data>
+  <data name="Action.Open" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Action.OpenFolder" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="Action.OpenItemFailedToast" xml:space="preserve">
+    <value>无法打开该项目</value>
+  </data>
+  <data name="Action.RevealInExplorer" xml:space="preserve">
+    <value>在资源管理器中显示</value>
+  </data>
+  <data name="Action.RevealInExplorerFailedToast" xml:space="preserve">
+    <value>无法打开资源管理器</value>
+  </data>
+  <data name="Action.StartEverything" xml:space="preserve">
+    <value>启动 Everything</value>
+  </data>
+  <data name="Action.StartEverythingFailedToast" xml:space="preserve">
+    <value>启动 Everything 失败</value>
+  </data>
+  <data name="Action.StartEverythingToast" xml:space="preserve">
+    <value>正在启动 Everything，稍后再试一次</value>
+  </data>
+  <data name="Details.File" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="Details.Folder" xml:space="preserve">
+    <value>文件夹</value>
+  </data>
+  <data name="Details.FullPath" xml:space="preserve">
+    <value>完整路径</value>
+  </data>
+  <data name="Details.Modified" xml:space="preserve">
+    <value>修改时间</value>
+  </data>
+  <data name="Details.Name" xml:space="preserve">
+    <value>名称</value>
+  </data>
+  <data name="Details.Size" xml:space="preserve">
+    <value>大小</value>
+  </data>
+  <data name="Details.Type" xml:space="preserve">
+    <value>类型</value>
+  </data>
+  <data name="Fallback.EsExeNotFoundSubtitle" xml:space="preserve">
+    <value>插件自带的 es.exe 缺失，请重新安装插件</value>
+  </data>
+  <data name="Fallback.EverythingNotRunningSubtitle" xml:space="preserve">
+    <value>请启动 Everything（或安装它），然后重新输入</value>
+  </data>
+  <data name="Fallback.QueryFailedTitle" xml:space="preserve">
+    <value>Everything 查询失败</value>
+  </data>
+  <data name="Fallback.ResultCountFormat" xml:space="preserve">
+    <value>（共 {0} 个结果）</value>
+  </data>
+  <data name="Fallback.RetryHint" xml:space="preserve">
+    <value>请稍后重试</value>
+  </data>
+  <data name="Fallback.RowTitleFormat" xml:space="preserve">
+    <value>Everything 搜索（第 {0} 行）</value>
+  </data>
+  <data name="Fallback.TimeoutTitle" xml:space="preserve">
+    <value>Everything 查询超时</value>
+  </data>
+  <data name="LaunchDialog.BundledEsExeMissing" xml:space="preserve">
+    <value>内置 es.exe 缺失，搜索无法工作。请重新安装本扩展。</value>
+  </data>
+  <data name="LaunchDialog.Caption" xml:space="preserve">
+    <value>Everything 搜索 — 命令面板扩展</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteInstalled" xml:space="preserve">
+    <value>已安装</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteLineFormat" xml:space="preserve">
+    <value>• 命令面板（PowerToys）：{0}</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteNotInstalled" xml:space="preserve">
+    <value>未检测到（请先安装 PowerToys 并启用 Command Palette）</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteUnknown" xml:space="preserve">
+    <value>未知（检测失败，请查看日志）</value>
+  </data>
+  <data name="LaunchDialog.DevelopmentVersionFormat" xml:space="preserve">
+    <value>{0}（开发版，未作为 MSIX 安装）</value>
+  </data>
+  <data name="LaunchDialog.DiagnosticsFailedPrefix" xml:space="preserve">
+    <value>Everything 搜索无法显示诊断信息，请查看日志：</value>
+  </data>
+  <data name="LaunchDialog.DiagnosticsHeader" xml:space="preserve">
+    <value>诊断：</value>
+  </data>
+  <data name="LaunchDialog.EsExeLineFormat" xml:space="preserve">
+    <value>• 内置 es.exe：{0}</value>
+  </data>
+  <data name="LaunchDialog.EsExeMissing" xml:space="preserve">
+    <value>缺失（请重新安装本扩展）</value>
+  </data>
+  <data name="LaunchDialog.EsExePresent" xml:space="preserve">
+    <value>存在</value>
+  </data>
+  <data name="LaunchDialog.EverythingInstalledNotRunningFormat" xml:space="preserve">
+    <value>已安装（{0}），未运行（搜索前请先启动）</value>
+  </data>
+  <data name="LaunchDialog.EverythingInstalledRunningFormat" xml:space="preserve">
+    <value>已安装（{0}），正在运行</value>
+  </data>
+  <data name="LaunchDialog.EverythingLineFormat" xml:space="preserve">
+    <value>• Everything：{0}</value>
+  </data>
+  <data name="LaunchDialog.EverythingMissingWarning" xml:space="preserve">
+    <value>未检测到 Everything，搜索将不可用。</value>
+  </data>
+  <data name="LaunchDialog.EverythingNotDetected" xml:space="preserve">
+    <value>未检测到（请先安装 Everything 并运行）</value>
+  </data>
+  <data name="LaunchDialog.EverythingNotRunningWarning" xml:space="preserve">
+    <value>Everything 未运行，搜索将不可用。</value>
+  </data>
+  <data name="LaunchDialog.EverythingRunningUnknownLocation" xml:space="preserve">
+    <value>正在运行（安装在非默认位置）</value>
+  </data>
+  <data name="LaunchDialog.InstallPowerToysQuestion" xml:space="preserve">
+    <value>未检测到 PowerToys 命令面板。是否打开 PowerToys 安装页面？</value>
+  </data>
+  <data name="LaunchDialog.Intro" xml:space="preserve">
+    <value>这是 PowerToys 命令面板（Command Palette）的扩展，不是独立应用，无需单独运行。</value>
+  </data>
+  <data name="LaunchDialog.LogLabel" xml:space="preserve">
+    <value>日志：</value>
+  </data>
+  <data name="LaunchDialog.LogLineFormat" xml:space="preserve">
+    <value>日志：{0}</value>
+  </data>
+  <data name="LaunchDialog.OpenBrowserFailedPrefix" xml:space="preserve">
+    <value>无法打开浏览器。请手动访问：</value>
+  </data>
+  <data name="LaunchDialog.OpenCommandPaletteFailed" xml:space="preserve">
+    <value>无法启动命令面板。请按 Win+Alt+Space 手动打开，或从开始菜单启动 PowerToys Command Palette。</value>
+  </data>
+  <data name="LaunchDialog.OpenCommandPaletteQuestion" xml:space="preserve">
+    <value>现在打开命令面板吗？</value>
+  </data>
+  <data name="LaunchDialog.OpenEverythingDownloadQuestion" xml:space="preserve">
+    <value>是否打开 Everything 下载页面？</value>
+  </data>
+  <data name="LaunchDialog.PrivacyLine" xml:space="preserve">
+    <value>本扩展不联网、不收集任何数据。</value>
+  </data>
+  <data name="LaunchDialog.StartEverythingFailed" xml:space="preserve">
+    <value>启动 Everything 失败。请手动启动 Everything 后重试。</value>
+  </data>
+  <data name="LaunchDialog.StartEverythingQuestion" xml:space="preserve">
+    <value>是否现在启动 Everything？</value>
+  </data>
+  <data name="LaunchDialog.UnknownDevelopmentVersion" xml:space="preserve">
+    <value>未知（开发版，未作为 MSIX 安装）</value>
+  </data>
+  <data name="LaunchDialog.UsageFallbackRows" xml:space="preserve">
+    <value>• 主页回退结果需在 命令面板设置 → 扩展 → Everything 搜索 → 回退命令 中开启（勾选“包含在全局结果中”）。</value>
+  </data>
+  <data name="LaunchDialog.UsageHeader" xml:space="preserve">
+    <value>用法：</value>
+  </data>
+  <data name="LaunchDialog.UsageHotkey" xml:space="preserve">
+    <value>• 按 Win+Alt+Space 打开命令面板，直接输入文件名即可搜索；</value>
+  </data>
+  <data name="LaunchDialog.UsageRequiresEverything" xml:space="preserve">
+    <value>• 搜索依赖 Everything 已安装并正在运行（本扩展通过内置 es.exe 查询本机索引）；</value>
+  </data>
+  <data name="LaunchDialog.VersionFormat" xml:space="preserve">
+    <value>版本：{0}</value>
+  </data>
+  <data name="Page.Name" xml:space="preserve">
+    <value>搜索</value>
+  </data>
+  <data name="Page.PlaceholderText" xml:space="preserve">
+    <value>输入文件名或路径片段（Everything 语法可用）</value>
+  </data>
+  <data name="Page.SearchFailedTitle" xml:space="preserve">
+    <value>搜索失败</value>
+  </data>
+  <data name="Page.Title" xml:space="preserve">
+    <value>Everything 搜索</value>
+  </data>
+  <data name="Settings.EsExePathDescription" xml:space="preserve">
+    <value>留空则自动探测：%LOCALAPPDATA%\Microsoft\WindowsApps、Everything 安装目录、PATH</value>
+  </data>
+  <data name="Settings.EsExePathLabel" xml:space="preserve">
+    <value>es.exe 路径</value>
+  </data>
+  <data name="Settings.FallbackRowsDescription" xml:space="preserve">
+    <value>0–5，默认 3。0 表示关闭主页 fallback；修改后需要重新加载 Command Palette 扩展。注：第三方 fallback 默认不进全局结果，需要在 CmdPal 的『回退命令』里启用并勾选『包含在全局结果中』。</value>
+  </data>
+  <data name="Settings.FallbackRowsLabel" xml:space="preserve">
+    <value>主页搜索内联结果行数</value>
+  </data>
+  <data name="Settings.MaxResultsDescription" xml:space="preserve">
+    <value>1–500，默认 50。传给 es.exe 的 -n 参数。</value>
+  </data>
+  <data name="Settings.MaxResultsLabel" xml:space="preserve">
+    <value>结果条数上限</value>
+  </data>
+  <data name="Settings.SortDateModifiedAscending" xml:space="preserve">
+    <value>修改时间升序</value>
+  </data>
+  <data name="Settings.SortDateModifiedDescending" xml:space="preserve">
+    <value>修改时间倒序</value>
+  </data>
+  <data name="Settings.SortDescription" xml:space="preserve">
+    <value>传给 es.exe 的 -sort 参数；插件会在返回后再按相关性微调顺序。</value>
+  </data>
+  <data name="Settings.SortLabel" xml:space="preserve">
+    <value>排序方式</value>
+  </data>
+  <data name="Settings.SortNameAscending" xml:space="preserve">
+    <value>名称升序（默认）</value>
+  </data>
+  <data name="Settings.SortPath" xml:space="preserve">
+    <value>路径</value>
+  </data>
+  <data name="Settings.SortRunCountDescending" xml:space="preserve">
+    <value>运行次数倒序</value>
+  </data>
+  <data name="Status.EsExeNotFoundSubtitle" xml:space="preserve">
+    <value>插件自带的 es.exe 缺失，请重新安装插件，或在设置里指定 es.exe 路径。</value>
+  </data>
+  <data name="Status.EsExeNotFoundTitle" xml:space="preserve">
+    <value>找不到 es.exe</value>
+  </data>
+  <data name="Status.EverythingNotRunningSubtitle" xml:space="preserve">
+    <value>请启动 Everything（或安装它），然后重新输入。</value>
+  </data>
+  <data name="Status.EverythingNotRunningTitle" xml:space="preserve">
+    <value>Everything 没有运行</value>
+  </data>
+  <data name="Status.NoResultsSubtitle" xml:space="preserve">
+    <value>换个关键词，或检查 Everything 的索引设置。</value>
+  </data>
+  <data name="Status.NoResultsTitle" xml:space="preserve">
+    <value>没有匹配结果</value>
+  </data>
+  <data name="Status.QueryFailedTitle" xml:space="preserve">
+    <value>查询失败</value>
+  </data>
+  <data name="Status.TimeoutSubtitle" xml:space="preserve">
+    <value>Everything 可能正忙或索引未加载完成，请稍后重试。</value>
+  </data>
+  <data name="Status.TimeoutTitle" xml:space="preserve">
+    <value>查询超时</value>
+  </data>
+  <data name="Status.UnknownError" xml:space="preserve">
+    <value>未知错误</value>
+  </data>
+</root>

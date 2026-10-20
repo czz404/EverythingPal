@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App.CommandSubtitle" xml:space="preserve">
+    <value>Search files and folders with Everything</value>
+  </data>
+  <data name="App.DisplayName" xml:space="preserve">
+    <value>Everything Search</value>
+  </data>
+  <data name="Action.CopyFailedToast" xml:space="preserve">
+    <value>Copy failed</value>
+  </data>
+  <data name="Action.CopyPath" xml:space="preserve">
+    <value>Copy path</value>
+  </data>
+  <data name="Action.CopyPathToast" xml:space="preserve">
+    <value>Path copied</value>
+  </data>
+  <data name="Action.DownloadEverything" xml:space="preserve">
+    <value>Download Everything</value>
+  </data>
+  <data name="Action.EverythingExeNotFoundToast" xml:space="preserve">
+    <value>Everything.exe was not found</value>
+  </data>
+  <data name="Action.EverythingNotInstalledToast" xml:space="preserve">
+    <value>Everything was not found. Install it first: https://www.voidtools.com/downloads/</value>
+  </data>
+  <data name="Action.LocateInEverything" xml:space="preserve">
+    <value>Locate in Everything</value>
+  </data>
+  <data name="Action.LocateInEverythingFailedToast" xml:space="preserve">
+    <value>Could not locate the item in Everything</value>
+  </data>
+  <data name="Action.Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Action.OpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Action.OpenItemFailedToast" xml:space="preserve">
+    <value>Could not open this item</value>
+  </data>
+  <data name="Action.RevealInExplorer" xml:space="preserve">
+    <value>Show in Explorer</value>
+  </data>
+  <data name="Action.RevealInExplorerFailedToast" xml:space="preserve">
+    <value>Could not open Explorer</value>
+  </data>
+  <data name="Action.StartEverything" xml:space="preserve">
+    <value>Start Everything</value>
+  </data>
+  <data name="Action.StartEverythingFailedToast" xml:space="preserve">
+    <value>Could not start Everything</value>
+  </data>
+  <data name="Action.StartEverythingToast" xml:space="preserve">
+    <value>Starting Everything — try again in a moment</value>
+  </data>
+  <data name="Details.File" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="Details.Folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="Details.FullPath" xml:space="preserve">
+    <value>Full path</value>
+  </data>
+  <data name="Details.Modified" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="Details.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Details.Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="Details.Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Fallback.EsExeNotFoundSubtitle" xml:space="preserve">
+    <value>The bundled es.exe is missing. Reinstall the extension</value>
+  </data>
+  <data name="Fallback.EverythingNotRunningSubtitle" xml:space="preserve">
+    <value>Start Everything (or install it), then type again</value>
+  </data>
+  <data name="Fallback.QueryFailedTitle" xml:space="preserve">
+    <value>Everything query failed</value>
+  </data>
+  <data name="Fallback.ResultCountFormat" xml:space="preserve">
+    <value>({0} results)</value>
+  </data>
+  <data name="Fallback.RetryHint" xml:space="preserve">
+    <value>Please try again later</value>
+  </data>
+  <data name="Fallback.RowTitleFormat" xml:space="preserve">
+    <value>Everything Search (row {0})</value>
+  </data>
+  <data name="Fallback.TimeoutTitle" xml:space="preserve">
+    <value>Everything query timed out</value>
+  </data>
+  <data name="LaunchDialog.BundledEsExeMissing" xml:space="preserve">
+    <value>The bundled es.exe is missing, so search cannot work. Reinstall this extension.</value>
+  </data>
+  <data name="LaunchDialog.Caption" xml:space="preserve">
+    <value>Everything Search — Command Palette extension</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteInstalled" xml:space="preserve">
+    <value>installed</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteLineFormat" xml:space="preserve">
+    <value>• Command Palette (PowerToys): {0}</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteNotInstalled" xml:space="preserve">
+    <value>not detected (install PowerToys and enable Command Palette first)</value>
+  </data>
+  <data name="LaunchDialog.CommandPaletteUnknown" xml:space="preserve">
+    <value>unknown (detection failed, see the log)</value>
+  </data>
+  <data name="LaunchDialog.DevelopmentVersionFormat" xml:space="preserve">
+    <value>{0} (development build, not installed as MSIX)</value>
+  </data>
+  <data name="LaunchDialog.DiagnosticsFailedPrefix" xml:space="preserve">
+    <value>Everything Search could not display diagnostics. Please check the log:</value>
+  </data>
+  <data name="LaunchDialog.DiagnosticsHeader" xml:space="preserve">
+    <value>Diagnostics:</value>
+  </data>
+  <data name="LaunchDialog.EsExeLineFormat" xml:space="preserve">
+    <value>• Bundled es.exe: {0}</value>
+  </data>
+  <data name="LaunchDialog.EsExeMissing" xml:space="preserve">
+    <value>missing (reinstall this extension)</value>
+  </data>
+  <data name="LaunchDialog.EsExePresent" xml:space="preserve">
+    <value>present</value>
+  </data>
+  <data name="LaunchDialog.EverythingInstalledNotRunningFormat" xml:space="preserve">
+    <value>installed ({0}), not running (start it before searching)</value>
+  </data>
+  <data name="LaunchDialog.EverythingInstalledRunningFormat" xml:space="preserve">
+    <value>installed ({0}), running</value>
+  </data>
+  <data name="LaunchDialog.EverythingLineFormat" xml:space="preserve">
+    <value>• Everything: {0}</value>
+  </data>
+  <data name="LaunchDialog.EverythingMissingWarning" xml:space="preserve">
+    <value>Everything was not detected, so search will not work.</value>
+  </data>
+  <data name="LaunchDialog.EverythingNotDetected" xml:space="preserve">
+    <value>not detected (install and run Everything first)</value>
+  </data>
+  <data name="LaunchDialog.EverythingNotRunningWarning" xml:space="preserve">
+    <value>Everything is not running, so search will not work.</value>
+  </data>
+  <data name="LaunchDialog.EverythingRunningUnknownLocation" xml:space="preserve">
+    <value>running (installed in a non-default location)</value>
+  </data>
+  <data name="LaunchDialog.InstallPowerToysQuestion" xml:space="preserve">
+    <value>PowerToys Command Palette was not detected. Open the PowerToys installation page?</value>
+  </data>
+  <data name="LaunchDialog.Intro" xml:space="preserve">
+    <value>This is an extension for the PowerToys Command Palette, not a standalone app, so it does not need to be started on its own.</value>
+  </data>
+  <data name="LaunchDialog.LogLabel" xml:space="preserve">
+    <value>Log:</value>
+  </data>
+  <data name="LaunchDialog.LogLineFormat" xml:space="preserve">
+    <value>Log: {0}</value>
+  </data>
+  <data name="LaunchDialog.OpenBrowserFailedPrefix" xml:space="preserve">
+    <value>Could not open the browser. Please visit manually:</value>
+  </data>
+  <data name="LaunchDialog.OpenCommandPaletteFailed" xml:space="preserve">
+    <value>Could not start Command Palette. Press Win+Alt+Space to open it manually, or start PowerToys Command Palette from the Start menu.</value>
+  </data>
+  <data name="LaunchDialog.OpenCommandPaletteQuestion" xml:space="preserve">
+    <value>Open Command Palette now?</value>
+  </data>
+  <data name="LaunchDialog.OpenEverythingDownloadQuestion" xml:space="preserve">
+    <value>Open the Everything download page?</value>
+  </data>
+  <data name="LaunchDialog.PrivacyLine" xml:space="preserve">
+    <value>This extension has no network access and collects no data.</value>
+  </data>
+  <data name="LaunchDialog.StartEverythingFailed" xml:space="preserve">
+    <value>Could not start Everything. Start it manually and try again.</value>
+  </data>
+  <data name="LaunchDialog.StartEverythingQuestion" xml:space="preserve">
+    <value>Start Everything now?</value>
+  </data>
+  <data name="LaunchDialog.UnknownDevelopmentVersion" xml:space="preserve">
+    <value>unknown (development build, not installed as MSIX)</value>
+  </data>
+  <data name="LaunchDialog.UsageFallbackRows" xml:space="preserve">
+    <value>• Home-screen fallback results must be enabled in Command Palette Settings → Extensions → Everything Search → Fallback commands (tick "Include in global results").</value>
+  </data>
+  <data name="LaunchDialog.UsageHeader" xml:space="preserve">
+    <value>Usage:</value>
+  </data>
+  <data name="LaunchDialog.UsageHotkey" xml:space="preserve">
+    <value>• Press Win+Alt+Space to open Command Palette, then type a file name to search;</value>
+  </data>
+  <data name="LaunchDialog.UsageRequiresEverything" xml:space="preserve">
+    <value>• Search requires Everything to be installed and running (this extension queries the local index through the bundled es.exe);</value>
+  </data>
+  <data name="LaunchDialog.VersionFormat" xml:space="preserve">
+    <value>Version: {0}</value>
+  </data>
+  <data name="Page.Name" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Page.PlaceholderText" xml:space="preserve">
+    <value>Type a file name or path fragment (Everything syntax supported)</value>
+  </data>
+  <data name="Page.SearchFailedTitle" xml:space="preserve">
+    <value>Search failed</value>
+  </data>
+  <data name="Page.Title" xml:space="preserve">
+    <value>Everything Search</value>
+  </data>
+  <data name="Settings.EsExePathDescription" xml:space="preserve">
+    <value>Leave empty to auto-detect: %LOCALAPPDATA%\Microsoft\WindowsApps, the Everything install directory, PATH</value>
+  </data>
+  <data name="Settings.EsExePathLabel" xml:space="preserve">
+    <value>es.exe path</value>
+  </data>
+  <data name="Settings.FallbackRowsDescription" xml:space="preserve">
+    <value>0–5, default 3. 0 disables the home fallback. Changing the count requires reloading the Command Palette extensions (Command Palette caches the fallback command list). Note: third-party fallbacks are excluded from global results by default; enable it under Command Palette's Fallback commands and tick "Include in global results".</value>
+  </data>
+  <data name="Settings.FallbackRowsLabel" xml:space="preserve">
+    <value>Inline home-search rows</value>
+  </data>
+  <data name="Settings.MaxResultsDescription" xml:space="preserve">
+    <value>1–500, default 50. Passed to es.exe as -n.</value>
+  </data>
+  <data name="Settings.MaxResultsLabel" xml:space="preserve">
+    <value>Maximum results</value>
+  </data>
+  <data name="Settings.SortDateModifiedAscending" xml:space="preserve">
+    <value>Date modified ascending</value>
+  </data>
+  <data name="Settings.SortDateModifiedDescending" xml:space="preserve">
+    <value>Date modified descending</value>
+  </data>
+  <data name="Settings.SortDescription" xml:space="preserve">
+    <value>Passed to es.exe as -sort; the extension re-ranks results by relevance afterwards.</value>
+  </data>
+  <data name="Settings.SortLabel" xml:space="preserve">
+    <value>Sort order</value>
+  </data>
+  <data name="Settings.SortNameAscending" xml:space="preserve">
+    <value>Name ascending (default)</value>
+  </data>
+  <data name="Settings.SortPath" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="Settings.SortRunCountDescending" xml:space="preserve">
+    <value>Run count descending</value>
+  </data>
+  <data name="Status.EsExeNotFoundSubtitle" xml:space="preserve">
+    <value>The bundled es.exe is missing. Reinstall the extension, or set the es.exe path in settings.</value>
+  </data>
+  <data name="Status.EsExeNotFoundTitle" xml:space="preserve">
+    <value>es.exe not found</value>
+  </data>
+  <data name="Status.EverythingNotRunningSubtitle" xml:space="preserve">
+    <value>Start Everything (or install it), then type again.</value>
+  </data>
+  <data name="Status.EverythingNotRunningTitle" xml:space="preserve">
+    <value>Everything is not running</value>
+  </data>
+  <data name="Status.NoResultsSubtitle" xml:space="preserve">
+    <value>Try another keyword, or check Everything's index settings.</value>
+  </data>
+  <data name="Status.NoResultsTitle" xml:space="preserve">
+    <value>No matching results</value>
+  </data>
+  <data name="Status.QueryFailedTitle" xml:space="preserve">
+    <value>Query failed</value>
+  </data>
+  <data name="Status.TimeoutSubtitle" xml:space="preserve">
+    <value>Everything may be busy or still loading its index. Please try again.</value>
+  </data>
+  <data name="Status.TimeoutTitle" xml:space="preserve">
+    <value>Query timed out</value>
+  </data>
+  <data name="Status.UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+  </data>
+</root>

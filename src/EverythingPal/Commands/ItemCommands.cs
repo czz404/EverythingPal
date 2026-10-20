@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using EverythingPal.Localization;
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 
@@ -11,7 +12,7 @@ namespace EverythingPal.Commands;
 /// <summary>Opens a file or folder with the shell (default app / Explorer).</summary>
 internal sealed partial class OpenItemCommand(string fullPath, bool isFolder) : InvokableCommand
 {
-    public override string Name => isFolder ? "打开文件夹" : "打开";
+    public override string Name => isFolder ? Strings.OpenFolderAction : Strings.OpenAction;
 
     public override IconInfo Icon => new(isFolder ? "\uE8B7" : "\uE8A7");
 
@@ -25,7 +26,7 @@ internal sealed partial class OpenItemCommand(string fullPath, bool isFolder) : 
         catch (Exception ex)
         {
             AppLog.Write($"OpenItemCommand failed for '{fullPath}': {ex.Message}");
-            return CommandResult.ShowToast("无法打开该项目");
+            return CommandResult.ShowToast(Strings.OpenItemFailedToast);
         }
     }
 }
@@ -33,7 +34,7 @@ internal sealed partial class OpenItemCommand(string fullPath, bool isFolder) : 
 /// <summary>Shows the item selected in a new Explorer window.</summary>
 internal sealed partial class RevealInExplorerCommand(string fullPath, bool isFolder) : InvokableCommand
 {
-    public override string Name => "在资源管理器中显示";
+    public override string Name => Strings.RevealInExplorerAction;
 
     public override IconInfo Icon => new("\uE8B7");
 
@@ -52,7 +53,7 @@ internal sealed partial class RevealInExplorerCommand(string fullPath, bool isFo
         catch (Exception ex)
         {
             AppLog.Write($"RevealInExplorerCommand failed for '{fullPath}': {ex.Message}");
-            return CommandResult.ShowToast("无法打开资源管理器");
+            return CommandResult.ShowToast(Strings.RevealInExplorerFailedToast);
         }
     }
 }
@@ -60,7 +61,7 @@ internal sealed partial class RevealInExplorerCommand(string fullPath, bool isFo
 /// <summary>Copies the full path to the clipboard.</summary>
 internal sealed partial class CopyItemPathCommand(string fullPath) : InvokableCommand
 {
-    public override string Name => "复制路径";
+    public override string Name => Strings.CopyPathAction;
 
     public override IconInfo Icon => new("\uE8C8");
 
@@ -69,12 +70,12 @@ internal sealed partial class CopyItemPathCommand(string fullPath) : InvokableCo
         try
         {
             ClipboardHelper.SetText(fullPath);
-            return CommandResult.ShowToast("路径已复制");
+            return CommandResult.ShowToast(Strings.CopyPathToast);
         }
         catch (Exception ex)
         {
             AppLog.Write($"CopyPathCommand failed: {ex.Message}");
-            return CommandResult.ShowToast("复制失败");
+            return CommandResult.ShowToast(Strings.CopyFailedToast);
         }
     }
 }
@@ -82,7 +83,7 @@ internal sealed partial class CopyItemPathCommand(string fullPath) : InvokableCo
 /// <summary>Selects the item in the Everything GUI (Everything.exe -select).</summary>
 internal sealed partial class OpenInEverythingCommand(string fullPath) : InvokableCommand
 {
-    public override string Name => "在 Everything 中定位";
+    public override string Name => Strings.LocateInEverythingAction;
 
     public override IconInfo Icon => new("\uE721");
 
@@ -90,10 +91,10 @@ internal sealed partial class OpenInEverythingCommand(string fullPath) : Invokab
     {
         try
         {
-            var exe = FindEverythingExe();
+            var exe = EverythingLocator.Find();
             if (exe is null)
             {
-                return CommandResult.ShowToast("未找到 Everything.exe");
+                return CommandResult.ShowToast(Strings.EverythingExeNotFoundToast);
             }
 
             var psi = new ProcessStartInfo(exe);
@@ -106,29 +107,8 @@ internal sealed partial class OpenInEverythingCommand(string fullPath) : Invokab
         catch (Exception ex)
         {
             AppLog.Write($"OpenInEverythingCommand failed: {ex.Message}");
-            return CommandResult.ShowToast("无法在 Everything 中定位");
+            return CommandResult.ShowToast(Strings.LocateInEverythingFailedToast);
         }
-    }
-
-    internal static string? FindEverythingExe()
-    {
-        var candidates = new[]
-        {
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything", "Everything.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Everything 1.5a", "Everything.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Everything", "Everything.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Everything 1.5a", "Everything.exe"),
-        };
-
-        foreach (var candidate in candidates)
-        {
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        return null;
     }
 }
 

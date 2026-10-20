@@ -1,138 +1,130 @@
-# HANDOVER — EverythingPal (Store 上架阶段)
+# HANDOVER — EverythingPal (Store 上架准备完成，待 Partner Center 身份)
 
-> 这份文档给「下一个 session」用。当前 session 上下文将满，在这里交接全部状态与下一步。
->
-> 新 session 的工作区：`E:\workspace\deepseek\EverythingPal`
-> 先读本文件 + `README.md`，再 `git log --oneline -10` / `gh run list` 确认状态。
+> 给下一个 session 的交接。工作区：`E:\workspace\deepseek\EverythingPal`
+> 先读本文件 + `README.md`；`git status` 当前应干净（本 session 末尾会提交）。
+> 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
+> `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
+> `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
 
-## 这是什么
+## 当前状态（2026-10-20 收尾）
 
-Everything 搜索扩展，用于 PowerToys Command Palette（CmdPal）。
-仓库：<https://github.com/czz404/EverythingPal>（private，用户 czz404）。
+- 版本 **0.2.0.0**，`main` 干净、CI 预期全绿；单元测试 **67/67**（提权跑）。
+- 已完成一轮“发布前打磨”（用户明确要求不要急着上架）：
+  - **真实文件类型图标**（SHGetFileInfo + 每扩展名缓存 PNG；页面与主页 fallback 行都有），
+    不再用笼统的文件夹/文件字形。图标类：`src/EverythingPal/Services/ShellIconProvider.cs`。
+  - **中英双语**（跟随系统 UI 语言，`EVERYTHINGPAL_LANG` 可强制）：`Resources/Strings*.resx` +
+    `Localization/Strings.cs`，95 个键，en/zh 键集一致（有测试）。
+  - **About 页不再出现 GitHub 用户名**：`Package.appxmanifest` 的
+    `<Properties><PublisherDisplayName>` 改为 `EverythingPal`（CmdPal 的 About 卡只读这个字段；
+    `Identity/@Publisher` 不显示）。
+  - **回退命令三行可辨认**：每行 `DisplayTitle` 为「Everything 搜索（第 N 行）」；三行=三个
+    `FallbackCommandItem`（CmdPal 的 fallback 模型就是一行一个命令，没有多行 API）。主页 fallback
+    延迟改为 50 ms（宿主对 inline fallback 有约 200 ms 预算），并先写 Title 再异步升级图标。
+  - **无参启动诊断对话框**（`Ui/LaunchDialog.cs`，Win32 MessageBox）：开始菜单点开不再“死掉”，
+    显示 PowerToys/Everything/es.exe 检测结果、版本、日志路径，可一键打开 Command Palette。
+  - **Core 正确性**：空结果不再显示空白列表（`SearchOutcomeMapper`）；盘符根 `D:` 有标题；
+    Everything.exe 发现支持自定义安装目录（注册表 App Paths/Uninstall、运行中进程、PATH——本机
+    `D:\software\Everything` 已验证）；es.exe 路径按配置缓存。
+  - **自包含打包**：`scripts/pack-store.ps1` 用 `dotnet publish --self-contained -p:PublishTrimmed=true`
+    产 x64+ARM64 未签名 `.msixbundle`（干净 Store 机器无需装 .NET）。`deploy.ps1` 也改为自包含，
+    用于本地签名安装/E2E。
+  - 图标资源重做为多 scale（`scripts/generate-icons.py`，37 个 PNG，含 300×300 商店图标）。
 
-- 纯托管扩展（无原生 SDK DLL），通过 **bundled `es.exe`（MIT，来自 voidtools/ES）** 查询本机
-  Everything；用户只需安装并运行 Everything。
-- 当前状态：**可用版本已完成并本机安装**；CI 全绿；release 工作流已产出 v0.1.0 draft（unsigned）。
-- 用户决定：**走 Microsoft Store 上架**，不再考虑自签分发。
+## 产物 / 已核实
 
-## 已实现的功能
+- **Store 上传包（未签名，最终）**：
+  `artifacts/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
+  size 22,348,532 B，SHA256 `512B9998E3A5BFF0240F41DCD573DF74DECE159A8B3704727EF90B98C9A4D8DB`
+  （x64/ARM64 各 ~10.8/10.5 MB；`artifacts/store/` 下还有两个 per-arch .msix 与 manifests）。
+  该 bundle 由 `scripts/pack-store.ps1` 生成，未签名（Store 重签）；本地安装验证用
+  `scripts/deploy.ps1 -Configuration Release` 出来的自包含签名包。
+- 本机已安装验证：`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`（Developer 签名，自包含）。
+  CmdPal 中：命令页/主页 3 行 fallback 均可见，真实图标（.lnk 箭头、文件夹、zip 图标）已确认。
+- 打包校验（脚本自动）：自包含 runtime、PE arch、zh-Hans satellite、GDI/System.Drawing、
+  Tools\es.exe、LICENSE + THIRD-PARTY-NOTICES、无 PDB、无 AppxSignature（unsigned）、
+  bundle 两架构同 identity、Windows.Desktop-only、`en-US`+`zh-Hans` 资源语言。
+- `docs/store/screenshots/` 下为最终商店截图（QA 采集，≥1366×768；提交前按 listing.md 复核）。
 
-- `Everything 搜索` 命令页：实时搜索（150ms 防抖），详情面板（大小/修改时间/可点路径）。
-- 主页 fallback：**多行内联结果**（默认 3 行，0–5 可配）。实现方式：一个扩展注册多个
-  `FallbackCommandItem`（`czz404.everythingpal.fallback.0/1/2`）。CmdPal 日志确认
-  `Loaded 4 command(s)` = 1 命令页 + 3 fallback 行，实测 `fallback result: Ok, 3 item(s)`。
-- 动作：打开 / 资源管理器定位 / 复制路径 / 在 Everything 中定位；盘符根路径（`D:\wantai`）正确。
-- 错误提示：Everything 未运行 → "Everything 没有运行" + **启动 Everything** / **下载 Everything**；
-  es.exe 缺失 → 重装提示；超时 → 索引未就绪提示。
-- 设置页：es.exe 路径、结果条数（1–500，默认 50）、排序、主页 fallback 行数（0–5，默认 3）。
-- 设置文件：`%LOCALAPPDATA%\EverythingPal\settings.json`。
+## 上架还差什么（按顺序）
 
-## 代码结构
+1. **Partner Center 注册 + 预留应用名**（用户个人账号 $19）：拿到 `Package/Identity/Name`、
+   `Package/Identity/Publisher`（`CN=<GUID>`）、`Package/Properties/PublisherDisplayName`、Store ID。
+   当前源码里的 `Identity Name=EverythingPal / Publisher=CN=czz404` 只是 dev 身份，**不要**直接提交。
+2. **用 Store 身份重打**（不改进源码 manifest）：
+   ```powershell
+   pwsh -File scripts/pack-store.ps1 -Version 1.0.0.0 `
+     -IdentityName "<PartnerCenter Name>" -Publisher "CN=<GUID>" `
+     -PublisherDisplayName "<Partner Center 的 PublisherDisplayName>"
+   ```
+   注意 Partner Center 版本规则：**第一段不能为 0**（Store 提交用 1.0.0.0；之后每次递增第三段），
+   第四段必须 0。脚本对 major=0 + Store 身份会硬报错。
+3. **公开支持/隐私 URL**：仓库现在是 private → `docs/store/privacy-policy.md` 需要托管到可公开访问
+   的 URL；支持链接同理（或把仓库转 public）。这是提交阻塞项。
+4. **决定 `unvirtualizedResources`**（认证风险 R2）：manifest 里保留了两条 `desktop6:*WriteVirtualization
+   disabled` + `unvirtualizedResources`。微软文档说该能力面向游戏/external-location，“不面向其他场景”，
+   审核可能要求 justification 或拒绝。建议做一次移除实验（设置/日志会落到包 LocalCache；es.exe 的
+   `%TEMP%` 导出仍需回归）——`docs/store/certification-notes.md` 已写了两套说法。
+5. **提交认证**：上传未签名 bundle（Store 重签）；Submission options 解释 `runFullTrust`
+   （打包 COM server 必需）；列表按 `docs/store/listing.md`；Notes for certification 用
+   `docs/store/certification-notes.md` 的英文短版（PowerToys + Everything 前提、Win+Alt+Space 测试步骤、
+   fallback 开启方法、无网络）。审核通常 1–3 个工作日。
+6. **发布后**：PFN 会从 `EverythingPal_b32a3jmekh2ja` 变 Partner Center 的 PFN → CmdPal 里该扩展的
+   per-fallback 开关/pin/alias 等设置会丢（settings 以 ProviderId=PFN!ExtensionId 为键），发版说明里写清。
+   另外 **Store-only 的 CmdPal 扩展在命令面板里不可发现**，建议同时发 WinGet + 商店 assoc tag。
 
-```
-src/EverythingPal/                 扩展（MSIX、COM server、页面、命令、设置）
-src/EverythingPal.Core/            纯逻辑（无 WinRT，单测覆盖）：ES 参数、JSON 解析、
-                                   排序、查询规范化、es.exe 定位、进程调用
-tests/EverythingPal.Core.Tests/    28 个 xUnit 测试
-scripts/deploy.ps1                 构建→下载 ES→组布局→makeappx→signtool→安装
-.github/workflows/ci.yml           单测(win) + Release x64 构建 + unsigned MSIX artifact
-.github/workflows/release.yml      v* tag：下载最新 ES(x64/ARM64)→构建→打包→可选签名→draft release
-Package.appxmanifest               Identity: EverythingPal / Publisher: CN=czz404
-```
-
-## 关键环境事实（本机）
-
-- Windows 11 26H1 build 28000.3231（x64），CmdPal 0.13.12862 / PowerToys 0.102.2862。
-- 已装：.NET 10 SDK 10.0.402、Windows SDK 10.0.26100.7705、VS Code、GitHub CLI 2.102.0（已 `gh auth login` 为 czz404）。
-  ⚠️ DSH 的 pwsh 继承的是安装前的旧 PATH：需要时手动前置
-  `C:\Program Files\dotnet`、`C:\Program Files\GitHub CLI`。
-- 开发证书 `CN=czz404` 在 `Cert:\CurrentUser\My` 且已信任到 `Cert:\LocalMachine\TrustedPeople`
-  （`scripts/deploy.ps1` 会自动处理；**Store 版不需要这个证书**）。
-- **必须用签名 MSIX 安装**：`Add-AppxPackage -Register`（松目录）会导致 COM server 启动失败
-  `CoResumeClassObjects → 0x80004015 CO_E_WRONG_SERVER_IDENTITY`。这条已实测，别再走松目录。
-- MSIX MSBuild 打包 targets 需要 Windows SDK 的 `UAP.props`；装 SDK 后可用，否则只能手工 makeappx。
-  `dotnet build -p:WindowsPackageType=None` 用于纯编译（CI 与本地 dev 的打包都由脚本手工 makeappx）。
-- `es.exe` 缓存：`artifacts/es/x64/es.exe`（deploy/release 自动下载最新版 voidtools/ES release）。
-  包内路径：`Tools\es.exe`（`FindEsExe` 优先使用）。
-- 安装后的包：`EverythingPal_0.1.0.0_x64__b32a3jmekh2ja`（PFN `EverythingPal_b32a3jmekh2ja`）。
-- 扩展日志：`%LOCALAPPDATA%\EverythingPal\Logs\extension.log`。
-- CmdPal 设置：`%LOCALAPPDATA%\Packages\Microsoft.CommandPalette_8wekyb3d8bbwe\LocalState\settings.json`
-  里 `ProviderSettings → EverythingPal_b32a3jmekh2ja!App!ID → FallbackCommands` 已把
-  `fallback.0/1/2` 设为 `IncludeInGlobalResults: true`（第三方 fallback 默认 false，必须开）。
-- DSH 沙箱怪癖（本会话遇到，下个 session 可能也会遇到）：
-  - 从 workspace 直接运行构建出来的 `EverythingPal.exe` 时，写 `%TEMP%` 会被拒绝（es.exe 导出失败）。
-    把 exe 复制到别的目录运行、或 `dotnet EverythingPal.dll ...` 就正常；CmdPal 拉起的进程不受影响。
-  - `dotnet test` 非提权运行时 testhost 报 `Win32Exception(5)`；用
-    `Start-Process -Verb RunAs cmd /c "dotnet test ... > log 2>&1"` 跑（UAC 静默）。
-  - 有火绒，可能拦截隐藏窗口的 powershell/cmd；被拦时改成交给用户手动执行的一次性命令。
-
-## 当前 git / CI / release 状态
-
-- 分支 `main`，最新提交 `c37fc7c`（clean，已 push）。
-- CI：最近几次全绿（单测 28 + Windows x64 构建 + unsigned MSIX artifact）。
-- Release：tag `v0.1.0` → draft release 已生成，资产 `EverythingPal_0.1.0.0_x64.msix`、
-  `_ARM64.msix`（各 ~8MB，内含 es.exe，**unsigned**）。
-- 注意：draft 是从较早 commit（1744849）打的；正式发布前把 tag 移到最新 commit 重新跑。
-
-## 下一步：Microsoft Store 上架清单
-
-1. **Partner Center**
-   - 注册 Microsoft Partner Center 开发者账号（个人约 $19 一次性）。
-   - Reserve app name（建议 "Everything Search for Command Palette" 或类似，避免与 Everything 官方混淆）。
-   - 拿到 Store 分配的 `Identity Name` 与 `Publisher`（`CN=...`），以及 Store ID。
-2. **包身份改造**
-   - 把 `src/EverythingPal/Package.appxmanifest` 的 `Identity/@Name`、`Identity/@Publisher`
-     改成 Partner Center 的值（Publisher 必须一字不差）。
-   - 版本号用 Store 要求（`x.y.z.0`，每次提交需递增）。
-   - 不需要改 CLSID / 代码；`AppContext.BaseDirectory\Tools\es.exe` 与 PFN 无关。
-   - 本地 dev 安装的 `EverythingPal_..._b32a3jmekh2ja` 与 Store 版 PFN 不同，可共存。
-3. **提交包**
-   - 需要 **x64 + ARM64 的 `.msixbundle`**（Store 接受 `.msix`/`.msixbundle`/`.msixupload`；
-     用 `makeappx bundle /f mapping.txt /p EverythingPal_<ver>_bundle.msixbundle`，
-     mapping 里分别指向两个 arch 的 msix；或 VS "Create App Packages" 生成 `.msixupload`）。
-   - **上传未签名包即可**，Store 会重新签名（现有 release workflow 的签名步骤可跳过/关掉）。
-   - 可能需要 `.msixupload`（= bundle + 资源 的 zip）；Partner Center 会提示。
-4. **Store 列表材料**
-   - 截图（至少 1 张，建议 1366×768 或更高，展示 CmdPal 里搜索 `wantai` 的结果）。
-   - 应用图标：需要 StoreLogo 300×300 等更高规格（当前是脚本生成的占位图，建议做正式图标）。
-   - 描述（中英）、分类 Utilities & tools、支持链接（仓库/issue）、隐私政策 URL（不收集数据也要有页面）。
-   - 年龄分级问卷、免费定价、市场选择。
-5. **能力/合规说明（certification notes 要写清楚）**
-   - `runFullTrust` + `unvirtualizedResources`：全信任 Win32 扩展 + 关闭写虚拟化（为了日志/Temp 正常）。
-   - 扩展会：调用包内 `Tools\es.exe`（MIT 第三方，已附 THIRD-PARTY-NOTICES）；启动用户自行安装的
-     `Everything.exe`（"启动 Everything" 动作）；读写 `%LOCALAPPDATA%\EverythingPal`。
-   - **没有网络能力**（不声明 internetClient），无遥测、不收集用户数据。
-   - CmdPal 第三方扩展的 fallback 需要在 CmdPal 设置里手动开启（IncludeInGlobalResults），
-     这属于 CmdPal 平台行为，可在描述里提示用户。
-6. **提交前自检**
-   - `dotnet build -c Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64` 通过。
-   - `dotnet test`（提权跑）28 通过。
-   - 包内 `Tools\es.exe` 存在、`THIRD-PARTY-NOTICES.md` 存在。
-   - 用 Store 身份打包后在干净用户（或删掉 dev 包）上安装，CmdPal 能 `Reload` 出
-     `Loaded 4 command(s)`，主页搜 `wantai` 出 3 行、详情面板正常、退出 Everything 后提示可启动。
-
-## 可以顺手继续的改进（非阻塞）
-
-- 文件类型图标（按扩展名映射 Segoe 字形）、正式图标资源。
-- 中英 i18n（当前 UI 文案为中文硬编码）。
-- fallback 分组的单测（需要把 group 逻辑抽到 Core 或做可注入的搜索桩）。
-- `msixbundle` 加入 release workflow 产物。
-- Node20 action 版本升级（checkout/setup-dotnet/upload-artifact → v5），仅警告。
-
-## 常用命令
+## 重跑验证
 
 ```powershell
 $env:PATH = "C:\Program Files\dotnet;C:\Program Files\GitHub CLI;" + $env:PATH
 cd E:\workspace\deepseek\EverythingPal
 
-pwsh -File scripts/deploy.ps1 -RestartCmdPal     # 本地构建+打包+签名+安装+重启 CmdPal
-dotnet test tests\EverythingPal.Core.Tests\EverythingPal.Core.Tests.csproj   # 提权跑
-gh run list --limit 5                            # 查看 CI
-gh release list                                   # 查看 draft release
+# 单测（必须提权；非提权 testhost 会 Win32Exception(5)）
+#   Start-Process -Verb RunAs cmd /c "dotnet test ... > log 2>&1"
+dotnet test tests\EverythingPal.Core.Tests\EverythingPal.Core.Tests.csproj
+
+pwsh -File scripts\pack-store.ps1                    # ~20s（冷）/ 8s（热），产 artifacts/store/*.msixbundle
+pwsh -File scripts\verify-build.ps1                  # 独立校验（测试/包/无头搜索），报告 docs/qa/verification.md
+pwsh -File scripts\deploy.ps1 -Configuration Release -RestartCmdPal   # 本机自包含签名安装 + 重启 CmdPal
+pwsh -File scripts\capture-screenshots.ps1 -Mode page -Queries wantai -SelectFirst -Backdrop -Names 01-search-page
+pwsh -File scripts\capture-screenshots.ps1 -Mode home -Queries wantai -SelectFirst -Backdrop -Names 02-home-inline
 ```
 
-## 用户偏好 / 决策记录
+## 环境 / 沙箱怪癖（本机）
 
-- 扩展名界面用中文；包名 `EverythingPal`；仓库先 private，确认好用后再考虑 public。
-- 明确要求：`es.exe` 由 release 自动从 voidtools/ES 下载并打包；错误提示必须明确可操作。
-- 已卸载旧的 VictorLin ECP 插件，只保留本插件。
+- Windows 11 26H1 build 28000.3231 (x64)；CmdPal 0.13.12862（host ABI 0.13.261013002）；
+  SDK 引用 `Microsoft.CommandPalette.Extensions` 0.12.260812002（NuGet 最新稳定，和 host ABI 兼容）。
+- PATH 里要手动前置 `C:\Program Files\dotnet`、`C:\Program Files\GitHub CLI`（DSH 继承的是安装前 PATH）。
+- DSH 沙箱：**从 workspace 路径直接跑发布产物时 es.exe 会 `Error 5: Failed to create output file`**
+  （临时文件写不进去的沙箱怪癖）；把 self-contained publish 复制到 workspace 之外
+  （例如 `E:\workspace\deepseek\_epwt-publish`）再跑 `dotnet EverythingPal.dll --search-test readme`
+  就正常（本 session 已验证 status Ok）。CmdPal 拉起的已安装扩展不受影响。
+- 非提权 `dotnet test` 的 testhost 会 `Win32Exception(5)`；用
+  `Start-Process -Verb RunAs cmd /c "dotnet test ... > log 2>&1"`。
+- 有火绒，可能拦截隐藏窗口的 powershell/cmd；被拦时交给用户手动执行。
+- `dotnet publish` 必须加 `-p:EnableMsixTooling=false`（否则 MSB3030 缺 EverythingPal.pri）和
+  `-p:PublishProfile=`（否则 NETSDK1198）；脚本已处理。
+- 安装/本地签名：dev 证书 `CN=czz404` 在 `Cert:\LocalMachine\TrustedPeople`；Store 版不需要。
+  仍是 `Add-AppxPackage` 安装（不要用 `-Register` 松目录，COM server 会 CO_E_WRONG_SERVER_IDENTITY）。
+
+## 用户偏好 / 决策
+
+- **不要署名**：CmdPal 设置页 About 不显示个人 GitHub 用户名；发布者显示名 = `EverythingPal`。
+- 界面中英双语、跟随系统；商店列表中文为主 + 英文。
+- 上架前先把本体打磨好（本 session 的主线）；Store 身份/隐私 URL 等留到 Partner Center 阶段。
+- 扩展名界面用中文；包名 `EverythingPal`；`es.exe` 由构建自动从 voidtools/ES 下载并打包。
+- 之前已卸载 VictorLin ECP 插件，只保留本插件。
+
+## 代码结构
+
+```
+src/EverythingPal/                 扩展（MSIX、COM server、页面/命令/设置、图标、i18n、启动对话框）
+src/EverythingPal.Core/            纯逻辑（无 WinRT，单测覆盖）：ES 参数、JSON 解析、排序、
+                                   查询规范化、es.exe/Everything 发现、退出码映射
+tests/EverythingPal.Core.Tests/    67 xUnit 测试
+scripts/deploy.ps1                 自包含 publish -> layout -> makeappx -> signtool -> 安装
+scripts/pack-store.ps1             自包含 x64+ARM64 -> MSIX -> 未签名 Store bundle（身份参数化）
+scripts/verify-build.ps1           QA 独立验证（含从 workspace 外跑无头搜索）
+scripts/capture-screenshots.ps1    自动截 CmdPal 窗口（商店截图，≥1366×768）
+scripts/generate-icons.py          多 scale 图标生成（Pillow）
+docs/store/                        商店材料；docs/qa/ QA 报告；docs/research/ 平台研究
+```

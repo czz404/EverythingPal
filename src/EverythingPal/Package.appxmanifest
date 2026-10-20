@@ -9,26 +9,40 @@
   xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   IgnorableNamespaces="uap uap3 rescap desktop6">
 
+  <!--
+    Identity/@Name and Identity/@Publisher still use the local dev identity. For a Microsoft Store
+    submission they MUST be replaced by the values reserved in Partner Center; do that only in the
+    staged layout via scripts/pack-store.ps1 -IdentityName ... -Publisher ... (see
+    docs/store/packaging.md). PublisherDisplayName is display-only (CmdPal's extension "About" card
+    shows it) and is intentionally branded "EverythingPal" here.
+  -->
   <Identity
     Name="EverythingPal"
     Publisher="CN=czz404"
-    Version="0.1.0.0" />
+    Version="0.2.0.0" />
 
   <Properties>
     <DisplayName>Everything Search</DisplayName>
-    <PublisherDisplayName>czz404</PublisherDisplayName>
+    <PublisherDisplayName>EverythingPal</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
     <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
     <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
   </Properties>
 
+  <!--
+    Desktop only: this is a full-trust packaged COM server that only makes sense on Windows desktop
+    with PowerToys Command Palette. Declaring Windows.Universal would make the Store offer it to
+    Xbox/Holo devices where it cannot work.
+  -->
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
   </Dependencies>
 
   <Resources>
     <Resource Language="en-US" />
+    <!-- Shipped satellite: zh-Hans\EverythingPal.resources.dll (the UI is Chinese). Declared here so
+         the Store language metadata matches the resources that actually ship in the package. -->
+    <Resource Language="zh-Hans" />
   </Resources>
 
   <Applications>
