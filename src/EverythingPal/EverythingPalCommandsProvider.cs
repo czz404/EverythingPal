@@ -9,6 +9,7 @@ namespace EverythingPal;
 public partial class EverythingPalCommandsProvider : CommandProvider
 {
     private readonly ICommandItem[] _commands;
+    private readonly IFallbackCommandItem[] _fallbacks;
     private readonly EverythingPalPage _page = new();
 
     public EverythingPalCommandsProvider()
@@ -23,7 +24,10 @@ public partial class EverythingPalCommandsProvider : CommandProvider
                 Subtitle = "用 Everything 搜索文件和文件夹",
             },
         ];
+        _fallbacks = [new EverythingFallbackItem()];
     }
 
     public override ICommandItem[] TopLevelCommands() => _commands;
+
+    public override IFallbackCommandItem[] FallbackCommands() => _fallbacks;
 }
