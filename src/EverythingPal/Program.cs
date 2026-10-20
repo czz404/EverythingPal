@@ -21,7 +21,7 @@ public class Program
         if (args.Length > 0 && args[0] == "--search-test")
         {
             var query = args.Length > 1 ? args[1] : string.Empty;
-            var outcome = new EverythingSearch().Search(query, 20);
+            var outcome = new EverythingSearch().Search(query, new SearchOptions { MaxResults = 20 });
             Console.WriteLine($"status: {outcome.Status}");
             foreach (var result in outcome.Results)
             {
