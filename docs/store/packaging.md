@@ -111,6 +111,22 @@ publish 会更久，主要是下载 runtime pack + 首次 trim）。trim 期间 
 
 ---
 
+## 2.5 本仓库实际注册的 Store 身份（2026-10-20）
+
+| 字段 | 值 |
+|---|---|
+| 产品名（Store listing） | EverythingPal |
+| Package/Identity/Name | EverythingPal.EverythingPal |
+| Package/Identity/Publisher | CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F |
+| Package/Properties/PublisherDisplayName | EverythingPal |
+| Package/Properties/DisplayName（Store 包） | EverythingPal（必须是你预留过的名字之一；用 -DisplayName 注入） |
+| Store ID / URL | 9NFD76MCDRJZ / https://apps.microsoft.com/detail/9NFD76MCDRJZ |
+| PFN | EverythingPal.EverythingPal_33w78pmn50ga4 |
+
+最终上传包：artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle
+（SHA256 82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769，未签名）。
+生成命令见第 5 节；关键点：Store 严格校验 Identity Name/Publisher/PublisherDisplayName，并拒绝未预留的
+Properties/DisplayName，所以必须加 -DisplayName "EverythingPal"。
 ## 3. Partner Center 一次性流程
 
 1. 注册 Microsoft Partner Center 开发者账号（新 onboarding 流程下个人开发者注册免费；仍需 Microsoft 账户/身份验证）→ **Apps and Games** → **New product** → **MSIX or PWA app**。
@@ -362,3 +378,4 @@ pwsh -File scripts/deploy.ps1 -Configuration Release -RestartCmdPal
 - [listing.md](listing.md) — Store listing 文案素材
 - [certification-notes.md](certification-notes.md) — 认证说明 / 审阅者测试步骤
 - [docs/research/platform-and-store-research.md](../research/platform-and-store-research.md) — CmdPal/Store 调研（含认证风险与政策条款）
+

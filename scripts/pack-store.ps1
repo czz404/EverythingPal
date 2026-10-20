@@ -53,6 +53,12 @@
     Display publisher name shown in the Store and in CmdPal's extension "About" card. Applied ONLY to
     the staged layout manifests. Must match Partner Center "Properties/PublisherDisplayName".
 
+.PARAMETER DisplayName
+    Store product display name (Properties/DisplayName and the app VisualElements DisplayName).
+    The Store rejects a package whose Properties/DisplayName is not one of your reserved app names,
+    so pass the reserved Partner Center product name here (e.g. "EverythingPal"). Applied ONLY to the
+    staged layout manifests; the source manifest keeps its friendlier dev name.
+
 .PARAMETER Architectures
     Architectures to build and bundle. Default: x64,arm64. Accepts a subset (x64 / arm64).
 
@@ -91,7 +97,8 @@
         -Version 1.0.0.0 `
         -IdentityName "12345ABCDE6789.5F6E7D8C9B0A1F2E" `
         -Publisher "CN=01234567-89AB-CDEF-0123-456789ABCDEF" `
-        -PublisherDisplayName "EverythingPal"
+        -PublisherDisplayName "EverythingPal" `
+        -DisplayName "EverythingPal"
 
 .EXAMPLE
     # Re-pack the current Release build output without rebuilding (faster loop while tweaking manifests).
@@ -109,6 +116,7 @@ param(
     [string]$IdentityName,
     [string]$Publisher,
     [string]$PublisherDisplayName,
+    [string]$DisplayName,
     [string[]]$Architectures = @("x64", "arm64"),
     [string]$OutputDir = "artifacts/store",
     [string]$EsRoot = "artifacts/es",
@@ -222,6 +230,9 @@ $expectedPublisher = if ($Publisher) { $Publisher } else { $sourceIdentity.GetAt
 $sourcePublisherDisplayNameNode = $sourceManifest.SelectSingleNode("/*[local-name()='Package']/*[local-name()='Properties']/*[local-name()='PublisherDisplayName']")
 if (-not $sourcePublisherDisplayNameNode) { throw "Properties/PublisherDisplayName not found in $sourceManifestPath" }
 $expectedPublisherDisplayName = if ($PublisherDisplayName) { $PublisherDisplayName } else { $sourcePublisherDisplayNameNode.InnerText.Trim() }
+$sourceDisplayNameNode = $sourceManifest.SelectSingleNode("/*[local-name()='Package']/*[local-name()='Properties']/*[local-name()='DisplayName']")
+if (-not $sourceDisplayNameNode) { throw "Properties/DisplayName not found in $sourceManifestPath" }
+$expectedDisplayName = if ($DisplayName) { $DisplayName } else { $sourceDisplayNameNode.InnerText.Trim() }
 
 # Architecture tokens: MSBuild platform names differ from the MSIX ProcessorArchitecture tokens.
 $archDefinitions = @{
@@ -497,6 +508,19 @@ function New-Layout {
         if (-not $pdnNode) { throw "Properties/PublisherDisplayName missing in the staged manifest." }
         $pdnNode.InnerText = $PublisherDisplayName
     }
+    if ($DisplayName) {
+        # The Store rejects a package whose Properties/DisplayName is not one of the reserved app
+        # names, so the Store build uses the reserved product name even though the dev manifest keeps
+        # the friendlier "Everything Search" name.
+        $properties = $doc.SelectSingleNode("/*[local-name()='Package']/*[local-name()='Properties']")
+        if (-not $properties) { throw "Properties element not found in the staged manifest." }
+        $dnNode = $properties.SelectSingleNode("*[local-name()='DisplayName']")
+        if (-not $dnNode) { throw "Properties/DisplayName missing in the staged manifest." }
+        $dnNode.InnerText = $DisplayName
+
+        $visual = $doc.SelectSingleNode("/*[local-name()='Package']/*[local-name()='Applications']/*[local-name()='Application']/*[local-name()='VisualElements']")
+        if ($visual) { $visual.SetAttribute("DisplayName", $DisplayName) }
+    }
     $doc.Save($manifest)
 
     # Sanity-check that the staged manifest still parses and carries what we expect.
@@ -601,6 +625,9 @@ function Test-StagedPackage {
         $pdnNode = $doc.SelectSingleNode("/*[local-name()='Package']/*[local-name()='Properties']/*[local-name()='PublisherDisplayName']")
         if (-not $pdnNode) { throw "Properties/PublisherDisplayName missing in the $Arch package." }
         Assert-Equal $expectedPublisherDisplayName ($pdnNode.InnerText.Trim()) "$Arch unpacked PublisherDisplayName"
+        $dnNode = $doc.SelectSingleNode("/*[local-name()='Package']/*[local-name()='Properties']/*[local-name()='DisplayName']")
+        if (-not $dnNode) { throw "Properties/DisplayName missing in the $Arch package." }
+        Assert-Equal $expectedDisplayName ($dnNode.InnerText.Trim()) "$Arch unpacked DisplayName"
 
         $required = @(
             "EverythingPal.exe",

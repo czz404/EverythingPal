@@ -32,12 +32,27 @@
 
 ## 产物 / 已核实
 
-- **Store 上传包（未签名，最终）**：
-  `artifacts/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
-  size 22,349,272 B，SHA256 `73B71AF9B1570FC592DFFAB1522F177F1CCACD65878BBF0E8187B0DFEAAAF8E4`
-  （x64/ARM64 各 ~10.8/10.5 MB；`artifacts/store/` 下还有两个 per-arch .msix 与 manifests）。
-  该 bundle 由 `scripts/pack-store.ps1` 生成，未签名（Store 重签）；本地安装验证用
-  `scripts/deploy.ps1 -Configuration Release` 出来的自包含签名包。
+- **Partner Center 已注册（2026-10-20）**，产品名 **EverythingPal**，Product identity：
+  - `Package/Identity/Name` = `EverythingPal.EverythingPal`
+  - `Package/Identity/Publisher` = `CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F`
+  - `Package/Properties/PublisherDisplayName` = `EverythingPal`
+  - Store ID = `9NFD76MCDRJZ`；商店链接 `https://apps.microsoft.com/detail/9NFD76MCDRJZ`
+  - PFN = `EverythingPal.EverythingPal_33w78pmn50ga4`（换到 Store 身份后 CmdPal 的旧 dev PFN 设置会重置）
+- **最终 Store 上传包（未签名，Store 身份）**：
+  `artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle`
+  size 22,349,xxx B，SHA256 `82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769`
+  （x64/ARM64 各 ~10.8/10.5 MB；`manifests/` 为解包证据）。
+  生成命令：
+  ```powershell
+  pwsh -File scripts/pack-store.ps1 -Version 1.0.0.0 `
+    -IdentityName "EverythingPal.EverythingPal" `
+    -Publisher "CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F" `
+    -PublisherDisplayName "EverythingPal" -DisplayName "EverythingPal"
+  ```
+  注意 `-DisplayName EverythingPal` 是必须的：Store 会拒绝“未预留的 Properties/DisplayName”，
+  所以 Store 包内显示名用预留产品名 EverythingPal（dev 包仍是 Everything Search）。
+- 另有 **dev 包**（`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`，`CN=czz404`）用于本机 CmdPal 验证，
+  不要上传；Store 身份包不要在本机签名安装（Publisher 不匹配 dev 证书）。
 - 本机已安装验证：`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`（Developer 签名，自包含）。
   CmdPal 中：命令页、主页 fallback 均可见，真实图标（.lnk 箭头、文件夹、zip 图标）已确认。
   **主页 fallback 默认 1 行**（可 0–5）：为了和旧的两个 Everything 插件（lin-ycv ECP、goucey
