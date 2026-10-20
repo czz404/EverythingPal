@@ -15,8 +15,8 @@ env:
 
 jobs:
   test-core:
-    name: Unit tests (.NET 10)
-    runs-on: ubuntu-latest
+    name: Unit tests (.NET 10, Windows)
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -92,3 +92,4 @@ jobs:
           name: EverythingPal-unsigned-msix
           path: artifacts/EverythingPal-unsigned.msix
           if-no-files-found: error
+

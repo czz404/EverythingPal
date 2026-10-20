@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Test method names intentionally use underscores: Parse_detects_folders_from_trailing_separator. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,3 +26,4 @@
     <ProjectReference Include="..\..\src\EverythingPal.Core\EverythingPal.Core.csproj" />
   </ItemGroup>
 </Project>
+
