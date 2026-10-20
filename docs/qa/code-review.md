@@ -117,9 +117,10 @@ human decision** is F1 (`unvirtualizedResources` + disabled write virtualization
   (`01-search-page.png`); context menu unchanged (`03-context-menu.png`).
 - **Packaging re-verified on the final source tree:** `scripts/verify-build.ps1` → 26 PASS / 0 FAIL / 2 TBD
   (`docs/qa/verification.md`); final unsigned Store bundle for upload sha256
-  `512B9998E3A5BFF0240F41DCD573DF74DECE159A8B3704727EF90B98C9A4D8DB`.
+  `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12`.
 - Remaining open item: **F1 only** — restricted capability `unvirtualizedResources` +
   `desktop6:*WriteVirtualization=disabled` (`Package.appxmanifest:28-29`). This needs a submission-options
   justification or a deliberate removal + retest before/at Store submission; it is a product/certification
   decision, not a code defect. F5 (row-count reload UX) stays as a documentation/wording item; the rest are
   host-side TBDs (details pane, not-running status row) or fixed.
+

@@ -20,8 +20,8 @@
 | 商店图标 | `docs/store/assets/store-icon-300.png`（300×300 PNG） | 已生成 |
 | 截图 | `docs/store/screenshots/`（QA 负责采集，≥1366×768，≥1 张，建议 4–6 张） | 待采集最终图：采集管线已验证，需先装 0.2.0.0 新包；首图用 `-Mode page`（见 §10） |
 | 年龄分级 | IARC 问卷；无用户生成内容、无网络、无广告 → 预计 3+ | 问卷在 Partner Center 填 |
-| 隐私政策 URL | 需公开可访问；见 `privacy-policy.md`（托管位置 TBD） | **未托管 → 阻塞项** |
-| 支持 URL | GitHub 仓库/Issues（**仓库当前 private，必须先公开或建公开支持页**） | **阻塞项** |
+| 隐私政策 URL | https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md | ✅ 仓库已 public，可直接使用 |
+| 支持 URL | https://github.com/czz404/EverythingPal/issues | ✅ 仓库已 public |
 | 认证备注（Notes for certification） | 见 `certification-notes.md` 的英文粘贴版 | 已准备，需随最终行为复核 |
 
 > 截图、应用图标、描述、隐私/支持 URL 是 Store 列表的核心资产；其中**隐私政策 URL 与支持 URL 必须真实可访问**，否则提交可能被拒。
@@ -183,7 +183,7 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 
 ## 7. 版权 / 商标声明（Copyright & trademark）
 
-- Copyright © 2026 czz404（作者名/实体名 **TBD**：上架前确定 Store 的 Publisher display name，并与包内 `Properties/PublisherDisplayName` 一致；当前包内已由 store-packaging 改为 `EverythingPal`，最终以 Partner Center 值为准）。
+- Copyright © 2026 EverythingPal（与包内 `Properties/PublisherDisplayName` 一致；最终以 Partner Center 值为准）。
 - 本产品为第三方独立开发的 PowerToys Command Palette 扩展，**与 voidtools 及 Microsoft 无隶属、赞助或背书关系**。
 - “Everything” 是 voidtools 的商标；“PowerToys”“Command Palette” 是 Microsoft 的商标。本项目仅在描述性语境中使用这些名称。
 - 应用图标为本项目原创（`scripts/generate-icons.py` 生成，见 `assets/icon-inventory.md`），不含 voidtools / Microsoft 的商标或标志。
@@ -196,8 +196,8 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 
 | 项 | 值 | 状态 |
 | --- | --- | --- |
-| 支持 URL | `https://github.com/czz404/EverythingPal/issues`（或公开仓库首页） | **阻塞**：仓库当前 private；Store 审核/用户必须能打开。需先 public，或建 GitHub Pages 支持页 |
-| 隐私政策 URL | 由 `privacy-policy.md` 发布获得（GitHub Pages / 公开 gist / 仓库内 docs 路径） | **待托管** |
+| 支持 URL | $supportUrl | ✅ 仓库已 public，可直接访问 |
+| 隐私政策 URL | $privacyUrl | ✅ 仓库已 public，可直接访问 |
 | 支持邮箱（可选） | TBD（建议公开一个 GitHub Discussions/Issues 之外的邮箱，若无则只留 Issues） | TBD |
 
 > Learn 的 [Privacy policy and support info](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/support-info) 要求：若应用“访问、收集或传输个人信息”或能力声明可能触及个人信息，则必须提供隐私政策 URL；本应用实际不收集数据，但仍建议提供，且不要留空支持信息。
@@ -263,7 +263,7 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 | 2 | Short description 硬上限 | 提交时看 Partner Center 提示 |
 | 3 | Product features 条数与单条长度上限 | 提交时看字段提示 |
 | 4 | 搜索词数量/长度上限 | 提交时看字段提示 |
-| 5 | 隐私政策 URL、支持 URL 的最终托管地址 | Lead / 用户（仓库需 public） |
+| 5 | ~~隐私政策 URL、支持 URL~~（已解决：仓库已 public） | — |
 | 6 | Publisher display name / 作者署名 | 用户（与包内 `PublisherDisplayName` 一致） |
 | 7 | 最终截图（≥1366×768、中文 UI 版本） | QA / Lead（task-6）；需先安装 0.2.0.0 新包，首图用 `-Mode page` |
 | 8 | 上架语言组合（zh-CN + en-US 或仅其一） | 用户 |
@@ -283,4 +283,5 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 - [Microsoft Store Policies](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies) — 10.1.1 描述准确、10.1.2 完全可用/兼容性要求。
 
 **未核实 / 需现场确认（TBD）**：Short description、Product features、搜索词的硬上限；Partner Center 子类别 id；voidtools 再分发许可；headless 扩展的实际认证结果（见 `README.md` 风险与 `docs/research/platform-and-store-research.md`）。
+
 

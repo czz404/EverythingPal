@@ -11,9 +11,9 @@
 | 文件 | 内容 | 状态 |
 | --- | --- | --- |
 | [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、截图清单 | 草稿完成；待最终名称/URL/截图 |
-| [privacy-policy.md](privacy-policy.md) | 中英双语隐私政策（无网络/无遥测、本地设置与日志、第三方 es.exe） | 内容完成；**待托管公开 URL** |
+| [privacy-policy.md](privacy-policy.md) | 中英双语隐私政策（无网络/无遥测、本地设置与日志、第三方 es.exe） | ✅ 已随 public 仓库发布：https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md |
 | [certification-notes.md](certification-notes.md) | 认证备注（可粘贴英文版 + 中文版 + 能力/外部进程/headless 解释 + Q&A） | 草稿完成；待复核 3 处最终实现 |
-| [support.md](support.md) | 支持渠道、FAQ（Everything 未运行、fallback 行、日志、卸载）、反馈模板 | 内容完成；GitHub 仓库需 public |
+| [support.md](support.md) | 支持渠道、FAQ（Everything 未运行、fallback 行、日志、卸载）、反馈模板 | ✅ 仓库已 public：https://github.com/czz404/EverythingPal/issues |
 | [packaging.md](packaging.md) | 打包/Partner Center 流程（store-packaging 负责） | 由 store-packaging 产出，已存在 |
 | `assets/store-icon-300.png` | Store 列表 1:1 图标（300×300 PNG） | 已生成 |
 | [assets/icon-inventory.md](assets/icon-inventory.md) | 全部图标资源：尺寸、字节、SHA-256 前 12 位（脚本自动生成） | 已生成 |
@@ -192,3 +192,4 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 - Store 包构建/上传 → store-packaging + Lead
 
 **复核记录**：图标生成后已检查 16/24/32/48/44/50/150/300/310×150 及 1240×600 预览；文字/商标/隐私表述按当前源码（AppLog、Program、settings key、manifest capabilities）核对 2026-10-20。
+

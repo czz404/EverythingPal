@@ -34,7 +34,7 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
     public EverythingFallbackGroup(int rowCount)
     {
         rowCount = Math.Clamp(rowCount, 1, 5);
-        _items = Enumerable.Range(0, rowCount).Select(index => new EverythingFallbackItem(this, index)).ToArray();
+        _items = Enumerable.Range(0, rowCount).Select(index => new EverythingFallbackItem(this, index, rowCount)).ToArray();
     }
 
     public IFallbackCommandItem[] Items => _items;
@@ -153,10 +153,10 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
 }
 
 /// <summary>One home-search row, showing the N-th Everything result.</summary>
-internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup group, int index)
+internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup group, int index, int totalRows)
     : FallbackCommandItem(
         new NoOpCommand { Id = "czz404.everythingpal.fallback" },
-        Strings.FormatFallbackRowTitle(index + 1),
+        Strings.FormatFallbackRowTitle(index + 1, totalRows),
         $"czz404.everythingpal.fallback.{index}")
 {
     private static readonly IconInfo AppIcon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");

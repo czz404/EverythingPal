@@ -103,7 +103,7 @@
     <value>Please try again later</value>
   </data>
   <data name="Fallback.RowTitleFormat" xml:space="preserve">
-    <value>Everything Search (row {0})</value>
+    <value>Everything Search · home result {0}/{1}</value>
   </data>
   <data name="Fallback.TimeoutTitle" xml:space="preserve">
     <value>Everything query timed out</value>
@@ -235,7 +235,7 @@
     <value>es.exe path</value>
   </data>
   <data name="Settings.FallbackRowsDescription" xml:space="preserve">
-    <value>0–5, default 3. 0 disables the home fallback. Changing the count requires reloading the Command Palette extensions (Command Palette caches the fallback command list). Note: third-party fallbacks are excluded from global results by default; enable it under Command Palette's Fallback commands and tick "Include in global results".</value>
+    <value>0–5, default 3. 0 disables the home fallback. Each home row is a separate Command Palette fallback command (platform limitation: one row = one fallback command), so this page shows N switches for N rows — enable all of them to see N rows. Changing the count requires reloading the Command Palette extensions. Note: third-party fallbacks are excluded from global results by default; enable it under Command Palette's Fallback commands and tick "Include in global results".</value>
   </data>
   <data name="Settings.FallbackRowsLabel" xml:space="preserve">
     <value>Inline home-search rows</value>

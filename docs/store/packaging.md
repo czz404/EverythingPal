@@ -68,9 +68,9 @@ Debug symbols（`*.pdb`）在打包前被剔除，不进入 MSIX。
 | --- | --- | --- |
 | `publish-x64`（self-contained, trimmed） | 25.3 MB | — |
 | `publish-arm64`（self-contained, trimmed） | 26.7 MB | — |
-| `EverythingPal_0.2.0.0_x64.msix` | 10.81 MB（11,337,117 B） | `4556635B0D0DA3534F346EDEEFD4B799FEDB0E58CFFB5A6277F2E2C6CC46728A` |
-| `EverythingPal_0.2.0.0_arm64.msix` | 10.5 MB（11,009,442 B） | `C151E049F4A870E7D785B9871989D04BE24EABD4A81440B61370537183E75A0D` |
-| `EverythingPal_0.2.0.0_x64_arm64.msixbundle`（实际提交物） | **21.31 MB（22,348,532 B）** | `512B9998E3A5BFF0240F41DCD573DF74DECE159A8B3704727EF90B98C9A4D8DB` |
+| `EverythingPal_0.2.0.0_x64.msix` | 10.81 MB（11,337,460 B） | `38DD872D983A4ACC39F3608456DFBCF4772F5932142E68C51DF061B51D1C9B7D` |
+| `EverythingPal_0.2.0.0_arm64.msix` | 10.5 MB（11,009,785 B） | `45D2F91044ED23A7404BC237ADB069AAF38D894F2D7522114035BB1CF454B708` |
+| `EverythingPal_0.2.0.0_x64_arm64.msixbundle`（实际提交物） | **21.31 MB（22,349,218 B）** | `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12` |
 
 > SHA256 每次重新打包都会变化（不是可复现构建）；以 `pack-store.ps1` 本次输出 / `artifacts/store` 里的文件为准。
 > 上传前用 `Get-FileHash <file> -Algorithm SHA256` 复核。

@@ -223,10 +223,10 @@ internal static class Strings
     internal static string FormatResultCount(int count) =>
         string.Format(CultureInfo.CurrentCulture, Get("Fallback.ResultCountFormat"), count);
 
-    /// <summary>"Everything Search (row N)" / "Everything 搜索（第 N 行）" for the CmdPal fallback list.</summary>
+    /// <summary>"Everything Search · home result 1/3" / "Everything 搜索 · 主页结果 1/3" for the CmdPal fallback list.</summary>
     [SuppressMessage("Performance", "CA1863", Justification = "The format string is a localized resource resolved per call; these are low-frequency UI paths, not hot loops.")]
-    internal static string FormatFallbackRowTitle(int rowNumber) =>
-        string.Format(CultureInfo.CurrentCulture, Get("Fallback.RowTitleFormat"), rowNumber);
+    internal static string FormatFallbackRowTitle(int rowNumber, int totalRows) =>
+        string.Format(CultureInfo.CurrentCulture, Get("Fallback.RowTitleFormat"), rowNumber, totalRows);
 
     /// <summary>Formats one localized resource; used by the typed format helpers above.</summary>
     [SuppressMessage("Performance", "CA1863", Justification = "The format string is a localized resource resolved per call; these are low-frequency UI paths, not hot loops.")]

@@ -34,7 +34,7 @@
 
 - **Store 上传包（未签名，最终）**：
   `artifacts/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
-  size 22,348,532 B，SHA256 `512B9998E3A5BFF0240F41DCD573DF74DECE159A8B3704727EF90B98C9A4D8DB`
+  size 22,349,218 B，SHA256 `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12`
   （x64/ARM64 各 ~10.8/10.5 MB；`artifacts/store/` 下还有两个 per-arch .msix 与 manifests）。
   该 bundle 由 `scripts/pack-store.ps1` 生成，未签名（Store 重签）；本地安装验证用
   `scripts/deploy.ps1 -Configuration Release` 出来的自包含签名包。
@@ -58,8 +58,9 @@
    ```
    注意 Partner Center 版本规则：**第一段不能为 0**（Store 提交用 1.0.0.0；之后每次递增第三段），
    第四段必须 0。脚本对 major=0 + Store 身份会硬报错。
-3. **公开支持/隐私 URL**：仓库现在是 private → `docs/store/privacy-policy.md` 需要托管到可公开访问
-   的 URL；支持链接同理（或把仓库转 public）。这是提交阻塞项。
+3. **公开支持/隐私 URL**：✅ 已解决——仓库已转 public：
+   - 隐私政策：https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md
+   - 支持：https://github.com/czz404/EverythingPal/issues
 4. **决定 `unvirtualizedResources`**（认证风险 R2）：manifest 里保留了两条 `desktop6:*WriteVirtualization
    disabled` + `unvirtualizedResources`。微软文档说该能力面向游戏/external-location，“不面向其他场景”，
    审核可能要求 justification 或拒绝。建议做一次移除实验（设置/日志会落到包 LocalCache；es.exe 的
@@ -128,3 +129,5 @@ scripts/capture-screenshots.ps1    自动截 CmdPal 窗口（商店截图，≥1
 scripts/generate-icons.py          多 scale 图标生成（Pillow）
 docs/store/                        商店材料；docs/qa/ QA 报告；docs/research/ 平台研究
 ```
+
+

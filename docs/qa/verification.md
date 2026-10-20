@@ -583,7 +583,8 @@ so no personal desktop content is in the PNGs.
 
 ## Final artifacts reference
 
-- Final unsigned Store bundle produced for upload (Lead/pack-store): **sha256 `512B9998E3A5BFF0240F41DCD573DF74DECE159A8B3704727EF90B98C9A4D8DB`**.
+- Final unsigned Store bundle produced for upload (Lead/pack-store): **sha256 `CF0D13A85F95BC26D01C41F3755E9B8A04163C135D32B49D43FA139ADD374C12`**.
 - QA verification rebuild (this report): sha256 `BA27D726FAD696BDEF2FE097674A98B882847020AF4C39EDFBE4CA3C0EA7B5C3`, 21.31 MB, 0 FAIL.
 - **Remaining Store-submission decision (not a code bug):** `unvirtualizedResources` + disabled write virtualization
   (`Package.appxmanifest:28-29`, restricted capability) — justify in certification notes or remove+retest.
+
