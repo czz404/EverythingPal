@@ -43,6 +43,8 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
     {
         _query = query?.Trim() ?? string.Empty;
 
+        AppLog.Write($"fallback UpdateQuery: '{_query}'");
+
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -80,6 +82,8 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
 
     private void Apply(SearchOutcome outcome)
     {
+        var topSuffix = outcome.Results.Count > 0 ? $", top='{outcome.Results[0].FullPath}'" : string.Empty;
+        AppLog.Write($"fallback result: {outcome.Status}, {outcome.Results.Count} item(s){topSuffix}");
         if (outcome.Status is SearchStatus.EverythingNotRunning or SearchStatus.EsExeNotFound)
         {
             Title = "Everything 不可用";
@@ -135,3 +139,4 @@ internal sealed partial class EverythingFallbackItem : FallbackCommandItem, IDis
         GC.SuppressFinalize(this);
     }
 }
+
