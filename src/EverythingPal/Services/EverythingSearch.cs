@@ -35,10 +35,26 @@ internal sealed class EverythingSearch
 
     public static string? FindEsExe()
     {
-        var overridePath = Environment.GetEnvironmentVariable("EVERYTHINGPAL_ES");
-        if (!string.IsNullOrWhiteSpace(overridePath) && File.Exists(overridePath))
+        // 1. Explicit setting (settings page or EVERYTHINGPAL_ES environment variable).
+        var configured = EverythingPalSettings.Instance.EsExePath;
+        if (string.IsNullOrWhiteSpace(configured))
         {
-            return overridePath;
+            configured = Environment.GetEnvironmentVariable("EVERYTHINGPAL_ES") ?? string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            if (File.Exists(configured))
+            {
+                return configured;
+            }
+
+            // Allow pointing at the containing directory as well.
+            var candidate = Path.Combine(configured, "es.exe");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
         }
 
         foreach (var candidate in EsCandidates)
@@ -74,13 +90,17 @@ internal sealed class EverythingSearch
     /// Runs one ES query. Never throws: failures are returned as <see cref="SearchStatus"/>.
     /// Intended to be called off the UI thread.
     /// </summary>
-    public SearchOutcome Search(string query, int maxResults, string sort = "name-ascending")
+    public SearchOutcome Search(string query, int? maxResults = null, string? sort = null)
     {
         query = query.Trim();
         if (query.Length == 0)
         {
             return new SearchOutcome { Status = SearchStatus.NoResults };
         }
+
+        var settings = EverythingPalSettings.Instance;
+        var effectiveMax = Math.Clamp(maxResults ?? settings.MaxResults, 1, 500);
+        var effectiveSort = string.IsNullOrWhiteSpace(sort) ? settings.Sort : sort;
 
         var esExe = FindEsExe();
         if (esExe is null)
@@ -107,8 +127,8 @@ internal sealed class EverythingSearch
             foreach (var arg in new[]
                      {
                          "-export-json", tempFile,
-                         "-n", maxResults.ToString(CultureInfo.InvariantCulture),
-                         "-sort", sort,
+                         "-n", effectiveMax.ToString(CultureInfo.InvariantCulture),
+                         "-sort", effectiveSort,
                          "-date-format", "1",
                          "-size",
                          "-date-modified",

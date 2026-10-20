@@ -14,7 +14,6 @@ namespace EverythingPal;
 /// </summary>
 internal sealed partial class EverythingPalPage : DynamicListPage
 {
-    private const int MaxResults = 50;
     private const int DebounceMilliseconds = 150;
 
     private static readonly IconInfo FolderIcon = new("\uE8B7");
@@ -61,7 +60,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = _search.Search(_query, MaxResults);
+                    var outcome = _search.Search(_query);
                     token.ThrowIfCancellationRequested();
 
                     _items = BuildItems(outcome);
@@ -137,4 +136,5 @@ internal sealed partial class EverythingPalPage : DynamicListPage
             Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png"),
         };
 }
+
 

@@ -3,6 +3,7 @@
 
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
+using EverythingPal.Services;
 
 namespace EverythingPal;
 
@@ -16,12 +17,15 @@ public partial class EverythingPalCommandsProvider : CommandProvider
     {
         DisplayName = "Everything 搜索";
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
+        Settings = EverythingPalSettings.Instance.Settings;
+
         _commands =
         [
             new CommandItem(_page)
             {
                 Title = DisplayName,
                 Subtitle = "用 Everything 搜索文件和文件夹",
+                MoreCommands = [new CommandContextItem(Settings.SettingsPage)],
             },
         ];
         _fallbacks = [new EverythingFallbackItem()];
