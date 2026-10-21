@@ -18,7 +18,8 @@
 | `assets/store-icon-300.png` | Store 列表 1:1 图标（300×300 PNG） | 已生成 |
 | [assets/icon-inventory.md](assets/icon-inventory.md) | 全部图标资源：尺寸、字节、SHA-256 前 12 位（脚本自动生成） | 已生成 |
 | [assets/icon-preview.png](assets/icon-preview.png) | 图标预览接触表（浅色/深色背景，供人工检查） | 已生成 |
-| `screenshots/` | Store 截图（≥1366×768，中文 UI） | ✅ QA 已交付 4 张：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`；可选补设置页/错误态 |
+| [gallery-submission/](gallery-submission/) | CmdPal 社区 Gallery PR 的 staged 文件（extension.json、256 icon、4 张截图、提交步骤） | 待提交 PR |
+| screenshots/ | Store 截图（≥1366×768，中文 UI） | ✅ QA 已交付 4 张：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`；可选补设置页/错误态 |
 | [../research/platform-and-store-research.md](../research/platform-and-store-research.md) | 平台 API / Store 认证研究 | 已完成（research 任务） |
 
 ---
@@ -197,5 +198,6 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 - Store 上架后提交 CmdPal 社区 Gallery（`microsoft/CmdPal-Extensions`）→ Lead/用户（发布后）
 
 **复核记录**：图标生成后已检查 16/24/32/48/44/50/150/300/310×150 及 1240×600 预览；文字/商标/隐私表述按当前源码（AppLog、Program、settings key、manifest capabilities = runFullTrust only）核对 2026-10-20。2026-10-20 二次修正：Gallery 可发现性、个人开发者免费注册、主页 fallback 默认 1 行、`unvirtualizedResources` 已移除、公开 URL/截图状态。
+
 
 
