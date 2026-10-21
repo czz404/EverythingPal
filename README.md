@@ -10,11 +10,11 @@ JSON export.
 **The MSIX bundles the MIT-licensed `es.exe`** (from <https://github.com/voidtools/ES>), so users
 only need Everything itself installed and running — no separate ES download or PATH setup.
 
-> Status: **release candidate 0.2.0** — live search page, multi-row home-search fallback, real
-> shell file-type icons, details pane, bilingual (zh-Hans / en) UI and a launch diagnostics dialog
-> are in place. CI/CD produces a self-contained, unsigned x64+ARM64 `.msixbundle` ready for Microsoft
-> Store submission (Store identity values are injected at build time; see
-> `docs/store/packaging.md`).
+> Status: **published on the Microsoft Store** (2026-10-20) — live search page, home-search fallback,
+> real shell file-type icons, details pane, bilingual (zh-Hans / en) UI and a launch diagnostics
+> dialog. Install it from
+> [apps.microsoft.com/detail/9NFD76MCDRJZ](https://apps.microsoft.com/detail/9NFD76MCDRJZ); the
+> source builds a self-contained x64+ARM64 MSIX bundle (see `docs/store/packaging.md`).
 
 ## Features
 
@@ -52,6 +52,11 @@ only need Everything itself installed and running — no separate ES download or
 - For development: .NET 10 SDK, Windows SDK 10.0.26100 (MSIX packaging/signing), Developer Mode
 
 ## Install
+
+### From the Microsoft Store (recommended)
+
+[**EverythingPal on the Microsoft Store**](https://apps.microsoft.com/detail/9NFD76MCDRJZ) — Store ID
+`9NFD76MCDRJZ`. Windows 11, or Windows 10 2004+; x64 or ARM64. The Store handles signing and updates.
 
 ### From a release
 

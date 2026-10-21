@@ -1,6 +1,6 @@
 # Everything Search for Command Palette — Store 上架材料总览 / Store submission kit
 
-> 状态：**v1（2026-10-20，含 Store 材料修正）**，由 brand-materials（task-4）产出。
+> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。材料 v1 由 brand-materials（task-4）产出。
 > 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、4 张截图已交付、包能力只剩 `runFullTrust`。**提交前剩余项**：Partner Center 真实身份/名称、voidtools 再分发确认，见 §4 风险与 §3 清单。
 > 研究依据：[docs/research/platform-and-store-research.md](../research/platform-and-store-research.md)（CmdPal API / Store 认证研究）。
 
@@ -197,4 +197,5 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 - Store 上架后提交 CmdPal 社区 Gallery（`microsoft/CmdPal-Extensions`）→ Lead/用户（发布后）
 
 **复核记录**：图标生成后已检查 16/24/32/48/44/50/150/300/310×150 及 1240×600 预览；文字/商标/隐私表述按当前源码（AppLog、Program、settings key、manifest capabilities = runFullTrust only）核对 2026-10-20。2026-10-20 二次修正：Gallery 可发现性、个人开发者免费注册、主页 fallback 默认 1 行、`unvirtualizedResources` 已移除、公开 URL/截图状态。
+
 

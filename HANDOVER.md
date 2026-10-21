@@ -1,14 +1,20 @@
-# HANDOVER — EverythingPal (Store 上架准备完成，待 Partner Center 身份)
+# HANDOVER — EverythingPal（已上架 Microsoft Store）
 
 > 给下一个 session 的交接。工作区：`E:\workspace\deepseek\EverythingPal`
 > 先读本文件 + `README.md`；`git status` 当前应干净（本 session 末尾会提交）。
-> 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
-> `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
-> `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
+>
+> **状态：2026-10-20 已发布到 Microsoft Store**
+> - Store 页面：<https://apps.microsoft.com/detail/9NFD76MCDRJZ>
+> - 产品名 / Store ID：`EverythingPal` / `9NFD76MCDRJZ`
+> - 包版本 `1.0.0.0`（x64+ARM64 bundle，Store 已重签）
+> - 后续：提交 CmdPal Gallery（`microsoft/CmdPal-Extensions`）、可选 WinGet、监控评价/崩溃。
+> - 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
+>   `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
+>   `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
 
 ## 当前状态（2026-10-20 收尾）
 
-- 版本 **0.2.0.0**，`main` 干净、CI 预期全绿；单元测试 **67/67**（提权跑）。
+- 源码/dev 版本 **0.2.0.0**；Store 上架包版本 **1.0.0.0**（`artifacts/store-identity`）。`main` 干净、CI 全绿；单元测试 **67/67**（提权跑）。
 - 已完成一轮“发布前打磨”（用户明确要求不要急着上架）：
   - **真实文件类型图标**（SHGetFileInfo + 每扩展名缓存 PNG；页面与主页 fallback 行都有），
     不再用笼统的文件夹/文件字形。图标类：`src/EverythingPal/Services/ShellIconProvider.cs`。
@@ -149,6 +155,7 @@ scripts/capture-screenshots.ps1    自动截 CmdPal 窗口（商店截图，≥1
 scripts/generate-icons.py          多 scale 图标生成（Pillow）
 docs/store/                        商店材料；docs/qa/ QA 报告；docs/research/ 平台研究
 ```
+
 
 
 
