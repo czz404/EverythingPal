@@ -1,6 +1,6 @@
 # Everything Search for Command Palette — Microsoft Store 上架文案
 
-> 状态：**v1.1（2026-10-20 修正版）**，供 Partner Center 提交时逐字复制。修正：Gallery 可发现性、个人开发者免费注册、主页 fallback 默认 1 行、能力只剩 `runFullTrust`、公开 URL/截图状态。
+> 状态：**v1.2（2026-10-21，1.0.1.0 更新）**，供 Partner Center 提交时逐字复制。v1.1 修正：Gallery、免费注册、默认 1 行、能力只剩 runFullTrust、公开 URL；v1.2 新增：智能匹配（忽略大小写/空格）、1920×1080 v2 截图、1.0.1.0 更新说明。**当前 Store live 版本 1.0.0.0，本次提交 1.0.1.0。**
 > 负责：brand-materials（task-4）；包身份 / 打包由 store-packaging（task-3）负责，见 [packaging.md](packaging.md)。
 > 事实核对来源：Microsoft Learn（见文末「引用与核实」）；未经核实的字段用 **TBD** 标出，提交前必须逐项确认。
 
@@ -16,9 +16,10 @@
 | 市场 | 全部市场（All markets） | 建议 |
 | 语言（商店列表） | 中文（简体，zh-CN/zh-Hans）为主 + English (United States) | 建议；每个语言要单独上传一次截图。UI 已双语（跟随系统显示语言） |
 | 支持的体系结构 | x64 + ARM64（`.msixbundle`） | 由 packaging 提供 |
+| 提交版本 | **1.0.1.0**（Store 当前 live：1.0.0.0） | 更新包；版本递增、第四段 0（打包规则见 packaging.md），更新说明见 §13 |
 | 包内身份 | 用 Partner Center「Product identity」的值逐字替换（Name / Publisher / PublisherDisplayName） | 由 store-packaging 执行；**提交前必须核对** |
 | 商店图标 | `docs/store/assets/store-icon-300.png`（300×300 PNG） | 已生成 |
-| 截图 | `docs/store/screenshots/`（QA 已采集 4 张，均 1366×768） | ✅ `01-search-page` / `02-home-inline-result` / `03-context-menu` / `04-zero-result`；可选补设置页/错误态（见 §10） |
+| 截图 | `docs/store/screenshots/`（v2：1920×1080，4 张 + 可选 1 张） | ✅ 已启用（Lead approved 2026-10-21）：`01-search-page` / `02-home-inline-result`（默认 1 行）/ `03-context-menu` / `04-zero-result`（+可选 `05-program-files`） |
 | 年龄分级 | IARC 问卷；无用户生成内容、无网络、无广告 → 预计 3+ | 问卷在 Partner Center 填 |
 | 隐私政策 URL | https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md | ✅ 仓库已 public，可直接使用 |
 | 支持 URL | https://github.com/czz404/EverythingPal/issues | ✅ 仓库已 public |
@@ -52,15 +53,15 @@
 
 **中文（zh-CN）**
 ```
-EverythingPal 是 PowerToys 命令面板的 Everything 搜索扩展：在命令面板里直接搜索本机文件和文件夹，回车打开、定位或复制路径。需已安装并运行 Everything 1.4/1.5；内置 es.exe，无需另行下载。
+EverythingPal 是 PowerToys 命令面板的 Everything 搜索扩展：在命令面板里直接搜索本机文件和文件夹，回车打开、定位或复制路径。智能匹配忽略大小写与空格（输入 term1 也能找到 Term 1）。需已安装并运行 Everything 1.4/1.5；内置 es.exe，无需另行下载。
 ```
-字符数：**124**（含标点，远低于 270）。
+字符数：**159**（含标点，低于 270）。
 
 **English (en-US)**
 ```
-Search your PC's files from PowerToys Command Palette. Type a file name, then open, reveal, or copy its path — powered by your local Everything index. Requires Everything 1.4/1.5 running; es.exe is bundled.
+Search your PC's files from PowerToys Command Palette. Type a name, then open, reveal, or copy its path — powered by your local Everything index. Smart matching ignores case and whitespace (term1 finds Term 1). Requires Everything 1.4/1.5 running; es.exe is bundled.
 ```
-字符数：**206**（含标点，远低于 270）。
+字符数：**266**（含标点，低于 270）。
 
 ---
 
@@ -81,7 +82,8 @@ EverythingPal 把 Everything 的本地文件搜索带进 PowerToys 命令面板�
 【功能】
 • 主页内联结果：在命令面板主页输入文件名，默认显示 1 行（可在设置中改为 0–5 行）Everything 结果；回车打开，右键菜单可定位、复制路径或在 Everything 中打开。
 • 实时搜索页：进入「Everything 搜索」命令，输入即搜（150 ms 防抖），结果按名称精确度、前缀、包含关系、文件夹/长度排序。
-• 详情面板：显示文件大小、修改时间与可点击的完整路径。
+• 智能匹配：单个关键词查询忽略大小写与空格，输入 term1 也能找到 Term 1（Everything 1.4 下自动回退到原始查询，兼容性不受影响）；高级 Everything 语法（ext:、folder:、通配符、路径等）保持原样传递，行为不变。
+• 详情面板（是否显示取决于 CmdPal 宿主版本）：显示文件大小、修改时间与可点击的完整路径。
 • 可操作错误：Everything 未运行时可一键「启动 Everything」或「下载 Everything」；内置 es.exe 缺失、Everything 索引未就绪（超时）都有明确提示。
 • 设置页：结果条数（1–500）、排序方式、主页 fallback 行数（0–5）、es.exe 路径覆盖。
 • 自带 MIT 许可的 es.exe（来自 voidtools/ES），你只需安装并运行 Everything 本体，无需再单独下载命令行工具或配置 PATH。
@@ -111,7 +113,8 @@ REQUIREMENTS
 FEATURES
 • Inline results on the Command Palette home screen: type a file name and get one row of Everything results by default (0–5 configurable). Enter opens the item; the context menu can reveal it, copy the path, or open it in Everything.
 • Live search page: open the "Everything Search" command and type to search with a 150 ms debounce, ranked by exact name, prefix, substring, folders and shorter names.
-• Details pane: size, modified time and a clickable full path.
+• Smart matching: single-word queries ignore case and whitespace, so "term1" also finds "Term 1" (on Everything 1.4 the app automatically falls back to the original query, so compatibility is unaffected); advanced Everything syntax (ext:, folder:, wildcards, paths) is passed through unchanged.
+• Details pane (when the CmdPal host renders it): size, modified time and a clickable full path.
 • Actionable errors: if Everything is not running, use "Start Everything" or "Download Everything"; a missing bundled es.exe or a still-loading index are explained clearly.
 • Settings page: result count (1–500), sort order, home-screen fallback rows (0–5) and an optional es.exe override.
 • The MIT-licensed es.exe (from voidtools/ES) is bundled: you only need Everything itself — no separate CLI download, no PATH setup.
@@ -132,27 +135,29 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 
 ## 4. 功能列表（Product features / 短 bullet）
 
-> Partner Center 的 “Product features” 一般最多 20 条、每条长度受限（**TBD**）；以下 8 条 zh + 8 条 en 可直接逐条粘贴。
+> Partner Center 的 “Product features” 一般最多 20 条、每条长度受限（**TBD**）；以下 9 条 zh + 9 条 en 可直接逐条粘贴。
 
 **中文**
 1. 在 PowerToys 命令面板内实时搜索本机文件与文件夹
 2. 主页默认显示 1 行内联结果（0–5 行可调），回车即打开
-3. 详情面板显示大小、修改时间与完整路径
+3. 结果信息（大小、修改时间、路径；详情面板是否显示取决于 CmdPal 宿主版本）
 4. 资源管理器定位、复制路径、在 Everything 中打开
 5. Everything 未运行时一键启动或下载
 6. 自带 MIT 许可的 es.exe，免配置
 7. 无网络能力、无遥测、不收集数据
 8. 支持 x64 与 ARM64
+9. 智能匹配：忽略大小写与空格（term1 匹配 Term 1）
 
 **English**
 1. Live local file search inside PowerToys Command Palette
 2. One inline result on the Command Palette home screen by default (0–5 configurable)
-3. Details pane with size, modified time and full path
+3. File info (size, modified time, path; the details pane depends on the CmdPal host version)
 4. Reveal in Explorer, copy path, or open in Everything
 5. Start or download Everything when it is not running
 6. Bundled MIT-licensed es.exe, zero configuration
 7. No network capability, no telemetry, no data collection
 8. x64 and ARM64 support
+9. Smart matching ignores case and whitespace (term1 matches Term 1)
 
 ---
 
@@ -220,31 +225,24 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 
 要求（已核实）：至少 1 张、最多 10 张桌面截图；`.png`，横向或纵向，≤50 MB；桌面要求 **≥1366×768**（支持 4K）；每张可加 ≤200 字符说明文字。建议提供 4–6 张。截图里的产品文案如果是中文，提交 zh-CN 列表；en-US 列表需要单独上传一份（可同图，说明文字用英文）。UI 已支持中/英双语，若时间允许可为 en-US 列表补拍英文 UI 截图（非必须）。
 
+> **当前截图集（v2，已启用）**：**1920×1080**（高于 Store 最低要求），统一查询 `program files`（通用、与机器无关、不含个人路径）；`docs/store/screenshots/` 就是提交用最终图（QA 采集、Lead approved 2026-10-21）。旧的 1366×768 / `wantai` 套图已作废。
+
 | # | 画面（文件） | 中文说明（≤200 字符） | English caption |
 | --- | --- | --- | --- |
-| 1 | 「Everything 搜索」命令页：查询 `wantai` 的真实文件/文件夹结果（`01-search-page.png`，已交付） | 「实时搜索本机文件：结果就是磁盘上的真实文件与文件夹，不是快捷方式」 | "Live local file search: results are the real files and folders on disk, not shortcuts." |
-| 2 | CmdPal 主页回退区：默认 **1 行** Everything 结果（`02-home-inline-result.png`，已交付；0–5 可调） | 「在命令面板主页直接搜索文件名，默认显示 1 条 Everything 结果（0–5 行可调；需在 CmdPal 设置中启用回退命令）」 | "Search from the Command Palette home screen — one Everything result by default (0–5 configurable; enable the fallback row in Command Palette settings)." |
-| 3 | 结果右键菜单：打开文件夹、资源管理器定位、复制路径、在 Everything 中定位、显示详细信息（`03-context-menu.png`，已交付） | 「回车打开；右键可打开文件夹、资源管理器定位、复制路径，或在 Everything 中定位」 | "Open with Enter, or open the folder, reveal in Explorer, copy the path, or locate it in Everything." |
-| 4 | 无匹配结果状态：`没有匹配结果 换个关键词，或检查 Everything 的索引设置。`（`04-zero-result.png`，已交付） | 「没有匹配结果时给出明确提示，而不是空白列表」 | "A clear empty-state message when nothing matches, instead of a blank list." |
-| 5（可选） | 扩展设置页：结果条数、排序、主页 fallback 行数（默认 1，0–5 可调）、es.exe 路径 | 「可调结果条数、排序与主页显示行数（默认 1 行，可 0–5），支持自定义 es.exe 路径」 | "Configure result count, sort order, home-screen rows (default 1; 0–5) and an optional es.exe path." |
-| 6（可选） | CmdPal 设置 → 扩展 → Everything Search → 回退命令开关（含 Include in Global result） | 「在 Command Palette 设置中启用第三方回退命令，即可在主页看到内联结果」 | "Enable the extension's fallback rows in Command Palette settings to get inline home-screen results." |
-| 7（可选） | Everything 未运行时的错误提示 + 「启动 Everything」「下载 Everything」按钮 | 「Everything 未运行时给出可操作提示：一键启动或前往下载」 | "Actionable error when Everything is not running: start it, or go download it." |
+| 1 | 「Everything 搜索」命令页：查询 `program files` 的真实文件/文件夹结果（`01-search-page.png`） | 「实时搜索本机文件：结果列表与真实文件图标」 | "Live local file search with real file-type icons." |
+| 2 | CmdPal 主页回退区：默认 **1 行** Everything 结果（`02-home-inline-result.png`；0–5 可调） | 「在命令面板主页直接搜索文件名，内联显示 Everything 结果」 | "Search file names right from the Command Palette home screen with an inline Everything result." |
+| 3 | 结果右键菜单：打开文件夹、资源管理器定位、复制路径、在 Everything 中定位、显示详细信息（`03-context-menu.png`） | 「回车打开，右键可定位到资源管理器、复制路径或在 Everything 中打开」 | "Open with Enter, or reveal in Explorer, copy the path, or open the item in Everything." |
+| 4 | 无匹配结果状态（`04-zero-result.png`，查询 `zzzqqq`） | 「没有匹配结果时给出一行可读提示，而不是空白行」 | "A readable one-line no-results message instead of blank rows when nothing matches." |
+| 5（可选） | 「Everything 搜索」命令页搜索系统级文件夹 Program Files（`05-program-files.png`） | 「在「Everything 搜索」命令页中搜索系统级文件夹（Program Files）」 | "Searching system-level folders (Program Files) on the Everything search page." |
 
-已交付截图（QA，2026-10-20，均 1366×768）：`01-search-page.png`、`02-home-inline-result.png`、`03-context-menu.png`、`04-zero-result.png`（另有同名 `-fullscreen` 2560×1440 备份；提交用 1366×768 版本即可）。可选的第 5–7 张若需补拍：
-
-| 文件 | 画面 | 命令 / 方式 |
-| --- | --- | --- |
-| `05-extension-settings.png` | 设置页 | 手工：命令 → 右键 → 设置（设置页）后截取 |
-| `06-fallback-settings.png` | CmdPal 回退命令开关 | 手工：CmdPal 设置 → 扩展 → Everything Search → 回退命令 |
-| `07-everything-not-running.png` | Everything 未运行错误态 | 手工：退出 Everything 后跑 `-Mode page` 截取（完成后重新启动 Everything） |
+已采集 v2 截图（QA，2026-10-21，均 **1920×1080**）：`01-search-page.png`、`02-home-inline-result.png`、`03-context-menu.png`、`04-zero-result.png`，可选 `05-program-files.png`（另有同名 `-fullscreen` 2560×1440 参考图）。已启用并位于 `docs/store/screenshots/`；提交用 1920×1080 版本。
 
 拍摄注意：
-- **主页截图按默认 1 行**：`02-home-inline-result.png` 已由 QA 用 0.2.0.0 包 + `-Mode home -SelectFirst -Backdrop -Names 02-home-inline-result` 生成；如需重拍，勿再描述成“3 行”。行数可在扩展设置页调为 0–5，默认 1。
-- 首图（`01-search-page.png`）用 `-Mode page`，不依赖 fallback 开关；`-Backdrop` 用中性背景避免桌面隐私入镜（CmdPal 窗口有透明阴影边距），`-SelectFirst` 选中首项。
-- 截图脚本会校验 ≥1366×768 并写 `_capture-manifest.json`；最终 PNG 只保留在 `docs/store/screenshots/`。
+- **统一查询 `program files`**：通用、与机器无关；已验证画面不含 `C:\Users\<name>`、`C:\ProgramData`、`C:\Windows\ServiceProfiles` 等个人路径。**不要再用旧的 `wantai` 查询**（会暴露个人目录）。
+- **主页截图按默认 1 行**：`02-home-inline-result.png` 显示单行回退结果（0–5 可调；改行数后 Reload 生效）。
+- 详情面板在 CmdPal 0.13.12862 上不渲染（宿主行为，内置项同样如此），截图说明不承诺详情面板。
+- 使用中性背景（`-Backdrop`）避免桌面隐私入镜；脚本校验 Store 最低 ≥1366×768，v2 目标为 1920×1080。
 - 关键内容放在画面上 2/3（Store 可能在底部叠加文字）；不要加第三方 logo/水印/营销文字；避免过亮/过暗或高对比条纹。
-- 建议 100% 缩放、窗口 1366×768 或更大；截图需能看清中文（若最终 UI 为中文，zh-CN 列表优先）。
-- 截图里不要出现作者个人路径/用户名等隐私信息（如 `C:\Users\<真实姓名>`）。**注意：已交付的 `01-search-page.png` / `03-context-menu.png` 含本机路径 `C:\Users\Lenovo\...`（来自 Everything 索引结果）；Store 审核通常可接受，若想更干净，可重拍时用测试账户或换不含用户目录的查询。**
 
 ---
 
@@ -266,16 +264,43 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 | 4 | 搜索词数量/长度上限 | 提交时看字段提示 |
 | 5 | ~~隐私政策 URL、支持 URL~~（已解决：仓库已 public） | — |
 | 6 | Publisher display name / 作者署名 | 用户（与包内 `PublisherDisplayName` 一致） |
-| 7 | 最终截图 | 已交付 4 张（`01-search-page` / `02-home-inline-result` / `03-context-menu` / `04-zero-result`，均 1366×768）；可选补设置页/错误态 |
+| 7 | 最终截图 | ✅ v2 已启用（`docs/store/screenshots/`）：1920×1080 的 4 张 + 可选 `05-program-files` |
 | 8 | 上架语言组合（zh-CN + en-US 或仅其一） | 用户 |
 | 9 | voidtools 对再分发 es.exe 的书面确认 | 用户 / Lead |
 | 10 | 子类别选择 | 提交时决定 |
 | 11 | Store 上架后提交 CmdPal 社区 Gallery（`microsoft/CmdPal-Extensions`） | 发布后必做；决定是否同时发 WinGet（Lead / 用户） |
 | 12 | 个人开发者注册（新流程免费）与身份验证 | 从 storedeveloper.microsoft.com 进入；提交前（用户） |
+| 13 | 详情面板在 CmdPal 0.13.12862 上不渲染（宿主行为） | 提交前确认描述措辞（已加“取决于宿主版本”）；或等宿主修复后更新（Lead） |
 
 ---
 
-## 13. 引用与核实（References）
+## 13. 1.0.1.0 更新说明（What's new，提交时填入 “What's new in this version”）
+
+> Store 当前 live 版本 **1.0.0.0**；本次提交 **1.0.1.0**。版本规则/打包见 packaging.md（store-packaging 负责）。
+
+**中文（zh-CN）**
+```text
+1.0.1.0 更新：
+• 智能匹配：单个关键词查询现在忽略大小写与空格，输入 term1 也能找到 Term 1；在 Everything 1.4 上会自动回退到原始查询，兼容性不受影响。
+• 高级 Everything 语法（ext:、folder:、通配符、路径等）保持原样传递，行为不变。
+• 设置页「主页搜索内联结果行数」文案更简短；修改行数后 Reload（重新加载扩展）生效。
+• 无能力变更：仍只声明 runFullTrust，无网络能力，不收集数据。
+```
+
+**English (en-US)**
+```text
+What's new in 1.0.1.0:
+• Smart matching: single-word queries now ignore case and whitespace, so "term1" also finds "Term 1"; on Everything 1.4 the app automatically falls back to the original query, so compatibility is unaffected.
+• Advanced Everything syntax (ext:, folder:, wildcards, paths) is passed through unchanged.
+• The home-search inline rows setting text is shorter; changing the row count takes effect after reloading the extensions.
+• No capability changes: still runFullTrust only, no network capability, no data collection.
+```
+
+> 商店素材同步：截图升级为 v2（1920×1080，`program files` 查询）；描述/功能列表已加入智能匹配；Gallery 的 `extension.json` 已同步。
+
+---
+
+## 14. 引用与核实（References）
 
 已通过 web 抓取/搜索核实的 Microsoft Learn 页面：
 

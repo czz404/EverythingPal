@@ -359,6 +359,9 @@ function Get-PaletteWindow {
     $candidates = @($windows | Where-Object {
         $_.Visible -and -not $_.Cloaked -and $_.Width -gt 300 -and $_.Height -gt 200 -and
         $_.Title -notmatch 'PowerDock|toast|WinUI Desktop' -and
+        # Command Palette's settings window belongs to the same process and its title also contains
+        # "命令面板" / "Command Palette"; never capture/type into the settings window.
+        $_.Title -notmatch '设置|Settings' -and
         -not ($_.Width -ge $screenWidth -and $_.Height -ge $screenHeight)
     } | Sort-Object { $_.Width * $_.Height } -Descending)
     if ($candidates.Count -eq 0) { return $null }
@@ -846,7 +849,7 @@ $manifest = [ordered]@{
         screenHeight              = $screenHeight
         dpiAwareness              = "PerMonitorAwareV2"
         cmdPalPackage             = @(Get-AppxPackage -Name "Microsoft.CommandPalette" -ErrorAction SilentlyContinue | ForEach-Object { "$($_.Name)_$($_.Version)_$($_.Architecture)" })
-        everythingPalPackage      = @(Get-AppxPackage -Name "EverythingPal" -ErrorAction SilentlyContinue | ForEach-Object { "$($_.Name)_$($_.Version)_$($_.Architecture)__$($_.PackageFamilyName)" })
+        everythingPalPackage      = @(Get-AppxPackage -Name "EverythingPal*" -ErrorAction SilentlyContinue | ForEach-Object { "$($_.Name)_$($_.Version)_$($_.Architecture)__$($_.PackageFamilyName)" })
         inputInjection            = "SendInput (Win+Alt+Space hotkey + Unicode characters)"
     }
     settings    = [ordered]@{ mode = $Mode; commandSearchText = $CommandSearchText; queries = @($Queries); preQuery = $PreQuery; names = @($Names); selectFirst = [bool]$SelectFirst; targetWidth = $Width; targetHeight = $Height; waitMs = $WaitMs; scrollDown = $ScrollDown; keepPaletteOpen = [bool]$KeepPaletteOpen; backdrop = [bool]$Backdrop }

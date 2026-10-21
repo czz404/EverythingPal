@@ -16,11 +16,13 @@
 pwsh -File scripts/pack-store.ps1
 
 # 真实 Store 包：身份和版本都来自 Partner Center（示例值，务必替换）
+# Store 会校验 Properties/DisplayName，必须用 -DisplayName 传一个已预留的名字。
 pwsh -File scripts/pack-store.ps1 `
     -Version 1.0.0.0 `
     -IdentityName "12345ABCDE6789.5F6E7D8C9B0A1F2E" `
     -Publisher "CN=01234567-89AB-CDEF-0123-456789ABCDEF" `
-    -PublisherDisplayName "EverythingPal"
+    -PublisherDisplayName "EverythingPal" `
+    -DisplayName "EverythingPal"
 ```
 
 产物位置（脚本最后会打印完整路径、大小和 SHA256）：
@@ -123,10 +125,16 @@ publish 会更久，主要是下载 runtime pack + 首次 trim）。trim 期间 
 | Store ID / URL | 9NFD76MCDRJZ / https://apps.microsoft.com/detail/9NFD76MCDRJZ |
 | PFN | EverythingPal.EverythingPal_33w78pmn50ga4 |
 
-最终上传包：artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle
-（SHA256 82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769，未签名）。
-生成命令见第 5 节；关键点：Store 严格校验 Identity Name/Publisher/PublisherDisplayName，并拒绝未预留的
-Properties/DisplayName，所以必须加 -DisplayName "EverythingPal"。
+最终上传包（UNSIGNED，Store 会重新签名）：
+
+| 版本 | 文件 | 大小 | SHA256 | 状态 |
+| --- | --- | --- | --- | --- |
+| **1.0.1.0（当前）** | `artifacts/store-identity-1.0.1/EverythingPal_1.0.1.0_x64_arm64.msixbundle` | 21.32 MB（22,350,534 B） | `8A014E6D6155ECD2DFCCA1D06123D6BCE7D0D5283060F8B431CCB428C75E58FB` | Store 更新包（待提交） |
+| 1.0.0.0（历史） | `artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle` | 21.31 MB（22,349,304 B） | `82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769` | 首版已提交（历史基线，证据保留） |
+
+各版本对应的单架构包也在同一目录（`EverythingPal_<version>_x64.msix` / `_arm64.msix`）。
+生成命令见第 5 节；Store 严格校验 Identity Name/Publisher/PublisherDisplayName，并拒绝未预留的
+Properties/DisplayName，所以必须加 `-DisplayName "EverythingPal"`。SHA256 每次重打都会变，以 `artifacts/` 里实际文件为准。
 ## 3. Partner Center 一次性流程
 
 1. 注册 Microsoft Partner Center 开发者账号（新 onboarding 流程下个人开发者注册免费；仍需 Microsoft 账户/身份验证）→ **Apps and Games** → **New product** → **MSIX or PWA app**。
@@ -136,7 +144,7 @@ Properties/DisplayName，所以必须加 -DisplayName "EverythingPal"。
    - `Package/Identity/Publisher`（`CN=<GUID>`）
    - `Package/Properties/PublisherDisplayName`（显示名，可与 "EverythingPal" 不同，按 Partner Center 定的填）
    - **Store ID**（`9N...` 形式，用于商店链接）
-4. 用这 4 个值打包（第 0/5 节的命令，`-IdentityName`、`-Publisher`、`-PublisherDisplayName`；Store ID 不进包，只用于 listing/链接）。
+4. 用这 4 个值打包（第 0/5 节的命令，`-IdentityName`、`-Publisher`、`-PublisherDisplayName`、`-DisplayName`；Store ID 不进包，只用于 listing/链接）。
 5. 上传 `.msixbundle` → 提交认证。
 
 > 没有拿到真实身份前，本地也可以用 dev identity 打"冒烟包"验证整条流水线（就是第 0 节第一条命令），但**不能上传**。
@@ -155,7 +163,8 @@ pwsh -File scripts/pack-store.ps1
 pwsh -File scripts/pack-store.ps1 -Version 1.0.0.0 `
     -IdentityName "<Partner Center Identity Name>" `
     -Publisher "CN=<Partner Center Publisher GUID>" `
-    -PublisherDisplayName "<Partner Center PublisherDisplayName>"
+    -PublisherDisplayName "<Partner Center PublisherDisplayName>" `
+    -DisplayName "<Partner Center reserved display name>"
 
 # 3) 只重新打包，不重新 publish（改了 manifest/脚本后快速迭代）
 pwsh -File scripts/pack-store.ps1 -Version 1.0.1.0 -IdentityName ... -Publisher ... -SkipBuild
@@ -178,6 +187,7 @@ pwsh -File scripts/pack-store.ps1 -Untrimmed
 | `-IdentityName` | 源码 manifest 的 `Identity/@Name` | 只写 staged manifest |
 | `-Publisher` | 源码 manifest 的 `Identity/@Publisher` | 只写 staged manifest；Store 值必须是 `CN=...` |
 | `-PublisherDisplayName` | 源码 manifest 的 `Properties/PublisherDisplayName` | 只写 staged manifest |
+| `-DisplayName` | 源码 manifest 的 `Properties/DisplayName` | 只写 staged manifest；Store 要求是已预留产品名之一（同时注入 `uap:VisualElements/@DisplayName`） |
 | `-Architectures` | `x64,arm64` | 支持子集 `x64` / `arm64` |
 | `-OutputDir` | `artifacts/store` | 产物目录（相对仓库根或绝对路径） |
 | `-EsRoot` | `artifacts/es` | es.exe 缓存根；缺失时自动从 voidtools/ES latest 下载 |

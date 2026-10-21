@@ -1,7 +1,7 @@
 # Everything Search for Command Palette — Store 上架材料总览 / Store submission kit
 
-> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。材料 v1 由 brand-materials（task-4）产出。
-> 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、4 张截图已交付、包能力只剩 `runFullTrust`。**提交前剩余项**：Partner Center 真实身份/名称、voidtools 再分发确认，见 §4 风险与 §3 清单。
+> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。**正在准备 1.0.1.0 更新**（smart matching、v2 1920×1080 截图；当前 live 1.0.0.0）。材料 v1 由 brand-materials（task-4）产出。
+> 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、包能力只剩 `runFullTrust`、**v2 截图已启用（1920×1080）**。**1.0.1.0 提交剩余项**：填 What's new、真实 Store 身份打包、可选更新 Gallery 截图，见 §3 清单与 §4 风险。
 > 研究依据：[docs/research/platform-and-store-research.md](../research/platform-and-store-research.md)（CmdPal API / Store 认证研究）。
 
 ---
@@ -10,7 +10,9 @@
 
 | 文件 | 内容 | 状态 |
 | --- | --- | --- |
-| [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、可发现性（Gallery）、截图清单 | 文案就绪；待最终名称/Publisher 确认 |
+| [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、可发现性（Gallery）、截图清单、**1.0.1.0 更新说明** | v1.2 更新完成；待提交 |
+| [gallery-submission/](gallery-submission/) | CmdPal 社区 Gallery PR 的 staged 文件（extension.json 已加入 smart matching；256 icon；截图仍为旧 1366 副本，待 QA/Lead 刷新为 v2） | 待提交 PR |
+| `screenshots/` | Store 截图（v2：1920×1080，已启用） | ✅ **v2 已启用**（Lead approved 2026-10-21）：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`；可选 `05-program-files` |
 | [privacy-policy.md](privacy-policy.md) | 中英双语隐私政策（无网络/无遥测、本地设置与日志、第三方 es.exe） | ✅ 已随 public 仓库发布：https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md |
 | [certification-notes.md](certification-notes.md) | 认证备注（可粘贴英文版 + 中文版 + 能力/外部进程/headless 解释 + Q&A） | ✅ 已更新（能力只剩 runFullTrust；UI 已双语）；待复核无参启动文案 |
 | [support.md](support.md) | 支持渠道、FAQ（Everything 未运行、fallback 行、Gallery、日志、卸载）、反馈模板 | ✅ 仓库已 public：https://github.com/czz404/EverythingPal/issues |
@@ -18,8 +20,6 @@
 | `assets/store-icon-300.png` | Store 列表 1:1 图标（300×300 PNG） | 已生成 |
 | [assets/icon-inventory.md](assets/icon-inventory.md) | 全部图标资源：尺寸、字节、SHA-256 前 12 位（脚本自动生成） | 已生成 |
 | [assets/icon-preview.png](assets/icon-preview.png) | 图标预览接触表（浅色/深色背景，供人工检查） | 已生成 |
-| [gallery-submission/](gallery-submission/) | CmdPal 社区 Gallery PR 的 staged 文件（extension.json、256 icon、4 张截图、提交步骤） | 待提交 PR |
-| screenshots/ | Store 截图（≥1366×768，中文 UI） | ✅ QA 已交付 4 张：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`；可选补设置页/错误态 |
 | [../research/platform-and-store-research.md](../research/platform-and-store-research.md) | 平台 API / Store 认证研究 | 已完成（research 任务） |
 
 ---
@@ -82,17 +82,18 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 | 材料 | 中文 | English | 状态 / 缺口 |
 | --- | --- | --- | --- |
 | 应用名候选 | ✅ 5 个候选 + 推荐流程 | ✅ | 待 Partner Center 实际 reserve 结果 |
-| 简短描述 | ✅ 124 字符 | ✅ 206 字符 | 符合 ≤270 目标；字段硬上限 TBD |
-| 长描述 | ✅（功能/前提/fallback 说明/商标） | ✅ | 可直接粘贴 |
-| 功能列表 | ✅ 8 条 | ✅ 8 条 | Product features 上限 TBD |
+| 简短描述 | ✅ 159 字符 | ✅ 266 字符 | 符合 ≤270 目标；字段硬上限 TBD |
+| 长描述 | ✅（功能/前提/fallback/智能匹配/商标） | ✅ | 可直接粘贴 |
+| 功能列表 | ✅ 9 条（含智能匹配） | ✅ 9 条 | Product features 上限 TBD |
 | 分类 / 搜索词 | ✅ Utilities & tools + 7 搜索词 | ✅ | 子类别/上限 TBD |
 | 要求/定价/市场 | ✅ | ✅ | — |
 | 商标/版权声明 | ✅ | ✅ | 作者实体名 TBD |
 | 隐私政策 | ✅ 完整 | ✅ 完整 | ✅ 已托管（公开仓库文件，URL 可用） |
 | 认证备注 | ✅ 中文详解 + Q&A | ✅ 可粘贴短版 | 待复核无参启动最终文案；UI 已双语，能力仅 `runFullTrust` |
-| 支持/FAQ | ✅ 14 个 FAQ（新增 Gallery） | ✅ 摘要 | ✅ 仓库已 public |
-| 截图清单 | ✅ 4 张已交付 + 3 张可选 shot list | ✅ | ✅ `01`–`04` 已交付（1366×768）；`05`–`07` 可选 |
-| 商店可发现性（Gallery） | ✅ 文案/FAQ/清单已加 | ✅ | 发布后提交 `microsoft/CmdPal-Extensions`（见 §3.5、R6） |
+| 支持/FAQ | ✅ 15 个 FAQ（新增 Gallery、智能匹配） | ✅ 摘要 | ✅ 仓库已 public |
+| 截图清单 | ✅ v2：4 张 + 可选 1 张（1920×1080，已启用） | ✅ | `docs/store/screenshots/` 即提交集；旧 1366 套图作废 |
+| 1.0.1.0 更新说明 | ✅ 中英 What's new（listing.md §13） | ✅ | 待提交时粘贴 |
+| 商店可发现性（Gallery） | ✅ 文案/FAQ/清单已加；extension.json 已更新 | ✅ | 发布后提交 `microsoft/CmdPal-Extensions`（见 §3.5、R6） |
 | Store 图标 300×300 | ✅ | — | 已生成 |
 | 包/身份/打包 | 由 store-packaging 负责 | — | 见 [packaging.md](packaging.md) |
 
@@ -118,11 +119,12 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 - [ ] bundle 内两包除 `ProcessorArchitecture` 外 manifest 一致
 - [ ] 包内 `Tools\es.exe`、`THIRD-PARTY-NOTICES.md`、全部 `Assets\*.png` 存在
 - [ ] 干净机器实测安装 + CmdPal `Reload` 后 `Loaded 2 command(s)`（1 命令页 + 1 默认 fallback 行；行数改为 N 后应为 N+1）、搜索/详情/错误提示正常
+- [ ] **1.0.1.0 更新包**：版本递增（1.0.0.0 → 1.0.1.0，第四段 0）、What's new 填 [listing.md](listing.md) §13、能力无变化（仍只 `runFullTrust`）
 
 ### 3.3 列表素材（4S/Lead）
 
 - [ ] 上传 `assets/store-icon-300.png`（300×300，1:1）
-- [ ] 上传 QA 已交付的 4 张（`01-search-page` / `02-home-inline-result`（默认 1 行）/ `03-context-menu` / `04-zero-result`，均 1366×768），按 [listing.md](listing.md) §10 配中英说明（≤200 字符/张）；可选补设置页/错误态
+- [ ] 上传 QA v2 截图（已启用）：`01-search-page` / `02-home-inline-result`（默认 1 行）/ `03-context-menu` / `04-zero-result`（均 **1920×1080**；可选 `05-program-files`），按 [listing.md](listing.md) §10 配中英说明（≤200 字符/张）
 - [ ] 隐私政策 URL（https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md）与支持 URL（https://github.com/czz404/EverythingPal/issues）确认可访问（✅ 仓库已 public）
 - [ ] 长/短描述、功能列表、搜索词、分类、价格/市场、年龄分级（IARC）
 
@@ -139,7 +141,7 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 - [ ] 认证结果跟进（通常 1–3 个工作日）
 - [ ] 发布后验证：Store 安装 → CmdPal 可见 → 中文/英文列表正确
 - [ ] 记录 identity 切换导致 CmdPal 设置重置的问题（见 R5），在发布说明/支持页提示
-- [ ] **提交 CmdPal 社区 Gallery**：向 https://github.com/microsoft/CmdPal-Extensions 提 PR（按其 Contributing Guide）；上架后用户可在 CmdPal Settings → Extensions → Gallery 搜索/一键安装（Gallery 链接 WinGet 或 Microsoft Store 安装源）
+- [ ] **提交 CmdPal 社区 Gallery**：向 https://github.com/microsoft/CmdPal-Extensions 提 PR（按其 Contributing Guide）；上架后用户可在 CmdPal Settings → Extensions → Gallery 搜索/一键安装（Gallery 链接 WinGet 或 Microsoft Store 安装源）。**PR 前把 `gallery-submission/` 里旧的 4 张 1366 截图换成 v2 1920×1080（QA 负责，本文件不动 PNG）**；`extension.json` 已加入 smart matching
 - [ ] 可选：发布 WinGet（Gallery 安装/更新可走 WinGet，推荐）；提供 Store 关联标签（见 R6）
 
 ---
@@ -159,8 +161,9 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 | R7 | 第三方 fallback 默认不进全局结果 | 🟠 中 | 安装后主页默认 **1 行**内联结果需要手动启用该回退命令；用户以为“不工作”；审核也可能误判功能缺失。 | 长描述 + 支持页 + 认证备注 + 首启诊断对话框均说明开启方法（默认 1 行，0–5 可调） |
 | R8 | 多 scale 资源需要 `resources.pri` 才生效 | 🟡 低 | 当前 makeappx 打包不生成 PRI，高 DPI 回退到基名图（功能/认证不受影响） | 可选：packaging 流程加 makepri/MSBuild 打包（见 §1.4）；不影响本次提交 |
 | R9 | 名称含 “Everything” 的商标风险 | 🟡 低 | 描述性使用通常可接受，但第三方商标出现在产品名有被下架/异议风险 | 首选 `Everything Search for Command Palette`；描述与支持页加非官方声明；准备备选名 |
-| R10 | 截图需真实展示扩展结果（已基本解决，剩隐私细节） | 🟡 低 | QA 已用 0.2.0.0 交付 4 张 1366×768：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`。`01`/`03` 画面含本机路径 `C:\Users\Lenovo\...`。 | 提交前按 [listing.md](listing.md) §10 配说明文字；可选补设置页/错误态；若介意用户名，重拍时用测试账户或查询不含 `C:\Users` 的结果 |
+| R10 | ~~截图展示/隐私~~（已解决，v2） | ✅ 已解决 | QA 已采集并启用 v2（**1920×1080**，统一查询 `program files`）：`01`–`04` + 可选 `05-program-files`；采集记录验证画面不含 `C:\Users\<name>`、`C:\ProgramData`、`C:\Windows\ServiceProfiles` 个人路径；`02` 为默认 1 行。 | 在 Partner Center 上传 `docs/store/screenshots/` 并填 caption；可选加 `05`；旧 1366/`wantai` 套图作废 |
 | R11 | Partner Center 字段上限未核实 | 🟡 低 | Short description / Product features / 搜索词 / 认证备注长度上限未经 Learn 证实 | 提交时按字段提示删减；文档内所有文案均短于常见上限 |
+| R12 | 详情面板在 CmdPal 0.13.12862 上不渲染（宿主行为） | 🟡 低 | QA v2 采集记录：详情面板即使内置项也不显示（host-side TBD）；listing 已把“详情面板”措辞改为“是否显示取决于 CmdPal 宿主版本” | 提交前保留当前措辞；宿主修复后再更新描述/截图；listing §12 #13 |
 
 ---
 
@@ -168,7 +171,7 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 
 | 事实 | 结论 | 来源 |
 | --- | --- | --- |
-| 截图：≥1 张必需、桌面 ≤10 张、PNG ≤50 MB、桌面 ≥1366×768、说明 ≤200 字符 | **已核实**（与 research 一致） | [Learn: screenshots-and-images](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images) |
+| 截图：≥1 张必需、桌面 ≤10 张、PNG ≤50 MB、桌面 ≥1366×768、说明 ≤200 字符 | **已核实**（与 research 一致）；本次交付 v2 为 1920×1080 | [Learn: screenshots-and-images](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/screenshots-and-images) |
 | Store 列表 1:1 图标 300×300 推荐，且 Store 优先于包内图标 | **已核实** | 同上 |
 | Command Palette 扩展可以发布到 Microsoft Store（官方流程、描述/备注要求、上传 `.msixbundle`） | **已核实** | [Learn: Publish to Microsoft Store (CmdPal)](https://learn.microsoft.com/en-us/windows/powertoys/command-palette/publish-extension-store) |
 | 未签名 `.msixbundle` 提交后由 Store 重新签名 | **已核实** | [Learn: App package requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/app-package-requirements) |
@@ -188,16 +191,17 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 **已做（brand-materials / task-4）**
 - `scripts/generate-icons.py`（新）+ 37 个图标资产中的 36 个包内 PNG（另 1 个为 Store 300 图标）+ inventory + preview；程序化尺寸校验。
 - `docs/store/listing.md`、`privacy-policy.md`、`certification-notes.md`、`support.md`、本 README。
+- 2026-10-21 / 1.0.1.0 更新：listing 加入智能匹配（描述/功能/截图说明）+ What's new §13；support 增 Q15；gallery-submission/extension.json 同步；截图引用改为 v2 1920×1080 + `program files`。
 
 **未做（不属于本任务写权限，或由其他任务并行负责）**
-- `src/EverythingPal/Package.appxmanifest` 的身份/版本调整 → store-packaging（task-3）；能力已缩到 `runFullTrust` 并实测通过（`unvirtualizedResources`/desktop6 写虚拟化已移除）
+- `src/EverythingPal/Package.appxmanifest` 的身份/版本调整 → store-packaging（task-3）；能力已缩到 `runFullTrust` 并实测通过（`unvirtualizedResources`/desktop6 写虚拟化已移除）；1.0.1.0 更新包由 packaging 产出
 - 无参启动诊断对话框 → launcher-ui（task-5）已实现（`src/EverythingPal/Ui/LaunchDialog.cs` + `Program.cs` 入口），认证备注 §3.1 已按其实现更新；提交前需实测最终文案
-- 截图采集 → qa-verify（task-6）：已交付 4 张（`01`–`04`，1366×768），见 `docs/store/screenshots/`
+- 截图采集 → qa-verify（task-6）：v2 已采集并启用（`01`–`04` + 可选 `05-program-files`，1920×1080，Lead approved 2026-10-21），`docs/store/screenshots/` 即提交集；gallery-submission 里的旧截图副本需同步替换
 - UI 中英文 i18n → core-i18n（task-2 Phase 2）**已实现**：`Resources/Strings.resx`（en）+ `Strings.zh-Hans.resx`，跟随系统显示语言；清单含 en-US + zh-Hans
 - Store 包构建/上传 → store-packaging + Lead
 - Store 上架后提交 CmdPal 社区 Gallery（`microsoft/CmdPal-Extensions`）→ Lead/用户（发布后）
 
-**复核记录**：图标生成后已检查 16/24/32/48/44/50/150/300/310×150 及 1240×600 预览；文字/商标/隐私表述按当前源码（AppLog、Program、settings key、manifest capabilities = runFullTrust only）核对 2026-10-20。2026-10-20 二次修正：Gallery 可发现性、个人开发者免费注册、主页 fallback 默认 1 行、`unvirtualizedResources` 已移除、公开 URL/截图状态。
+**复核记录**：图标生成后已检查 16/24/32/48/44/50/150/300/310×150 及 1240×600 预览；文字/商标/隐私表述按当前源码（AppLog、Program、settings key、manifest capabilities = runFullTrust only）核对 2026-10-20。2026-10-20 二次修正：Gallery 可发现性、个人开发者免费注册、主页 fallback 默认 1 行、`unvirtualizedResources` 已移除、公开 URL/截图状态。2026-10-21（1.0.1.0）：智能匹配（`SearchQueryBuilder`/`SearchRetryPolicy`/`ResultRanker` 源码核对）、v2 1920×1080 截图、gallery extension.json。
 
 
 

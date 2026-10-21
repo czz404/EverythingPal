@@ -238,10 +238,10 @@
     <value>es.exe path</value>
   </data>
   <data name="Settings.FallbackRowsDescription" xml:space="preserve">
-    <value>0–5, default 1. 0 disables the home fallback. Each home row is a separate Command Palette fallback command (platform limitation: one row = one fallback command), so this page shows N switches for N rows — enable all of them to see N rows. Changing the count requires reloading the Command Palette extensions. Note: third-party fallbacks are excluded from global results by default; enable it under Command Palette's Fallback commands and tick "Include in global results".</value>
+    <value>0–5, default 1. 0 disables the home result. Each row is one CmdPal fallback command: enable it under Fallback commands and tick "Include in global results". Reload Command Palette after changing the count.</value>
   </data>
   <data name="Settings.FallbackRowsLabel" xml:space="preserve">
-    <value>Inline home-search rows</value>
+    <value>Home result rows (Reload to apply)</value>
   </data>
   <data name="Settings.MaxResultsDescription" xml:space="preserve">
     <value>1–500, default 50. Passed to es.exe as -n.</value>
@@ -301,4 +301,5 @@
     <value>Unknown error</value>
   </data>
 </root>
+
 

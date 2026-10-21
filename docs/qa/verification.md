@@ -539,47 +539,58 @@ pwsh -File scripts/verify-build.ps1 -Architectures x64 -SkipTests
 
 ---
 
-# Installed-package end-to-end evidence (FINAL build: 0.2.0.0, capability-reduced, default fallback rows = 1)
+# Installed-package end-to-end evidence (Store 1.0.0.0 UI + screenshots; dev 0.2.0.0 fix chain)
 
-> Added by qa-verify on 2026-10-20 after the final reinstall of the committed source tree
-> (`90e6108`, capability-reduced manifest, zero-result fix, default home fallback rows = 1).
-> The automated `scripts/verify-build.ps1` report above covers packaging + headless smoke; this section
-> covers the **installed** package, the Command Palette UI and the final Store screenshots.
+> Added by qa-verify on 2026-10-20/21. The automated `scripts/verify-build.ps1` report above covers
+> packaging + headless smoke on the dev identity chain; this section covers the **installed** Store-identity
+> package and the Command Palette UI, and documents the **approved active Store screenshot set**.
+> The Store-identity package (`EverythingPal.EverythingPal_1.0.0.0`) was installed for screenshot work;
+> the source-fix evidence (zero-result fix, capability reduction, fallback rows) comes from the `0.2.0.0`
+> dev chain that was verified before the Store build was cut.
 
-Environment: `EverythingPal_0.2.0.0_x64__b32a3jmekh2ja` (SignatureKind=Developer, self-contained),
-installed `EverythingPal.dll` sha256 `93CDD800…1067F10`, Command Palette `Microsoft.CommandPalette_0.13.12862.0`,
-Windows 11 26H1 (build 28000) x64, zh-CN UI, 2560x1440 screen (screenshots at 1366x768 physical).
-**Capability posture (verified):** the installed and both bundled manifests declare **`runFullTrust` only** —
-`unvirtualizedResources` and the `desktop6:*WriteVirtualization` overrides are gone (verify-build now asserts this
-for every package; F1 from the code review is resolved). Only the routine Partner Center "restricted capability"
-justification for `runFullTrust` remains.
+Environment: Store-identity package
+`EverythingPal.EverythingPal_1.0.0.0_x64__33w78pmn50ga4` (developer-signed for local capture; the Store
+will re-sign the submitted unsigned bundle), Command Palette `Microsoft.CommandPalette_0.13.12862.0`,
+Windows 11 26H1 (build 28000) x64, zh-CN UI, 2560x1440 screen, **final Store screenshots at 1920x1080**.
+**Capability posture (verified on the 0.2.0.0 chain and asserted by verify-build for every bundled package):**
+`runFullTrust` only — `unvirtualizedResources` and the `desktop6:*WriteVirtualization` overrides are gone
+(F1 from the code review resolved). Only the routine Partner Center "restricted capability" justification
+for `runFullTrust` remains.
 
 | ID | Check | Status | Evidence |
 |---|---|---|---|
-| E2E-01 | No-argument launch shows the diagnostics dialog with version `0.2.0.0`, Command Palette installed, Everything installed/running, bundled `es.exe` present; "是(Yes)" opens Command Palette | PASS | `artifacts/qa/launch-dialog.png` (497x499); dialog text read via Win32 child-window enumeration; clicking Yes closed the dialog and brought Command Palette to the foreground. (Captured on an earlier 0.2.0.0 install; launcher code unchanged since.) |
-| E2E-03 | "Everything 搜索" page performs a real search through the bundled `es.exe` (packaged context) | PASS | `docs/store/screenshots/01-search-page.png` — query `wantai`, 3 real results with real shell icons (folder/.lnk/.zip). |
-| E2E-04 | Home-screen inline fallback result renders with real content + icon — **new default is exactly ONE row** | PASS | `docs/store/screenshots/02-home-inline-result.png` — one row `wantai  D:\` with the real folder icon; configured default `FallbackRows=1` (0–5 configurable). Host renders asynchronously; captured with a 9 s settle. Do not expect 3 rows anymore. |
-| E2E-05 | Zero-result state: one readable message, no blank rows / stale icons | PASS | `docs/store/screenshots/04-zero-result.png` — command page with `zzzqqq`: one row, app icon, `没有匹配结果 · 换个关键词，或检查 Everything 的索引设置。`; no blank/stale rows. Home-screen equivalent also probed on the final build: `artifacts/qa/home-zero-result-1row-new.png` (one row, query as title + status as subtitle). Old defect (earlier build): `artifacts/qa/zero-result-blank-rows.png`. Fix: `EverythingFallbackItem.cs:109-114` (`ShowNoResults`) + `Clear()` resets `Icon` (`:243+`). |
-| E2E-06 | Result context menu exposes the extension actions | PASS | `docs/store/screenshots/03-context-menu.png` — 打开文件夹 / 在资源管理器中显示 / 复制路径 / 在 Everything 中定位 / 显示详细信息. |
+| E2E-01 | No-argument launch shows the diagnostics dialog with the package version, Command Palette installed, Everything installed/running, bundled `es.exe` present; "是(Yes)" opens Command Palette | PASS | `artifacts/qa/launch-dialog.png` (497x499, captured on the 0.2.0.0 dev build); dialog text read via Win32 child-window enumeration; clicking Yes closed the dialog and brought Command Palette to the foreground. Launcher code unchanged since; not re-shot on the Store identity. |
+| E2E-03 | "Everything 搜索" page performs a real search through the bundled `es.exe` (packaged context) | PASS | `docs/store/screenshots/01-search-page.png` — query **`program files`** (universal, non-personal), generic results (`Program Files`, `Program Files (x86)`, `Downloaded Program Files`, …) with real shell folder icons. |
+| E2E-04 | Home-screen inline fallback result renders with real content + icon — **default is exactly ONE row** | PASS | `docs/store/screenshots/02-home-inline-result.png` — one row `Downloaded Program Files  C:\Windows （共 3 个结果）` (generic Windows folder, real icon); configured default `FallbackRows=1` (0–5 configurable). Host renders asynchronously; captured with a 9 s settle. Do not expect 3 rows. |
+| E2E-05 | Zero-result state: one readable message, no blank rows / stale icons | PASS | `docs/store/screenshots/04-zero-result.png` — command page with `zzzqqq`: one row, app icon, `没有匹配结果 · 换个关键词，或检查 Everything 的索引设置。`; no blank/stale rows. Home-screen equivalent probed: `artifacts/qa/home-zero-result-1row-new.png`. Old defect (earlier build): `artifacts/qa/zero-result-blank-rows.png`. Fix: `EverythingFallbackItem.cs:109-114` (`ShowNoResults`) + `Clear()` resets `Icon` (`:243+`). |
+| E2E-06 | Result context menu exposes the extension actions | PASS | `docs/store/screenshots/03-context-menu.png` — query `program files`; menu: 打开文件夹 / 在资源管理器中显示 / 复制路径 / 在 Everything 中定位 / 显示详细信息. |
 | E2E-07 | Details pane shows size/modified/clickable path after selecting a result | TBD (host-side, not a bug) | CmdPal 0.13.12862 did not render the details pane even for BUILT-IN items after keyboard selection and mouse click (`artifacts/qa/probe-builtin-details.png`). The extension supplies `Details` metadata; pane appearance is host/environment behaviour. |
 | E2E-08 | CmdPal About card shows PublisherDisplayName "EverythingPal" | TBD (not screenshotted) | Both bundled manifests assert `PublisherDisplayName=EverythingPal` (MSIX-*-MANIFEST PASS above); settings-page screenshot not captured. |
-| E2E-09 | Changing the home fallback row count 1→N applies without extension reload | TBD (not user-tested) | Default is 1 on the final build. Code (`EverythingPalCommandsProvider.cs:42-47`) expects a CmdPal reload because the host caches `FallbackCommands()`; settings-text wording should say so. |
+| E2E-09 | Changing the home fallback row count 1→N applies without extension reload | TBD (not user-tested) | Default is 1. Code (`EverythingPalCommandsProvider.cs:42-47`) expects a CmdPal reload because the host caches `FallbackCommands()`; settings-text wording should say so. |
 | E2E-10 | zh-Hans satellite resources load | PASS | Whole UI is Simplified Chinese on this zh-CN system (all screenshots); resx parity unit tests; `zh-Hans/EverythingPal.resources.dll` is asserted present in both MSIX payloads by verify-build. |
 | E2E-11 | "Everything not running" fallback status row | TBD | Not simulated (did not stop the user's Everything; es.exe path not deliberately broken). Exit-code mapping is unit-tested; `ShowStatus` keeps the query as title so it should render. |
+| E2E-12 | Smart-match ranking (dev build 1.0.1.0): query `term1` surfaces the matching folder first | PASS (dev-build evidence; not a Store asset) | `artifacts/qa/term1-evidence/term1-evidence.png` (1366x768, captured by the Lead on the dev build): query `term1` → first row `Term 1  E:\BaiduNetdiskDownload`, followed by the other generic `Term 1` folder and workspace matches. Regeneration was attempted on the installed Store 1.0.0.0 package and correctly does **not** show the smart-match ordering (that fix ships in 1.0.1.0), so the Lead-captured evidence is referenced instead. |
 
-## Final Store screenshots (docs/store/screenshots/) — regenerated on the final installed build
+## Final Store screenshots (docs/store/screenshots/) — ACTIVE, approved v2 set
+
+The approved set is the universal-query (`program files`) 1920x1080 set; the earlier 1366x768 `wantai`
+set was replaced on 2026-10-21.
 
 | File | Dimensions | Size | SHA256 (prefix) | Notes |
 |---|---|---|---|---|
-| `01-search-page.png` | 1366x768 | 18 KB | `5B1AE140026287D5` | Page mode, `wantai`, 3 real results + real icons; details pane absent (E2E-07). |
-| `02-home-inline-result.png` | 1366x768 | 33 KB | `69ECF5D37EF98CCD` | Home mode, **exactly ONE** inline result (`wantai  D:\`, real folder icon) — new default FallbackRows=1. |
-| `03-context-menu.png` | 1366x768 | 31 KB | `55BD9263586F9644` | Result context menu (open/reveal/copy/locate/details). |
-| `04-zero-result.png` | 1366x768 | 14 KB | `0E6D772C874493FD` | Page no-results state: one informative row, no blank/stale rows. |
+| `01-search-page.png` | 1920x1080 | 92 KB | `3F01CC0A3703D8C0` | Page mode, `program files`, generic Program Files results + real folder icons; details pane absent (E2E-07). |
+| `02-home-inline-result.png` | 1920x1080 | 31 KB | `806DCA047B5F1C39` | Home mode, **exactly ONE** inline result (`Downloaded Program Files  C:\Windows （共 3 个结果）`, real folder icon) — default FallbackRows=1. |
+| `03-context-menu.png` | 1920x1080 | 104 KB | `A5F4174EBDAE3B88` | Result context menu (open/reveal/copy/locate/details) on the `program files` list. |
+| `04-zero-result.png` | 1920x1080 | 18 KB | `D91C78E9BE62A1C4` | Page no-results state: one informative row, no blank/stale rows. |
+| `05-program-files.png` | 1920x1080 | 92 KB | `DA63B662254B9320` | Optional: program-files page without selection highlight. |
 | `*-fullscreen.png` | 2560x1440 | — | — | Neutral-backdrop reference only — do not upload. |
 
-`_capture-manifest.json` records the full SHA256, dimensions, zh/en captions, mode/preQuery and capture commands.
-All captures use a neutral topmost backdrop + `DwmGetWindowAttribute(EXTENDED_FRAME_BOUNDS)` (no personal desktop
-content in the PNGs) and `SendInput` with foreground verification.
+`_capture-manifest.json` records the full SHA256, dimensions, zh/en captions, mode/query, sizing (captured
+at 1934x1087 due to the host's ~75% window cap, then cropped to exactly 1920x1080) and the personal-path
+verification block. All captures use a neutral topmost backdrop + `DwmGetWindowAttribute(EXTENDED_FRAME_BOUNDS)`
+(no personal desktop content in the PNGs) and `SendInput` with foreground verification. Verified **no
+`C:\Users\<username>`, `C:\ProgramData` or `C:\Windows\ServiceProfiles` paths in 01/02/03**; only generic
+`Program Files`/`Windows` paths (plus cosmetic WinSxS noise in lower rows).
 
 ## Final artifacts reference
 

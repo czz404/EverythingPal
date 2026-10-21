@@ -238,10 +238,10 @@
     <value>es.exe 路径</value>
   </data>
   <data name="Settings.FallbackRowsDescription" xml:space="preserve">
-    <value>0–5，默认 1。0 表示关闭主页 fallback。主页每一行结果都是一个独立的 Command Palette 回退命令（平台限制：一行 = 一个回退命令），所以这里会看到 N 个开关；全部开启才会显示 N 行。修改行数后需要重新加载 Command Palette 扩展。注：第三方 fallback 默认不进全局结果，需要在 CmdPal 的『回退命令』里启用并勾选『包含在全局结果中』。</value>
+    <value>0–5，默认 1。0 关闭主页结果。每行 = 一个 CmdPal 回退命令：需在 CmdPal『回退命令』中启用并勾选『包含在全局结果中』。改行数后需重载扩展（Reload）才生效。</value>
   </data>
   <data name="Settings.FallbackRowsLabel" xml:space="preserve">
-    <value>主页搜索内联结果行数</value>
+    <value>主页结果行数（Reload 生效）</value>
   </data>
   <data name="Settings.MaxResultsDescription" xml:space="preserve">
     <value>1–500，默认 50。传给 es.exe 的 -n 参数。</value>
@@ -301,4 +301,5 @@
     <value>未知错误</value>
   </data>
 </root>
+
 

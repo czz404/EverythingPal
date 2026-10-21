@@ -3,18 +3,18 @@
 > 给下一个 session 的交接。工作区：`E:\workspace\deepseek\EverythingPal`
 > 先读本文件 + `README.md`；`git status` 当前应干净（本 session 末尾会提交）。
 >
-> **状态：2026-10-20 已发布到 Microsoft Store**
+> **状态：2026-10-20 已发布到 Microsoft Store；2026-10-21 准备 1.0.1.0 更新**
 > - Store 页面：<https://apps.microsoft.com/detail/9NFD76MCDRJZ>
 > - 产品名 / Store ID：`EverythingPal` / `9NFD76MCDRJZ`
-> - 包版本 `1.0.0.0`（x64+ARM64 bundle，Store 已重签）
-> - 后续：提交 CmdPal Gallery（`microsoft/CmdPal-Extensions`）、可选 WinGet、监控评价/崩溃。
+> - 已上架版本 `1.0.0.0`；**待提交更新 `1.0.1.0`**（智能忽略大小写/空格匹配 + 设置文案精简 + 新版 1920×1080 截图）
+> - 后续：提交 1.0.1.0 → CmdPal Gallery（`microsoft/CmdPal-Extensions`）→ 可选 WinGet → 监控评价/崩溃。
 > - 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
 >   `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
 >   `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
 
 ## 当前状态（2026-10-20 收尾）
 
-- 源码/dev 版本 **0.2.0.0**；Store 上架包版本 **1.0.0.0**（`artifacts/store-identity`）。`main` 干净、CI 全绿；单元测试 **67/67**（提权跑）。
+- 源码/dev 版本 **0.2.0.0**；Store 已上架 **1.0.0.0**，待提交更新 **1.0.1.0**（`artifacts/store-identity-1.0.1`）。`main` 干净、CI 全绿；单元测试 **118/118**（提权跑）。
 - 已完成一轮“发布前打磨”（用户明确要求不要急着上架）：
   - **真实文件类型图标**（SHGetFileInfo + 每扩展名缓存 PNG；页面与主页 fallback 行都有），
     不再用笼统的文件夹/文件字形。图标类：`src/EverythingPal/Services/ShellIconProvider.cs`。
@@ -28,7 +28,7 @@
     延迟改为 50 ms（宿主对 inline fallback 有约 200 ms 预算），并先写 Title 再异步升级图标。
   - **无参启动诊断对话框**（`Ui/LaunchDialog.cs`，Win32 MessageBox）：开始菜单点开不再“死掉”，
     显示 PowerToys/Everything/es.exe 检测结果、版本、日志路径，可一键打开 Command Palette。
-  - **Core 正确性**：空结果不再显示空白列表（`SearchOutcomeMapper`）；盘符根 `D:` 有标题；
+  - **智能匹配（1.0.1.0）**：单 token 查询自动加 `nocase:ignorews:`，`term1` 可匹配 `Term 1`；失败回退原查询；排序忽略空白；高级 Everything 语法原样传递。\n  - **Core 正确性**：空结果不再显示空白列表（`SearchOutcomeMapper`）；盘符根 `D:` 有标题；
     Everything.exe 发现支持自定义安装目录（注册表 App Paths/Uninstall、运行中进程、PATH——本机
     `D:\software\Everything` 已验证）；es.exe 路径按配置缓存。
   - **自包含打包**：`scripts/pack-store.ps1` 用 `dotnet publish --self-contained -p:PublishTrimmed=true`
@@ -44,19 +44,25 @@
   - `Package/Properties/PublisherDisplayName` = `EverythingPal`
   - Store ID = `9NFD76MCDRJZ`；商店链接 `https://apps.microsoft.com/detail/9NFD76MCDRJZ`
   - PFN = `EverythingPal.EverythingPal_33w78pmn50ga4`（换到 Store 身份后 CmdPal 的旧 dev PFN 设置会重置）
-- **最终 Store 上传包（未签名，Store 身份）**：
-  `artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle`
-  size 22,349,xxx B，SHA256 `82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769`
+- **待提交的 Store 更新包（未签名，Store 身份）**：
+  `artifacts/store-identity-1.0.1/EverythingPal_1.0.1.0_x64_arm64.msixbundle`
+  size 22,350,534 B，SHA256 `8A014E6D6155ECD2DFCCA1D06123D6BCE7D0D5283060F8B431CCB428C75E58FB`
   （x64/ARM64 各 ~10.8/10.5 MB；`manifests/` 为解包证据）。
-  生成命令：
+  已上架版本仍是 `artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle`
+  （22,349,304 B，SHA256 `82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769`）。
+  生成命令（版本号按需改）：
   ```powershell
-  pwsh -File scripts/pack-store.ps1 -Version 1.0.0.0 `
+  pwsh -File scripts/pack-store.ps1 -Version 1.0.1.0 `
     -IdentityName "EverythingPal.EverythingPal" `
     -Publisher "CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F" `
-    -PublisherDisplayName "EverythingPal" -DisplayName "EverythingPal"
+    -PublisherDisplayName "EverythingPal" -DisplayName "EverythingPal" `
+    -OutputDir "artifacts\store-identity-1.0.1"
   ```
   注意 `-DisplayName EverythingPal` 是必须的：Store 会拒绝“未预留的 Properties/DisplayName”，
   所以 Store 包内显示名用预留产品名 EverythingPal（dev 包仍是 Everything Search）。
+- **1.0.1.0 的新内容**：单 token 搜索自动使用 `nocase:ignorews:`（`term1` 能找到 `Term 1`），
+  失败自动回退原查询；排序忽略空白；设置里回退行数文案缩短为「主页结果行数（Reload 生效）」。
+  已在 dev 包上实测 `term1` → `E:\BaiduNetdiskDownload\Term 1` 命中并排在首位。
 - 另有 **dev 包**（`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`，`CN=czz404`）用于本机 CmdPal 验证，
   不要上传；Store 身份包不要在本机签名安装（Publisher 不匹配 dev 证书）。
 - 本机已安装验证：`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`（Developer 签名，自包含）。
@@ -155,6 +161,7 @@ scripts/capture-screenshots.ps1    自动截 CmdPal 窗口（商店截图，≥1
 scripts/generate-icons.py          多 scale 图标生成（Pillow）
 docs/store/                        商店材料；docs/qa/ QA 报告；docs/research/ 平台研究
 ```
+
 
 
 

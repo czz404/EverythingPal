@@ -1,7 +1,9 @@
 {
+  "version": "final-v2",
+  "status": "ACTIVE — approved by Lead 2026-10-21; this directory is the Store screenshot set",
   "tool": "scripts/capture-screenshots.ps1",
-  "capturedAt": "2026-10-20T17:47:00+08:00",
-  "purpose": "Microsoft Store desktop screenshots (PNG, >= 1366x768) of the final installed EverythingPal 0.2.0.0 CmdPal extension (capability-reduced manifest, default fallback rows = 1)",
+  "capturedAt": "2026-10-21T09:10:00+08:00",
+  "purpose": "Store PDP screenshots: universal non-personal query 'program files', readable at 1920x1080",
   "environment": {
     "os": "Microsoft Windows 10.0.28000 (Windows 11 26H1)",
     "screenWidth": 2560,
@@ -11,79 +13,106 @@
       "Microsoft.CommandPalette_0.13.12862.0_X64"
     ],
     "everythingPalPackage": [
-      "EverythingPal_0.2.0.0_X64__EverythingPal_b32a3jmekh2ja"
+      "EverythingPal.EverythingPal_1.0.0.0_X64__EverythingPal.EverythingPal_33w78pmn50ga4"
     ],
     "inputInjection": "SendInput (Win+Alt+Space hotkey + Unicode characters)"
+  },
+  "sizing": {
+    "target": "1920x1080",
+    "captureRequest": "1934x1087 (CmdPal caps its window at ~75% of the 2560x1440 screen)",
+    "final": "cropped centered to exactly 1920x1080",
+    "fullScreenReference": "2560x1440"
+  },
+  "personalPathVerification": {
+    "checked": [
+      "01-search-page.png",
+      "02-home-inline-result.png",
+      "03-context-menu.png"
+    ],
+    "result": "PASS — no C:\\\\Users\\\\<username>, C:\\\\ProgramData or C:\\\\Windows\\\\ServiceProfiles paths visible; rows are generic Program Files / Windows paths.",
+    "method": "visual inspection of the final 1920x1080 PNGs"
   },
   "captures": [
     {
       "file": "docs/store/screenshots/01-search-page.png",
-      "width": 1366,
-      "height": 768,
+      "width": 1920,
+      "height": 1080,
       "meetsStoreMinimum": true,
-      "sha256": "5B1AE140026287D505B721BA9034B513672517BB833CA5D12ACDAD3813DAE703",
+      "sha256": "3F01CC0A3703D8C0BABBB67C0490FE0ECAC9B8AC43948B8130C5A0A614E6F7F2",
       "mode": "page",
-      "query": "wantai",
-      "preQuery": null,
-      "settleMs": 2500,
-      "backdrop": true,
-      "captionZh": "实时搜索本机文件：结果列表与详情面板（大小、修改时间、可点击路径）",
-      "captionEn": "Live local file search with a details pane: size, modified time and clickable path.",
+      "query": "program files",
+      "captionZh": "实时搜索本机文件：结果列表与真实文件图标",
+      "captionEn": "Live local file search with real file-type icons.",
+      "warnings": [
+        "Top rows are generic Program Files / Program Files (x86) / Downloaded Program Files; lower visible rows include generic WinSxS path noise (cosmetic; not personal)."
+      ],
       "fullScreenFallback": "docs/store/screenshots/01-search-page-fullscreen.png"
     },
     {
       "file": "docs/store/screenshots/02-home-inline-result.png",
-      "width": 1366,
-      "height": 768,
+      "width": 1920,
+      "height": 1080,
       "meetsStoreMinimum": true,
-      "sha256": "69ECF5D37EF98CCD2C17CB34829C5176B6464594F40D347D78C946D0EF652A28",
+      "sha256": "806DCA047B5F1C3945E08315D7D72452DB03150D2E686512000177A5BCE36DFE",
       "mode": "home",
-      "query": "wantai",
-      "preQuery": null,
-      "settleMs": 9000,
-      "backdrop": true,
-      "captionZh": "在命令面板主页直接搜索文件名，内联显示 Everything 结果（默认 1 行，0–5 可配；需在 CmdPal 设置中启用第三方回退命令）",
-      "captionEn": "Search file names right from the Command Palette home screen with an inline Everything result (default 1 row, 0-5 configurable; enable third-party fallback rows in Command Palette settings).",
+      "query": "program files",
+      "captionZh": "在命令面板主页直接搜索文件名，内联显示 Everything 结果",
+      "captionEn": "Search file names right from the Command Palette home screen with an inline Everything result.",
+      "warnings": [
+        "Single inline fallback row is \"Downloaded Program Files  C:\\Windows （共 3 个结果）\" (generic Windows folder, ES name-ascending order; not personal)."
+      ],
       "fullScreenFallback": "docs/store/screenshots/02-home-inline-result-fullscreen.png"
     },
     {
       "file": "docs/store/screenshots/03-context-menu.png",
-      "width": 1366,
-      "height": 768,
+      "width": 1920,
+      "height": 1080,
       "meetsStoreMinimum": true,
-      "sha256": "55BD9263586F9644B1E42598B90A941B832DD4E4A6743EED7C57B04E24AA5349",
+      "sha256": "A5F4174EBDAE3B8810F925FF4143D6A8AF495B32EBD1D655C1C2766E818649AA",
       "mode": "page",
-      "query": "wantai",
-      "preQuery": null,
-      "settleMs": 2500,
-      "backdrop": true,
+      "query": "program files",
       "captionZh": "回车打开，右键可定位到资源管理器、复制路径或在 Everything 中打开",
       "captionEn": "Open with Enter, or reveal in Explorer, copy the path, or open the item in Everything.",
+      "warnings": [
+        "Same generic result list as 01; context menu actions correct; no personal paths."
+      ],
       "fullScreenFallback": "docs/store/screenshots/03-context-menu-fullscreen.png"
     },
     {
       "file": "docs/store/screenshots/04-zero-result.png",
-      "width": 1366,
-      "height": 768,
+      "width": 1920,
+      "height": 1080,
       "meetsStoreMinimum": true,
-      "sha256": "0E6D772C874493FDD0C560E29A8A353E1726B0D5D87E76668F8FCF689CF854F6",
+      "sha256": "D91C78E9BE62A1C4C14B78DD8FBC472105F3159AF7616BA2B75CF36CCDA3E4BC",
       "mode": "page",
       "query": "zzzqqq",
-      "preQuery": null,
-      "settleMs": 2500,
-      "backdrop": true,
       "captionZh": "没有匹配结果时给出一行可读提示，而不是空白行",
       "captionEn": "A readable one-line no-results message instead of blank rows when nothing matches.",
+      "warnings": [],
       "fullScreenFallback": "docs/store/screenshots/04-zero-result-fullscreen.png"
+    },
+    {
+      "file": "docs/store/screenshots/05-program-files.png",
+      "width": 1920,
+      "height": 1080,
+      "meetsStoreMinimum": true,
+      "sha256": "DA63B662254B9320EEA3C335FF476345790F314A1706EA28EF4802429472B3EF",
+      "mode": "page",
+      "query": "program files",
+      "captionZh": "在「Everything 搜索」命令页中搜索系统级文件夹（Program Files）",
+      "captionEn": "Searching system-level folders (Program Files) on the Everything search page.",
+      "warnings": [
+        "Optional alternative: program-files page without selection highlight."
+      ],
+      "fullScreenFallback": "docs/store/screenshots/05-program-files-fullscreen.png"
     }
   ],
   "notes": [
-    "Window captures use DWMWA_EXTENDED_FRAME_BOUNDS and a neutral topmost backdrop, so no personal desktop content appears in the window PNGs.",
-    "Final installed build default: 1 home-screen fallback row (0-5 configurable). Shot 02 therefore shows exactly one inline Everything result ('wantai  D:\\\\'), not three; this is the new default and must not be retried for 3 rows.",
-    "Home fallback rows are host-rendered asynchronously; shot 02 was captured with a 9 s settle after typing.",
-    "Shot 04 is the extension command page in its no-results state: one readable row ('没有匹配结果 · 换个关键词，或检查 Everything 的索引设置。') instead of blank rows. Verified on the final build.",
-    "The details pane did not render on CmdPal 0.13.12862 even for built-in commands (host behaviour, not an EverythingPal defect); the extension still supplies Details metadata.",
-    "Full-screen fallback images are reference only; do not upload them to the Store.",
-    "Package capability posture of this build: runFullTrust only (unvirtualizedResources and desktop6 write-virtualization removed)."
+    "Approved v2 set (program files query) replaced the earlier 1366x768 / wantai set on 2026-10-21.",
+    "Home fallback default is 1 row; the row shows 'Downloaded Program Files' (generic, ES name-ascending) — not WinSxS noise and no personal path.",
+    "04 zero-result: one informative row, no blank/stale rows.",
+    "Smart-match internal evidence (dev 1.0.1.0 build, NOT a Store asset): artifacts/qa/term1-evidence/term1-evidence.png — query 'term1' surfaces 'Term 1  E:\\BaiduNetdiskDownload' first. On the installed Store 1.0.0.0 package the smart-match ordering is not present (regeneration not reproducible, as expected).",
+    "Details pane still absent on CmdPal 0.13.12862 even for built-in items (host-side TBD).",
+    "Full-screen references are not Store upload candidates."
   ]
 }

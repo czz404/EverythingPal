@@ -118,8 +118,14 @@ public sealed class EverythingSearch
     }
 
     /// <summary>
-    /// Runs one ES query. Never throws: failures are returned as <see cref="SearchStatus"/>.
+    /// Runs one user query. Never throws: failures are returned as <see cref="SearchStatus"/>.
     /// Intended to be called off the UI thread.
+    ///
+    /// A plain single token is first searched with Everything 1.5's fuzzy modifiers
+    /// (<c>nocase:ignorews:</c>, see <see cref="SearchQueryBuilder"/>) so "term1" finds "Term 1".
+    /// If that run is empty (or failed in a retryable way), the original query is run once and its
+    /// result preferred; this also keeps Everything 1.4 working, where unknown modifiers return zero
+    /// results. Timeouts / "Everything not running" / missing es.exe are never retried.
     /// </summary>
     public static SearchOutcome Search(string query, SearchOptions? options = null)
     {
@@ -141,6 +147,27 @@ public sealed class EverythingSearch
             };
         }
 
+        // Both runs are ranked against the text the user actually typed, not against the modifier
+        // expression ("nocase:ignorews:term1" would otherwise be compared with file names).
+        var fuzzyExpression = SearchQueryBuilder.Build(normalized);
+        var fuzzyOutcome = RunEs(esExe, fuzzyExpression, normalized, options);
+
+        if (!SearchRetryPolicy.ShouldRetry(fuzzyOutcome, fuzzyExpression, normalized))
+        {
+            return fuzzyOutcome;
+        }
+
+        var originalOutcome = RunEs(esExe, normalized, normalized, options);
+        return SearchRetryPolicy.Select(fuzzyOutcome, originalOutcome);
+    }
+
+    /// <summary>
+    /// Runs one es.exe invocation with the given search expression and maps its result. Each run gets
+    /// a fresh unique export file; the export is parsed (and ranked) against
+    /// <paramref name="rankingQuery"/>, which is the user-visible query rather than the ES expression.
+    /// </summary>
+    private static SearchOutcome RunEs(string esExe, string searchExpression, string rankingQuery, SearchOptions options)
+    {
         var tempFile = Path.Combine(Path.GetTempPath(), $"EverythingPal-{Guid.NewGuid():N}.json");
 
         try
@@ -153,7 +180,7 @@ public sealed class EverythingSearch
                 RedirectStandardError = true,
             };
 
-            foreach (var argument in EsArguments.Build(normalized, tempFile, options))
+            foreach (var argument in EsArguments.Build(searchExpression, tempFile, options))
             {
                 psi.ArgumentList.Add(argument);
             }
@@ -177,7 +204,7 @@ public sealed class EverythingSearch
 
             // Only parse the export for exit 0; other codes produce no usable JSON. Exit 0 with zero
             // parsed items means "no matches" because of -no-result-error (see SearchOutcomeMapper).
-            var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, normalized) : null;
+            var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, rankingQuery) : null;
 
             return SearchOutcomeMapper.FromExitCode(exitCode, stderr, parsed);
         }

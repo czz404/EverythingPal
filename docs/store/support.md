@@ -3,7 +3,7 @@
 > 状态：**草稿 v1（2026-10-20）**。此文件同时用作 Store 支持信息页的内容来源与用户 FAQ。
 > 支持渠道：**GitHub Issues**（仓库已 public）：<https://github.com/czz404/EverythingPal/issues>
 > 支持邮箱：**TBD**（如无邮箱，把 Store 支持联系方式指向 GitHub Issues）。
-> 适用版本：v0.2.x（Store 首发；当前开发版）。回复时间：尽力而为，无 SLA（TBD）。
+> 适用版本：v1.0.x（Store 当前 live 1.0.0.0；1.0.1.0 更新即将发布）。回复时间：尽力而为，无 SLA（TBD）。
 
 ---
 
@@ -17,6 +17,7 @@
 | 提示 es.exe 缺失 / 无法搜索 | 安装包不完整或被杀软隔离（少见） | 从 Store 更新/重装本应用；检查安全软件隔离区 |
 | 搜索超时 / 结果迟迟不出现 | Everything 索引尚未就绪（刚启动或正在重建索引） | 等 Everything 索引完成后重试；在 Everything 里确认索引正常 |
 | 结果为空但文件确实存在 | Everything 未索引该磁盘/目录，或查询语法与 Everything 不同 | 在 Everything 本体里确认能搜到；检查 Everything 的索引设置（NTFS 卷/文件夹） |
+| 输入 `term1` 找不到 `Term 1` | 1.0.1.0 之前的版本区分大小写/空格 | 更新到 1.0.1.0+：单个关键词默认智能匹配，忽略大小写与空格（见 Q15） |
 | 同名程序/扩展冲突 | 已安装其他 Everything CmdPal 扩展（如旧插件） | 只保留一个，避免重复结果/快捷键冲突 |
 | 界面语言与商店语言不一致 | UI 跟随系统显示语言（中文系统显示中文，其它系统显示 English）；商店列表语言独立 | 在 Windows 设置 → 时间和语言 → 语言 中调整显示语言后重启 CmdPal；商店列表语言与 UI 语言不必一致 |
 
@@ -76,6 +77,12 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 - **WinGet**：可选（推荐）。若发布 WinGet 包，可用 `winget install` 安装；Gallery 的安装/更新同样会走 WinGet。
 - 如果 Gallery 里看不到：先更新 PowerToys/CmdPal 到较新版本，并在 Gallery 刷新；或直接用 Store 安装。
 
+### Q15. 搜索 `term1` 能匹配 `Term 1` 吗？智能匹配是什么？
+能。从 **1.0.1.0** 开始，**单个关键词**查询默认忽略大小写与空格，所以 `term1` 可以找到 `Term 1`、`TERM1` 等；结果排序同样忽略大小写/空格，因此 `Term 1` 会被当作精确匹配排在最前。
+- 兼容性：Everything 1.4 不认识 `nocase:`/`ignorews:` 修饰符，扩展会在首次结果为空时自动用原始查询重试，行为与旧版一致。
+- 高级语法保持原样：`ext:`、`folder:`、通配符、路径、引号、分组等 Everything 查询语法不会被改写（多关键词查询也不改写）。
+- 该优化不改变搜索范围/索引，也不发送任何数据。
+
 ---
 
 ## 3. 如何启用主页内联结果（图文步骤，供截图/说明复用）
@@ -130,6 +137,7 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 
 - **What it is:** a third-party PowerToys Command Palette extension that searches your local files through the bundled MIT `es.exe` and your running Everything index. It is not affiliated with voidtools or Microsoft.
 - **Requirements:** Windows 11, or Windows 10 version 2004 (build 19041)+, x64/ARM64; PowerToys with Command Palette enabled; Everything 1.4/1.5 running.
+- **Smart matching:** single-word queries ignore case and whitespace (`term1` finds `Term 1`); on Everything 1.4 the app automatically retries the original query. Advanced Everything syntax (ext:, folder:, wildcards, paths) is passed through unchanged. Added in 1.0.1.0.
 - **Home-screen inline rows:** Command Palette does not include third-party fallback rows in global results by default. Enable them in Command Palette settings → Extensions → Everything Search → Fallback commands (check "Include in the Global result"). Default is **one row**; 0–5 configurable in the extension settings.
 - **Finding the extension:** install from the Microsoft Store; after the Store release it is also submitted to the `microsoft/CmdPal-Extensions` community Gallery (Command Palette Settings → Extensions → Gallery), which installs via WinGet or the Microsoft Store. WinGet publishing is optional/recommended.
 - **Privacy:** no telemetry, no network capability, no data collection; settings and logs stay on your device (`%LOCALAPPDATA%\EverythingPal`).

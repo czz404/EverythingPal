@@ -23,6 +23,9 @@ only need Everything itself installed and running — no separate ES download or
   appears directly (default 1 row, 0–5 in settings — each row is one CmdPal fallback command, so
   N rows means N switches under Fallback commands). Enter opens the item; the context menu can
   reveal it in Explorer, copy the path, or locate it in Everything.
+- **Smart matching**: a single-word search ignores letter case and spaces, so `term1` also finds
+  `Term 1` (and `Term 1` ranks as an exact match). Everything's own syntax (`ext:`, `folder:`,
+  wildcards, paths, boolean operators) is passed through untouched.
 - **Real paths, not shortcuts**: results are the actual files/folders (drive roots such as
   `D:\wantai` included), unlike Recent-items shortcuts.
 - **Real file-type icons**: each result shows the shell's registered icon for its type (folder,
