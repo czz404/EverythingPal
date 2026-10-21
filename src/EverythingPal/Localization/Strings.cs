@@ -68,6 +68,8 @@ internal static class Strings
 
     internal static string OpenAction => Get("Action.Open");
 
+    internal static string ShowAllResultsAction => Get("Action.ShowAllResults");
+
     internal static string OpenFolderAction => Get("Action.OpenFolder");
 
     internal static string RevealInExplorerAction => Get("Action.RevealInExplorer");

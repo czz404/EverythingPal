@@ -45,6 +45,9 @@
   <data name="Action.Open" xml:space="preserve">
     <value>Open</value>
   </data>
+  <data name="Action.ShowAllResults" xml:space="preserve">
+    <value>Show all results</value>
+  </data>
   <data name="Action.OpenFolder" xml:space="preserve">
     <value>Open folder</value>
   </data>

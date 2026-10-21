@@ -1,6 +1,6 @@
 # Everything Search for Command Palette — Microsoft Store 上架文案
 
-> 状态：**v1.2（2026-10-21，1.0.1.0 更新）**，供 Partner Center 提交时逐字复制。v1.1 修正：Gallery、免费注册、默认 1 行、能力只剩 runFullTrust、公开 URL；v1.2 新增：智能匹配（忽略大小写/空格）、1920×1080 v2 截图、1.0.1.0 更新说明。**当前 Store live 版本 1.0.0.0，本次提交 1.0.1.0。**
+> 状态：**v1.3（2026-10-21，1.0.2.0 更新）**，供 Partner Center 提交时逐字复制。v1.1 修正 Gallery/免费注册/默认 1 行/能力；v1.2 智能匹配 + 1920×1080 截图 + 1.0.1.0 更新；v1.3 回退行回车打开完整结果页 + 1.0.2.0 更新说明。**当前 Store live 版本 1.0.1.0，本次提交 1.0.2.0。**
 > 负责：brand-materials（task-4）；包身份 / 打包由 store-packaging（task-3）负责，见 [packaging.md](packaging.md)。
 > 事实核对来源：Microsoft Learn（见文末「引用与核实」）；未经核实的字段用 **TBD** 标出，提交前必须逐项确认。
 
@@ -274,7 +274,28 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 
 ---
 
-## 13. 1.0.1.0 更新说明（What's new，提交时填入 “What's new in this version”）
+## 13. 1.0.2.0 / 1.0.1.0 更新说明（What's new，提交时填入 “What's new in this version”）
+
+> Store live **1.0.1.0**；本次提交 **1.0.2.0**。提交 1.0.2.0 时使用下面第一段；1.0.1.0 段保留作历史。
+
+### 1.0.2.0（本次提交）
+
+**中文（zh-CN）**
+```text
+1.0.2.0 更新：
+• 主页内联结果：当一个回退行对应多条匹配时，按回车会打开「Everything 搜索」完整结果页；只有一个匹配时仍直接打开文件，右键菜单新增「查看全部结果」。
+• 设置页「主页结果行数（Reload 生效）」文案更明确：修改行数后需重新加载 Command Palette 扩展。
+• 无能力变更：仍只声明 runFullTrust，无网络能力，不收集数据。
+```
+**English (en-US)**
+```text
+What's new in 1.0.2.0:
+• Home inline result: when a fallback row represents multiple matches, Enter now opens the full EverythingPal results page; a single match still opens directly, and the context menu offers "Show all results".
+• The "Home result rows (Reload to apply)" setting now explains that reloading Command Palette is required after changing the row count.
+• No capability changes: runFullTrust only, no network capability, no data collection.
+```
+
+### 1.0.1.0（历史）
 
 > Store 当前 live 版本 **1.0.0.0**；本次提交 **1.0.1.0**。版本规则/打包见 packaging.md（store-packaging 负责）。
 
@@ -314,5 +335,6 @@ What's new in 1.0.1.0:
 - [Microsoft Store Policies](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies) — 10.1.1 描述准确、10.1.2 完全可用/兼容性要求。
 
 **未核实 / 需现场确认（TBD）**：Short description、Product features、搜索词的硬上限；Partner Center 子类别 id；voidtools 再分发许可；headless 扩展的实际认证结果（见 `README.md` 风险与 `docs/research/platform-and-store-research.md`）。
+
 
 

@@ -137,6 +137,8 @@ public sealed class EverythingSearch
             return new SearchOutcome { Status = SearchStatus.NoResults };
         }
 
+
+
         var esExe = FindEsExe(options.EsExePath);
         if (esExe is null)
         {
@@ -218,3 +220,4 @@ public sealed class EverythingSearch
         }
     }
 }
+

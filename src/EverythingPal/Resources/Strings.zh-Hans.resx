@@ -45,6 +45,9 @@
   <data name="Action.Open" xml:space="preserve">
     <value>打开</value>
   </data>
+  <data name="Action.ShowAllResults" xml:space="preserve">
+    <value>查看全部结果</value>
+  </data>
   <data name="Action.OpenFolder" xml:space="preserve">
     <value>打开文件夹</value>
   </data>

@@ -30,6 +30,12 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
 
     public override IListItem[] GetItems() => _items;
 
+    /// <summary>
+    /// Pre-fills the page search text (used when a home-screen fallback row opens the full result
+    /// list). The dynamic-list page starts its normal debounced search from <see cref="UpdateSearchText"/>.
+    /// </summary>
+    internal void SetSearchQuery(string query) => SearchText = query;
+
     public void Dispose()
     {
         _cts?.Cancel();

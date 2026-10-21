@@ -28,6 +28,7 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
     // keeps its own, longer, 150 ms debounce.
     private const int DebounceMilliseconds = 50;
     private readonly EverythingFallbackItem[] _items;
+    private readonly EverythingPalPage _resultsPage = new();
     private CancellationTokenSource? _cts;
     private string _query = string.Empty;
 
@@ -38,6 +39,9 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
     }
 
     public IFallbackCommandItem[] Items => _items;
+
+    /// <summary>The full result page a home row opens when it represents more than one match.</summary>
+    internal EverythingPalPage ResultsPage => _resultsPage;
 
     internal void OnUpdateQuery(string? query)
     {
@@ -121,6 +125,11 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
         }
 
         var visible = Math.Min(_items.Length, outcome.Results.Count);
+
+        // The shared full-result page is pre-filled once (not once per row) so pressing Enter on an
+        // inline row that represents multiple matches opens the complete list immediately.
+        _resultsPage.SetSearchQuery(query);
+
         var tasks = new Task[visible];
         for (var i = 0; i < visible; i++)
         {
@@ -129,7 +138,7 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
                 return;
             }
 
-            tasks[i] = _items[i].ShowResultAsync(outcome.Results[i], outcome.Results.Count, token);
+            tasks[i] = _items[i].ShowResultAsync(outcome.Results[i], outcome.Results.Count, query, token);
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -148,6 +157,7 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
+        _resultsPage.Dispose();
         GC.SuppressFinalize(this);
     }
 }
@@ -163,7 +173,7 @@ internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup gro
 
     public override void UpdateQuery(string query) => group.OnUpdateQuery(query);
 
-    internal async Task ShowResultAsync(EverythingResult result, int totalCount, CancellationToken token)
+    internal async Task ShowResultAsync(EverythingResult result, int totalCount, string query, CancellationToken token)
     {
         var extra = totalCount > 1 && index == 0 ? Strings.FormatResultCount(totalCount) : string.Empty;
 
@@ -172,13 +182,33 @@ internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup gro
         Title = result.Name;
         Subtitle = $"{result.Directory}{extra}";
         Icon = result.IsFolder ? Icons.Folder : Icons.File;
-        Command = new OpenItemCommand(result.FullPath, result.IsFolder);
-        MoreCommands =
-        [
-            new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = Strings.RevealInExplorerAction },
-            new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = Strings.CopyPathAction },
-            new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = Strings.LocateInEverythingAction },
-        ];
+
+        // A row that represents several matches opens the complete result page (the same query);
+        // a single match keeps the convenient "open the file" primary action and offers the full
+        // page in the context menu. This makes the "共 N 个结果" subtitle meaningful.
+        var openItem = new OpenItemCommand(result.FullPath, result.IsFolder);
+        if (totalCount > 1)
+        {
+            Command = group.ResultsPage;
+            MoreCommands =
+            [
+                new CommandContextItem(openItem) { Title = Strings.OpenAction },
+                new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = Strings.RevealInExplorerAction },
+                new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = Strings.CopyPathAction },
+                new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = Strings.LocateInEverythingAction },
+            ];
+        }
+        else
+        {
+            Command = openItem;
+            MoreCommands =
+            [
+                new CommandContextItem(group.ResultsPage) { Title = Strings.ShowAllResultsAction },
+                new CommandContextItem(new RevealInExplorerCommand(result.FullPath, result.IsFolder)) { Title = Strings.RevealInExplorerAction },
+                new CommandContextItem(new CopyItemPathCommand(result.FullPath)) { Title = Strings.CopyPathAction },
+                new CommandContextItem(new OpenInEverythingCommand(result.FullPath)) { Title = Strings.LocateInEverythingAction },
+            ];
+        }
 
         var icon = await ShellIconProvider.GetIconAsync(result.FullPath, result.IsFolder).ConfigureAwait(false);
         if (token.IsCancellationRequested)
@@ -259,3 +289,4 @@ internal static class Icons
     internal static readonly IconInfo Folder = new("\uE8B7");
     internal static readonly IconInfo File = new("\uE8A5");
 }
+

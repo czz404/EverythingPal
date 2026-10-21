@@ -37,3 +37,9 @@ Submission steps (per `docs/CONTRIBUTING.md` in that repo):
 4. Open a PR against `main`; CI validates the schema, id/folder match, and icon size.
 5. After maintainer merge + gallery regeneration, the extension appears in CmdPal Settings →
    Extensions → Gallery.
+
+
+## Status
+
+PR opened: https://github.com/microsoft/CmdPal-Extensions/pull/207 — waiting for Microsoft CLA signature (@microsoft-github-policy-service agree) and maintainer review.
+
