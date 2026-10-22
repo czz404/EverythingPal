@@ -3,11 +3,11 @@
 > 给下一个 session 的交接。工作区：`E:\workspace\deepseek\EverythingPal`
 > 先读本文件 + `README.md`；`git status` 当前应干净（本 session 末尾会提交）。
 >
-> **状态：已发布到 Microsoft Store；Store live 1.0.1.0，准备提交 1.0.2.0 更新**
+> **状态：已发布到 Microsoft Store；Store live 1.0.2.0，Gallery PR 已合并**
 > - Store 页面：<https://apps.microsoft.com/detail/9NFD76MCDRJZ>
 > - 产品名 / Store ID：`EverythingPal` / `9NFD76MCDRJZ`
-> - 已上架版本 `1.0.1.0`；**待提交更新 `1.0.2.0`**（主页 fallback 多结果时回车打开完整结果页）
-> - Gallery PR 已提交：<https://github.com/microsoft/CmdPal-Extensions/pull/207>（等待 CLA/CI/维护者审核；WinGet 的 msstore 源已可直接安装）。
+> - 已上架版本 **`1.0.2.0`**（主页 fallback 多结果时回车打开完整结果页）
+> - Gallery PR **#207 已于 2026-10-21 合并**：<https://github.com/microsoft/CmdPal-Extensions/pull/207>；等待维护者重新生成 `extensions.json` 后出现在 CmdPal Gallery（WinGet 的 msstore 源已可直接安装）。
 > - 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
 >   `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
 >   `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
@@ -161,6 +161,7 @@ scripts/capture-screenshots.ps1    自动截 CmdPal 窗口（商店截图，≥1
 scripts/generate-icons.py          多 scale 图标生成（Pillow）
 docs/store/                        商店材料；docs/qa/ QA 报告；docs/research/ 平台研究
 ```
+
 
 
 
