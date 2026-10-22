@@ -12,9 +12,11 @@
 >   `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
 >   `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
 
-## 当前状态（2026-10-20 收尾）
+## 当前状态（2026-10-22 复核；下方“发布前打磨”为 2026-10-20 记录）
 
-- 源码/dev 版本 **0.2.0.0**；Store 已上架 **1.0.0.0**，待提交更新 **1.0.1.0**（`artifacts/store-identity-1.0.1`）。`main` 干净、CI 全绿；单元测试 **118/118**（提权跑）。
+- **2026-10-22 PowerToys 0.102 兼容性复核**：本机 PowerToys **0.102.2933.0** / CmdPal **0.13.12934.0**（host ABI **0.13.261020004**，旧值 0.13.261013002）下，现有 Store **1.0.2.0** 实测正常加载与工作（宿主日志 `Started extension EverythingPal…` / `Loaded 2 command(s)`；扩展日志 fallback `Ok`）。0.13 宿主 ABI 相对 0.12 SDK **纯增量**（只新增 `IDetails2`/`IFormContent2`，无删除/改名），且 NuGet 上仍无 0.13 SDK 包 → **无需更新插件、无需重编译/重打包、无需重新提交 Store**。评估报告：`docs/research/powertoys-0.102-assessment.md`；证据笔记：`docs/research/notes/powertoys-0.102-cmdpal.md`、`docs/research/notes/everythingpal-api-audit.md`、`docs/qa/notes/powertoys-0.102-runtime.md`。
+
+- 源码/dev 版本 **0.2.0.0**；Store 已上架 **1.0.2.0**（2026-10-21 更新上线；Store 页面 <https://apps.microsoft.com/detail/9NFD76MCDRJZ>）。`main` 干净、CI 全绿；单元测试 **118/118**（提权跑；最后一次全绿记录 2026-10-21）。
 - 已完成一轮“发布前打磨”（用户明确要求不要急着上架）：
   - **真实文件类型图标**（SHGetFileInfo + 每扩展名缓存 PNG；页面与主页 fallback 行都有），
     不再用笼统的文件夹/文件字形。图标类：`src/EverythingPal/Services/ShellIconProvider.cs`。
@@ -124,7 +126,7 @@ pwsh -File scripts\capture-screenshots.ps1 -Mode home -Queries wantai -SelectFir
 
 ## 环境 / 沙箱怪癖（本机）
 
-- Windows 11 26H1 build 28000.3231 (x64)；CmdPal 0.13.12862（host ABI 0.13.261013002）；
+- Windows 11 26H1 build 28000.3231 (x64)；PowerToys 0.102.2933.0 / CmdPal 0.13.12934.0（host ABI 0.13.261020004）；
   SDK 引用 `Microsoft.CommandPalette.Extensions` 0.12.260812002（NuGet 最新稳定，和 host ABI 兼容）。
 - PATH 里要手动前置 `C:\Program Files\dotnet`、`C:\Program Files\GitHub CLI`（DSH 继承的是安装前 PATH）。
 - DSH 沙箱：**从 workspace 路径直接跑发布产物时 es.exe 会 `Error 5: Failed to create output file`**
