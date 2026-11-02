@@ -18,6 +18,7 @@
 | 搜索超时 / 结果迟迟不出现 | Everything 索引尚未就绪（刚启动或正在重建索引） | 等 Everything 索引完成后重试；在 Everything 里确认索引正常 |
 | 结果为空但文件确实存在 | Everything 未索引该磁盘/目录，或查询语法与 Everything 不同 | 在 Everything 本体里确认能搜到；检查 Everything 的索引设置（NTFS 卷/文件夹） |
 | 输入 `term1` 找不到 `Term 1` | 1.0.1.0 之前的版本区分大小写/空格 | 更新到 1.0.1.0+：单个关键词默认智能匹配，忽略大小写与空格（见 Q15） |
+| 输入拼音搜不到中文文件（如 `nihao` 找不到 `你好`） | Everything 默认没有开启拼音搜索；Everything 1.4 根本没有内置拼音 | Everything 1.5：在 Everything 里开启 `pinyin`（见 Q16）；Everything 1.4：搭配 IbEverythingExt（EvEx），见 Q16 |
 | 同名程序/扩展冲突 | 已安装其他 Everything CmdPal 扩展（如旧插件） | 只保留一个，避免重复结果/快捷键冲突 |
 | 界面语言与商店语言不一致 | UI 跟随系统显示语言（中文系统显示中文，其它系统显示 English）；商店列表语言独立 | 在 Windows 设置 → 时间和语言 → 语言 中调整显示语言后重启 CmdPal；商店列表语言与 UI 语言不必一致 |
 
@@ -83,6 +84,16 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 - 高级语法保持原样：`ext:`、`folder:`、通配符、路径、引号、分组等 Everything 查询语法不会被改写（多关键词查询也不改写）。
 - 该优化不改变搜索范围/索引，也不发送任何数据。
 
+### Q16. 可以用拼音搜索吗（比如输入 `nihao` 找 `你好`）？需要装什么？
+可以。扩展本身**不含拼音引擎**，查询是交给 Everything 求值的，所以拼音能力取决于 Everything，本扩展不需要单独设置：
+- **Everything 1.5（beta）自带拼音搜索，但默认关闭**：在 Everything 里打开「工具 → 选项 → 高级」，把 `pinyin` 设为 `true`，并在 `pinyin_type` 选择「全拼（QuanPin）」或「首字母（Single Character）」。开启后直接输入 `nihao` 即可匹配 `你好`。也可以只在单次查询里用 Everything 语法（扩展会原样传递，无需开全局开关）：`pinyin:nihao`、`pinyin-quan:nihaoshijie`（全拼）、`pinyin-jian:nhsj`（首字母）。
+- **Everything 1.4 没有内置拼音**：建议搭配开源插件 [IbEverythingExt（EvEx）](https://github.com/Chaoses-Ib/IbEverythingExt)。它通过修改 Everything 的匹配引擎生效，所以本扩展（经 `es.exe`/IPC 查询 Everything）和 Everything 本体一样能获得拼音匹配，无需在本扩展里做任何配置。注意其限制：仅支持 64 位 Everything；Everything 1.4 最高支持到 **1.4.1.1026**（1.4.1.1027+ 会阻止加载）；Everything 1.5 需在「选项 → 插件」里启用插件并关闭命名实例。它按 Everything 版本做特征码匹配，升级 Everything 前请先看 EvEx 的发布说明（最近版本测试到 Everything 1.5.0.1416 Beta）。
+
+补充说明：
+- 开启全局拼音后，普通输入（如 `nihaoshijie`）也能命中中文文件名；但扩展的「智能匹配」会先给单个关键词加 `nocase:ignorews:`（这个组合不会触发拼音匹配），结果为空时会自动用原始查询重试，所以仍能搜到，只是多一次 `es.exe` 调用。想直接走拼音匹配，用 `pinyin:` 开头的查询即可。
+- 已实测：Everything 1.5.0.1423b + 内置 ES 1.1.1.39，`pinyin-quan:nihaoshijie`、`pinyin-jian:nhsj` 能搜到 `你好世界测试.txt`；`pinyin=true` 时普通 `nihaoshijie` 也能搜到。
+- 本扩展不打包、不安装 IbEverythingExt（它是 Everything 侧插件，用户自行安装即可）；详细说明与证据见仓库 `README.md` 的 *Pinyin search* 段和 `docs/research/notes/pinyin-search.md`。
+
 ---
 
 ## 3. 如何启用主页内联结果（图文步骤，供截图/说明复用）
@@ -138,6 +149,7 @@ Windows 11，或 Windows 10 2004（build 19041）及以上，x64 / ARM64；Power
 - **What it is:** a third-party PowerToys Command Palette extension that searches your local files through the bundled MIT `es.exe` and your running Everything index. It is not affiliated with voidtools or Microsoft.
 - **Requirements:** Windows 11, or Windows 10 version 2004 (build 19041)+, x64/ARM64; PowerToys with Command Palette enabled; Everything 1.4/1.5 running.
 - **Smart matching:** single-word queries ignore case and whitespace (`term1` finds `Term 1`); on Everything 1.4 the app automatically retries the original query. Advanced Everything syntax (ext:, folder:, wildcards, paths) is passed through unchanged. Added in 1.0.1.0.
+- **Pinyin search:** the extension has no pinyin engine; queries are evaluated by Everything. Everything 1.5 has built-in pinyin, disabled by default (Tools → Options → Advanced → `pinyin` = true, `pinyin_type` = QuanPin/Single Character; or per-query `pinyin:`, `pinyin-quan:`, `pinyin-jian:`). Everything 1.4 has none — pair it with [IbEverythingExt](https://github.com/Chaoses-Ib/IbEverythingExt) (64-bit Everything; 1.4 up to 1.4.1.1026; on 1.5 enable the plug-in and disable named instances), which patches Everything's matcher so `es.exe` queries get pinyin too. No setting is needed in EverythingPal itself. See Q16.
 - **Home-screen inline rows:** Command Palette does not include third-party fallback rows in global results by default. Enable them in Command Palette settings → Extensions → Everything Search → Fallback commands (check "Include in the Global result"). Default is **one row**; 0–5 configurable in the extension settings.
 - **Finding the extension:** install from the Microsoft Store; after the Store release it is also submitted to the `microsoft/CmdPal-Extensions` community Gallery (Command Palette Settings → Extensions → Gallery), which installs via WinGet or the Microsoft Store. WinGet publishing is optional/recommended.
 - **Privacy:** no telemetry, no network capability, no data collection; settings and logs stay on your device (`%LOCALAPPDATA%\EverythingPal`).

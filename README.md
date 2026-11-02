@@ -26,6 +26,10 @@ only need Everything itself installed and running — no separate ES download or
 - **Smart matching**: a single-word search ignores letter case and spaces, so `term1` also finds
   `Term 1` (and `Term 1` ranks as an exact match). Everything's own syntax (`ext:`, `folder:`,
   wildcards, paths, boolean operators) is passed through untouched.
+- **Pinyin search via Everything**: the extension has no pinyin engine of its own — queries are
+  evaluated by Everything, so pinyin works when Everything itself provides it (Everything 1.5's
+  built-in pinyin, or Everything 1.4 + [IbEverythingExt](https://github.com/Chaoses-Ib/IbEverythingExt)).
+  See [Pinyin search](#pinyin-search).
 - **Real paths, not shortcuts**: results are the actual files/folders (drive roots such as
   `D:\wantai` included), unlike Recent-items shortcuts.
 - **Real file-type icons**: each result shows the shell's registered icon for its type (folder,
@@ -53,6 +57,49 @@ only need Everything itself installed and running — no separate ES download or
 - PowerToys with Command Palette (`Microsoft.CommandPalette` 0.13+)
 - **Everything 1.4 or 1.5a installed and running** (the extension only queries it)
 - For development: .NET 10 SDK, Windows SDK 10.0.26100 (MSIX packaging/signing), Developer Mode
+
+## Pinyin search
+
+Queries are evaluated by Everything, not by this extension, so **pinyin search is inherited from
+Everything** and needs no code or setting on the EverythingPal side.
+
+### Everything 1.5: built-in pinyin
+
+Everything 1.5 has built-in pinyin search, disabled by default:
+
+- **Globally**: in Everything, *Tools → Options → Advanced* → set `pinyin` to `true` and choose
+  `pinyin_type` (*QuanPin* for full pinyin, *Single Character* for first letters). After that a
+  plain query such as `zhongwen` also matches `中文`.
+- **Per query** (Everything syntax is passed through unchanged):
+  - `pinyin:nihao` — mode from the Advanced `pinyin` setting
+  - `pinyin-quan:nihaoshijie` — QuanPin (full pinyin)
+  - `pinyin-jian:nhsj` — single-character pinyin (first letter of every character)
+
+The `pinyin*:` modifiers work even while the global switch is off; the global switch additionally
+makes plain queries match pinyin. Verified against Everything 1.5.0.1423b with the bundled ES 1.1.1.39: `pinyin-quan:nihaoshijie`
+and `pinyin-jian:nhsj` return a file named `你好世界测试.txt`, and with `pinyin=true` a plain
+`nihaoshijie` matches it as well. For plain single-word queries the extension first tries its
+smart-matching variant (`nocase:ignorews:…`), which does not trigger pinyin matching, then retries
+the query as typed — the pinyin result still appears, at the cost of one extra `es.exe` run. Start
+the query with `pinyin:`, `pinyin-quan:` or `pinyin-jian:` to get pinyin matching directly.
+
+### Everything 1.4: pair with IbEverythingExt (EvEx)
+
+Everything 1.4 has no pinyin search. [IbEverythingExt](https://github.com/Chaoses-Ib/IbEverythingExt)
+(EvEx) adds it by patching Everything's matcher, so **queries sent by this extension — and by any
+other program that lets Everything evaluate the query — get pinyin matching automatically**; nothing
+has to be installed or configured on the EverythingPal side. EvEx also adds romaji, double pinyin,
+tone-marked pinyin, wildcard enhancements and quick-select. Per its README:
+
+- 64-bit Everything only (x86/ARM64 builds and the Lite build are not supported);
+- Everything 1.4 up to **1.4.1.1026** (1.4.1.1027+ blocks the DLL hijack used to load EvEx);
+- Everything 1.5: enable the plug-in under *Options → Plug-ins* and disable named instances.
+
+EvEx compatibility depends on the exact Everything build (it signature-scans `Everything64.exe`), so
+check its release notes before updating Everything; the latest release was tested with Everything
+1.5.0.1416 Beta. EverythingPal does not bundle or install IbEverythingExt — it is an Everything-side
+plug-in, and the pairing described above is all that is needed. Details and evidence:
+[`docs/research/notes/pinyin-search.md`](docs/research/notes/pinyin-search.md).
 
 ## Install
 

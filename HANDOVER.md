@@ -16,6 +16,15 @@
 
 - **2026-10-22 PowerToys 0.102 兼容性复核**：本机 PowerToys **0.102.2933.0** / CmdPal **0.13.12934.0**（host ABI **0.13.261020004**，旧值 0.13.261013002）下，现有 Store **1.0.2.0** 实测正常加载与工作（宿主日志 `Started extension EverythingPal…` / `Loaded 2 command(s)`；扩展日志 fallback `Ok`）。0.13 宿主 ABI 相对 0.12 SDK **纯增量**（只新增 `IDetails2`/`IFormContent2`，无删除/改名），且 NuGet 上仍无 0.13 SDK 包 → **无需更新插件、无需重编译/重打包、无需重新提交 Store**。评估报告：`docs/research/powertoys-0.102-assessment.md`；证据笔记：`docs/research/notes/powertoys-0.102-cmdpal.md`、`docs/research/notes/everythingpal-api-audit.md`、`docs/qa/notes/powertoys-0.102-runtime.md`。
 
+- **2026-11-02 文档补充（未改代码、未重打包、未改 Store 文案）**：新增「拼音搜索」说明——扩展本身不含
+  拼音引擎，查询由 Everything 求值：**Everything 1.5 其实内置拼音**（默认关闭；*选项 → 高级* 的
+  `pinyin`/`pinyin_type`，或查询级 `pinyin:`/`pinyin-quan:`/`pinyin-jian:` 修饰符），Everything 1.4
+  则建议用户自行搭配 [IbEverythingExt（EvEx）](https://github.com/Chaoses-Ib/IbEverythingExt)（x64、
+  1.4≤1.4.1.1026 或 1.5 插件模式；1.5.0.1423b 上 EvEx 未验证）。本机实测 Everything **1.5.0.1423b** + ES 1.1.1.39：
+  `pinyin-quan:nihaoshijie`/`pinyin-jian:nhsj` 命中 `你好世界测试.txt`；`pinyin=true` 时普通
+  `nihaoshijie` 也命中（扩展的 `nocase:ignorews:` 会先得到空结果，再由 `SearchRetryPolicy` 用原查询重试）。
+  详见 `README.md` 的 *Pinyin search* 段、`docs/store/support.md` Q16、`docs/research/notes/pinyin-search.md`。
+
 - 源码/dev 版本 **0.2.0.0**；Store 已上架 **1.0.2.0**（2026-10-21 更新上线；Store 页面 <https://apps.microsoft.com/detail/9NFD76MCDRJZ>）。`main` 干净、CI 全绿；单元测试 **118/118**（提权跑；最后一次全绿记录 2026-10-21）。
 - 已完成一轮“发布前打磨”（用户明确要求不要急着上架）：
   - **真实文件类型图标**（SHGetFileInfo + 每扩展名缓存 PNG；页面与主页 fallback 行都有），
@@ -136,6 +145,11 @@ pwsh -File scripts\capture-screenshots.ps1 -Mode home -Queries wantai -SelectFir
 - 非提权 `dotnet test` 的 testhost 会 `Win32Exception(5)`；用
   `Start-Process -Verb RunAs cmd /c "dotnet test ... > log 2>&1"`。
 - 有火绒，可能拦截隐藏窗口的 powershell/cmd；被拦时交给用户手动执行。
+- 2026-11-02 观察：从 workspace 路径直接运行 `artifacts\es\{x64,arm64}\es.exe` 查询本机 Everything 会
+  `Error 7: Unable to send IPC message or bad IPC reply`（`-debug` 显示 `CreateFile failed 5`）；把同一
+  `es.exe` 复制到 `%TEMP%` 再运行即可正常查询（JSON 仍可导出到 workspace）。疑似沙箱/安全软件对
+  workspace 路径进程的 IPC 限制，**与产品无关**（Store 包内 es.exe 由 CmdPal 拉起，不受影响）；
+  做无头验证时按此方式绕开即可。
 - `dotnet publish` 必须加 `-p:EnableMsixTooling=false`（否则 MSB3030 缺 EverythingPal.pri）和
   `-p:PublishProfile=`（否则 NETSDK1198）；脚本已处理。
 - 安装/本地签名：dev 证书 `CN=czz404` 在 `Cert:\LocalMachine\TrustedPeople`；Store 版不需要。
