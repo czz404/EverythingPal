@@ -10,7 +10,7 @@
 
 | Partner Center 字段 | 建议值 | 状态 |
 | --- | --- | --- |
-| 产品名称（Product name） | `Everything Search for Command Palette`（候选见 §1） | 推荐；商标风险见 §7 |
+| 产品名称（Product name） | `EverythingPal`（已预留；Store ID `9NFD76MCDRJZ`） | 实际值；§1 的名称候选仅保留作历史 |
 | 类别 / 子类别 | Utilities & tools（子类别 TBD，按 Partner Center 列表选最接近“文件/搜索工具”） | Learn 建议按功能选最合适类别 |
 | 定价 | 免费，无应用内购买 | 建议 |
 | 市场 | 全部市场（All markets） | 建议 |
@@ -23,6 +23,7 @@
 | 年龄分级 | IARC 问卷；无用户生成内容、无网络、无广告 → 预计 3+ | 问卷在 Partner Center 填 |
 | 隐私政策 URL | https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md | ✅ 仓库已 public，可直接使用 |
 | 支持 URL | https://github.com/czz404/EverythingPal/issues | ✅ 仓库已 public |
+| 产品网站（可选） | https://github.com/czz404/EverythingPal | 可选；可直接使用 |
 | 认证备注（Notes for certification） | 见 `certification-notes.md` 的英文粘贴版 | 已准备，需随最终行为复核 |
 
 > 截图、应用图标、描述、隐私/支持 URL 是 Store 列表的核心资产；其中**隐私政策 URL 与支持 URL 必须真实可访问**，否则提交可能被拒。
@@ -30,6 +31,9 @@
 ---
 
 ## 1. 应用名称候选（Store display name）
+
+> 当前实际预留产品名为 **`EverythingPal`**（Store ID `9NFD76MCDRJZ`），本节候选仅保留作历史；
+> 已上架产品不建议改名（影响链接/评价/更新继承）。
 
 规则：Store 列表名 = 在 Partner Center 预留的产品名；它**不要求**等于包身份 `Identity/@Name`，但提交后不轻易改（改名通常要重新提交、且影响已有评价/链接）。名称上限以 Partner Center 输入框提示为准（**TBD**；下列候选均远低于常见 256 字符限制）。
 
