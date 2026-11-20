@@ -102,6 +102,9 @@
   <data name="Fallback.ResultCountFormat" xml:space="preserve">
     <value>（共 {0} 个结果）</value>
   </data>
+  <data name="Fallback.ShowMoreResults" xml:space="preserve">
+    <value>查看更多结果</value>
+  </data>
   <data name="Fallback.RetryHint" xml:space="preserve">
     <value>请稍后重试</value>
   </data>
@@ -259,7 +262,7 @@
     <value>修改时间倒序</value>
   </data>
   <data name="Settings.SortDescription" xml:space="preserve">
-    <value>传给 es.exe 的 -sort 参数；插件会在返回后再按相关性微调顺序。</value>
+    <value>传给 es.exe 的 -sort 参数。默认的『名称升序』会再按相关性微调顺序；选择其他排序时保留 Everything 的返回顺序。</value>
   </data>
   <data name="Settings.SortLabel" xml:space="preserve">
     <value>排序方式</value>

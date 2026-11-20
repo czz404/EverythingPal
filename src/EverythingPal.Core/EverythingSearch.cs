@@ -1,6 +1,7 @@
 // EverythingPal - Everything search for PowerToys Command Palette.
 // SPDX-License-Identifier: MIT
 
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace EverythingPal.Core;
@@ -118,26 +119,43 @@ public sealed class EverythingSearch
     }
 
     /// <summary>
-    /// Runs one user query. Never throws: failures are returned as <see cref="SearchStatus"/>.
-    /// Intended to be called off the UI thread.
+    /// Synchronous compatibility entry point (used by <c>--search-test</c>). Prefer
+    /// <see cref="SearchAsync"/> from UI code so a superseded query can cancel the child process.
+    /// Never throws for search failures: they are returned as <see cref="SearchStatus"/>. A cancelled
+    /// <paramref name="cancellationToken"/> is the one exception: it is propagated as
+    /// <see cref="OperationCanceledException"/> so callers can stay silent.
+    /// </summary>
+    public static SearchOutcome Search(string query, SearchOptions? options = null, CancellationToken cancellationToken = default)
+        => SearchAsync(query, options, cancellationToken).GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Runs one user query. Never throws for search failures: failures are returned as
+    /// <see cref="SearchStatus"/>. Intended to be called off the UI thread.
     ///
     /// A plain single token is first searched with Everything 1.5's fuzzy modifiers
     /// (<c>nocase:ignorews:</c>, see <see cref="SearchQueryBuilder"/>) so "term1" finds "Term 1".
     /// If that run is empty (or failed in a retryable way), the original query is run once and its
     /// result preferred; this also keeps Everything 1.4 working, where unknown modifiers return zero
     /// results. Timeouts / "Everything not running" / missing es.exe are never retried.
+    ///
+    /// The token cancels both the wait and the es.exe process this query started. Cancellation is
+    /// reported by throwing <see cref="OperationCanceledException"/>; a query that genuinely exceeds
+    /// the deadline is reported as <see cref="SearchStatus.Timeout"/>.
     /// </summary>
-    public static SearchOutcome Search(string query, SearchOptions? options = null)
+    public static async Task<SearchOutcome> SearchAsync(
+        string query,
+        SearchOptions? options = null,
+        CancellationToken cancellationToken = default)
     {
         options ??= new SearchOptions();
+
+        cancellationToken.ThrowIfCancellationRequested();
 
         var normalized = QueryNormalizer.Normalize(query);
         if (normalized.Length == 0)
         {
             return new SearchOutcome { Status = SearchStatus.NoResults };
         }
-
-
 
         var esExe = FindEsExe(options.EsExePath);
         if (esExe is null)
@@ -152,25 +170,39 @@ public sealed class EverythingSearch
         // Both runs are ranked against the text the user actually typed, not against the modifier
         // expression ("nocase:ignorews:term1" would otherwise be compared with file names).
         var fuzzyExpression = SearchQueryBuilder.Build(normalized);
-        var fuzzyOutcome = RunEs(esExe, fuzzyExpression, normalized, options);
+        var fuzzyOutcome = await RunEsAsync(esExe, fuzzyExpression, normalized, options, cancellationToken).ConfigureAwait(false);
+
+        // The user may have typed a newer query while the fuzzy run was in flight; do not start the
+        // 1.4 compatibility retry for a query nobody is waiting for anymore.
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (!SearchRetryPolicy.ShouldRetry(fuzzyOutcome, fuzzyExpression, normalized))
         {
             return fuzzyOutcome;
         }
 
-        var originalOutcome = RunEs(esExe, normalized, normalized, options);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var originalOutcome = await RunEsAsync(esExe, normalized, normalized, options, cancellationToken).ConfigureAwait(false);
         return SearchRetryPolicy.Select(fuzzyOutcome, originalOutcome);
     }
 
     /// <summary>
     /// Runs one es.exe invocation with the given search expression and maps its result. Each run gets
-    /// a fresh unique export file; the export is parsed (and ranked) against
-    /// <paramref name="rankingQuery"/>, which is the user-visible query rather than the ES expression.
+    /// a fresh unique export file; the export is parsed (and ranked against
+    /// <paramref name="rankingQuery"/>, which is the user-visible query rather than the ES expression).
     /// </summary>
-    private static SearchOutcome RunEs(string esExe, string searchExpression, string rankingQuery, SearchOptions options)
+    private static async Task<SearchOutcome> RunEsAsync(
+        string esExe,
+        string searchExpression,
+        string rankingQuery,
+        SearchOptions options,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         var tempFile = Path.Combine(Path.GetTempPath(), $"EverythingPal-{Guid.NewGuid():N}.json");
+        Process? process = null;
 
         try
         {
@@ -187,28 +219,54 @@ public sealed class EverythingSearch
                 psi.ArgumentList.Add(argument);
             }
 
-            using var process = Process.Start(psi);
+            process = Process.Start(psi);
             if (process is null)
             {
                 return new SearchOutcome { Status = SearchStatus.QueryFailed, Error = "Failed to start es.exe." };
             }
 
+            // Read both pipes while the child runs. ES prints its help dump to stdout for some
+            // failures; leaving that pipe unread can fill the buffer and block the process until the
+            // timeout fires. This also keeps the redirect from interfering with cancellation.
+            // CancellationToken.None is intentional: the reads are drained only after the process is
+            // gone, so cancelling them would discard the stderr that explains a failure.
+            var stdoutTask = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+            var stderrTask = process.StandardError.ReadToEndAsync(CancellationToken.None);
+
             // ES can block for the full -timeout when Everything's IPC is unhealthy, so cap it.
             var deadline = Math.Clamp(options.IpcTimeoutMs, 100, 10000) + 1000;
-            if (!process.WaitForExit(deadline))
+            using var waitCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            waitCts.CancelAfter(deadline);
+
+            try
             {
-                try { process.Kill(entireProcessTree: true); } catch { /* ignore */ }
+                await process.WaitForExitAsync(waitCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                await KillAndDrainAsync(process, stdoutTask, stderrTask).ConfigureAwait(false);
+
+                // A fresh keystroke must stay quiet; only a genuine deadline is a Timeout. Check the
+                // caller token after the process is gone so the UI never shows a stale timeout.
+                cancellationToken.ThrowIfCancellationRequested();
                 return new SearchOutcome { Status = SearchStatus.Timeout, Error = "es.exe did not finish in time." };
             }
 
-            var stderr = process.StandardError.ReadToEnd();
+            var stderr = await stderrTask.ConfigureAwait(false);
+            _ = await stdoutTask.ConfigureAwait(false);
             var exitCode = process.ExitCode;
 
             // Only parse the export for exit 0; other codes produce no usable JSON. Exit 0 with zero
             // parsed items means "no matches" because of -no-result-error (see SearchOutcomeMapper).
-            var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, rankingQuery) : null;
+            var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, rankingQuery, options.Sort) : null;
 
             return SearchOutcomeMapper.FromExitCode(exitCode, stderr, parsed);
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation must reach the caller instead of being flattened into QueryFailed by the
+            // generic handler below.
+            throw;
         }
         catch (Exception ex)
         {
@@ -216,8 +274,61 @@ public sealed class EverythingSearch
         }
         finally
         {
+            // The export file may only be deleted after the child is gone: on cancellation/timeout
+            // the kill happens above, but an unexpected exception can also leave it running.
+            if (process is not null)
+            {
+                await WaitForExitOrKillAsync(process).ConfigureAwait(false);
+                process.Dispose();
+            }
+
             try { File.Delete(tempFile); } catch { /* ignore */ }
         }
     }
-}
 
+    /// <summary>Kills this invocation's es.exe, waits for it to exit and drains its redirected pipes.</summary>
+    private static async Task KillAndDrainAsync(Process process, Task<string> stdout, Task<string> stderr)
+    {
+        await WaitForExitOrKillAsync(process).ConfigureAwait(false);
+
+        // The tasks are expected to complete once the process (and its inherited pipe handles) are
+        // gone; swallow failures because their content is irrelevant to a cancelled/timed-out run.
+        try { _ = await stdout.ConfigureAwait(false); } catch { /* ignored */ }
+        try { _ = await stderr.ConfigureAwait(false); } catch { /* ignored */ }
+    }
+
+    /// <summary>
+    /// Waits for the process to exit, terminating the exact Process object started by this call if it
+    /// is still running. Handles the race where it exited just before the kill.
+    /// </summary>
+    private static Task WaitForExitOrKillAsync(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch (InvalidOperationException)
+                {
+                    // Exited between HasExited and Kill.
+                }
+                catch (Win32Exception)
+                {
+                    // Access denied (already terminating / elevated child); fall through to the wait.
+                }
+            }
+
+            // Bounded: after Kill the process should exit promptly. Never block the caller forever.
+            _ = process.WaitForExit(2000);
+        }
+        catch (InvalidOperationException)
+        {
+            // No process associated / already exited.
+        }
+
+        return Task.CompletedTask;
+    }
+}

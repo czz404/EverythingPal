@@ -67,8 +67,9 @@
     architecture, the .msixbundle, the staged layouts and validation evidence.
 
 .PARAMETER EsRoot
-    Cache root for es.exe. Default: artifacts/es. The script looks for <EsRoot>/<arch>/es.exe and
-    otherwise downloads the latest official release from https://github.com/voidtools/ES.
+    Cache root for es.exe. Default: artifacts/es. The pinned ES version and per-architecture SHA-256
+    live in scripts/es-release.ps1; a cache hit is only reused after its hash matches, and a mismatch
+    is re-fetched from the fixed release tag.
 
 .PARAMETER Configuration
     Build configuration. Default: Release (keep Release for Store packages).
@@ -129,10 +130,11 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+. (Join-Path $PSScriptRoot "es-release.ps1")
+
 $root = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $root "src\EverythingPal\EverythingPal.csproj"
 $sourceManifestPath = Join-Path $root "src\EverythingPal\Package.appxmanifest"
-$esReleaseApi = "https://api.github.com/repos/voidtools/ES/releases/latest"
 
 # ---------------------------------------------------------------------------
 # Small helpers
@@ -326,54 +328,9 @@ $makeappx = Resolve-MakeAppx
 Write-Host ("  makeappx        : {0}" -f $makeappx)
 
 # ---------------------------------------------------------------------------
-# es.exe (MIT, from voidtools/ES) - bundled so users only need Everything itself
+# es.exe (MIT, from voidtools/ES) - bundled so users only need Everything itself.
+# The version + SHA-256 are pinned in scripts/es-release.ps1 (see that file for why).
 # ---------------------------------------------------------------------------
-
-function Resolve-EsExe {
-    param([hashtable]$Arch)
-
-    $cacheDir = Join-Path $esDir $Arch.Token
-    $cached = Join-Path $cacheDir "es.exe"
-    if (Test-Path -LiteralPath $cached) { return $cached }
-
-    if (Test-Path -LiteralPath $esDir) {
-        $existing = Get-ChildItem -LiteralPath $esDir -Recurse -Filter "es.exe" -File -ErrorAction SilentlyContinue |
-            Where-Object { $_.Directory.Name -match [regex]::Escape($Arch.Token) } |
-            Select-Object -First 1
-        if ($existing) {
-            New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
-            Copy-Item -LiteralPath $existing.FullName -Destination $cached -Force
-            Write-Host ("  Using cached es.exe ({0}): {1}" -f $Arch.Token, $existing.FullName) -ForegroundColor DarkGray
-            return $cached
-        }
-    }
-
-    Write-Host ("  Downloading latest es.exe ({0}) from github.com/voidtools/ES ..." -f $Arch.Token) -ForegroundColor DarkGray
-    New-Item -ItemType Directory -Force -Path $cacheDir | Out-Null
-    # CI passes GITHUB_TOKEN to avoid the anonymous GitHub API rate limit.
-    $headers = @{ "User-Agent" = "EverythingPal-pack-store" }
-    if ($env:GITHUB_TOKEN) { $headers["Authorization"] = "Bearer $env:GITHUB_TOKEN" }
-    try {
-        $release = Invoke-RestMethod -Uri $esReleaseApi -Headers $headers -TimeoutSec 120
-    }
-    catch {
-        throw "Could not query the latest voidtools/ES release: $($_.Exception.Message). Place es.exe manually at $cached and re-run."
-    }
-    $suffix = if ($Arch.Token -eq "arm64") { "ARM64.zip" } else { "x64.zip" }
-    $asset = $release.assets | Where-Object { $_.name -like "*.$suffix" } | Select-Object -First 1
-    if (-not $asset) { throw "No ES asset '*.$suffix' in the latest voidtools/ES release ($($release.tag_name))." }
-
-    $zip = Join-Path $cacheDir "es.zip"
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -TimeoutSec 300
-    $extract = Join-Path $cacheDir "extract"
-    if (Test-Path -LiteralPath $extract) { Remove-Item -LiteralPath $extract -Recurse -Force }
-    Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
-    $found = Get-ChildItem -LiteralPath $extract -Recurse -Filter "es.exe" -File | Select-Object -First 1
-    if (-not $found) { throw "es.exe not found inside $($asset.name)." }
-    Copy-Item -LiteralPath $found.FullName -Destination $cached -Force
-    Write-Host ("  Bundled ES {0} ({1})" -f $release.tag_name, $asset.name) -ForegroundColor DarkGray
-    return $cached
-}
 
 # ---------------------------------------------------------------------------
 # Publish (self-contained) + stage + pack per architecture
@@ -535,7 +492,7 @@ function New-Layout {
     # Bundle the MIT-licensed ES client + its notice.
     $toolsDir = Join-Path $layout "Tools"
     New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null
-    $esExe = Resolve-EsExe -Arch $Arch
+    $esExe = Resolve-PinnedEsExe -EsRoot $esDir -Arch $Arch.Token
     Copy-Item -LiteralPath $esExe -Destination (Join-Path $toolsDir "es.exe") -Force
     Copy-Item -LiteralPath (Join-Path $root "THIRD-PARTY-NOTICES.md") -Destination (Join-Path $layout "THIRD-PARTY-NOTICES.md") -Force
     Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination (Join-Path $layout "LICENSE") -Force
@@ -661,6 +618,9 @@ function Test-StagedPackage {
         }
         $esLength = (Get-Item -LiteralPath (Join-Path $unpackDir "Tools\es.exe")).Length
         if ($esLength -le 0) { throw "$Arch package Tools\es.exe is empty." }
+        $expectedEsHash = Get-EsExpectedHash -Arch $Arch
+        $actualEsHash = (Get-FileHash -LiteralPath (Join-Path $unpackDir "Tools\es.exe") -Algorithm SHA256).Hash.ToUpperInvariant()
+        Assert-Equal $expectedEsHash $actualEsHash "$Arch package Tools\es.exe SHA-256 (pinned ES $(Get-EsReleaseVersion))"
         return $esLength
     }
     finally {

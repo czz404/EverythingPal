@@ -79,7 +79,10 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = EverythingSearch.Search(searchQuery, EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length));
+                    var outcome = await EverythingSearch.SearchAsync(
+                        searchQuery,
+                        EverythingPalSettings.Instance.ToSearchOptions(maxResultsOverride: _items.Length + 1),
+                        token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
                     await DistributeAsync(outcome, searchQuery, token).ConfigureAwait(false);
                 }
@@ -103,6 +106,10 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
         token.ThrowIfCancellationRequested();
         ClearAll();
 
+        // The shared page may still hold the deferred initial query of the previous home search;
+        // never let the next navigation open it with stale text.
+        _resultsPage.ClearPendingSearch();
+
         // A successful search with zero hits (or Core's NoResults) keeps one informative row instead
         // of blank rows: the query stays the title so CmdPal's live re-scoring keeps it, with the
         // localized "no results" status in the subtitle. (Older Core versions return Ok/0.)
@@ -124,21 +131,30 @@ internal sealed partial class EverythingFallbackGroup : IDisposable
             return;
         }
 
-        var visible = Math.Min(_items.Length, outcome.Results.Count);
+        // The home query fetched one extra row: the extra row is only used to decide whether Enter
+        // should open this item or the complete result page. Without it a 1-row home setting asked
+        // ES for exactly one result and could never tell that a second match existed.
+        var plan = FallbackResultPlan.Create(_items.Length, outcome.Results.Count);
 
         // The shared full-result page is pre-filled once (not once per row) so pressing Enter on an
-        // inline row that represents multiple matches opens the complete list immediately.
+        // inline row that represents multiple matches opens the complete list. The page only runs
+        // the full search when the host first requests its items (task 3A).
         _resultsPage.SetSearchQuery(query);
 
-        var tasks = new Task[visible];
-        for (var i = 0; i < visible; i++)
+        var tasks = new Task[plan.VisibleCount];
+        for (var i = 0; i < plan.VisibleCount; i++)
         {
             if (token.IsCancellationRequested)
             {
                 return;
             }
 
-            tasks[i] = _items[i].ShowResultAsync(outcome.Results[i], outcome.Results.Count, query, token);
+            tasks[i] = _items[i].ShowResultAsync(
+                outcome.Results[i],
+                plan.HasMultipleMatches,
+                plan.HitFetchLimit,
+                outcome.Results.Count,
+                token);
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -173,21 +189,33 @@ internal sealed partial class EverythingFallbackItem(EverythingFallbackGroup gro
 
     public override void UpdateQuery(string query) => group.OnUpdateQuery(query);
 
-    internal async Task ShowResultAsync(EverythingResult result, int totalCount, string query, CancellationToken token)
+    internal async Task ShowResultAsync(
+        EverythingResult result,
+        bool hasMultipleMatches,
+        bool hitFetchLimit,
+        int returnedCount,
+        CancellationToken token)
     {
-        var extra = totalCount > 1 && index == 0 ? Strings.FormatResultCount(totalCount) : string.Empty;
+        // The first row announces what Enter will do. When ES returned exactly the extra row, the
+        // real total is unknown (>= returnedCount), so only "more results" is truthful; otherwise
+        // the exact count is safe.
+        var note = index == 0 && hasMultipleMatches
+            ? hitFetchLimit ? Strings.FallbackShowMoreResults : Strings.FormatResultCount(returnedCount)
+            : string.Empty;
 
         // Fill the row immediately: CmdPal only keeps inline fallback rows for a short budget, so
         // the row content must not wait for shell icon extraction. The icon is upgraded below.
         Title = result.Name;
-        Subtitle = $"{result.Directory}{extra}";
+        Subtitle = note.Length == 0
+            ? result.Directory
+            : result.Directory.Length == 0 ? note : $"{result.Directory} · {note}";
         Icon = result.IsFolder ? Icons.Folder : Icons.File;
 
         // A row that represents several matches opens the complete result page (the same query);
         // a single match keeps the convenient "open the file" primary action and offers the full
-        // page in the context menu. This makes the "共 N 个结果" subtitle meaningful.
+        // page in the context menu. Every row's "Open" always opens THAT row's file.
         var openItem = new OpenItemCommand(result.FullPath, result.IsFolder);
-        if (totalCount > 1)
+        if (hasMultipleMatches)
         {
             Command = group.ResultsPage;
             MoreCommands =

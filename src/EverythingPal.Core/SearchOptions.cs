@@ -16,11 +16,14 @@ public enum SearchStatus
 /// <summary>Options for one ES query, normally derived from the extension settings.</summary>
 public sealed class SearchOptions
 {
+    /// <summary>Everything's default order. It is also the only order for which we re-rank by relevance.</summary>
+    public const string DefaultSort = "name-ascending";
+
     public string? EsExePath { get; init; }
 
     public int MaxResults { get; init; } = 50;
 
-    public string Sort { get; init; } = "name-ascending";
+    public string Sort { get; init; } = DefaultSort;
 
     /// <summary>How long ES may wait for Everything's index; also used as the process timeout budget.</summary>
     public int IpcTimeoutMs { get; init; } = 1500;

@@ -15,7 +15,10 @@ public class Program
     [MTAThread]
     public static void Main(string[] args)
     {
-        AppLog.Write($"Main entry. args=[{string.Join(" | ", args)}]");
+        // Never log the raw command line: --search-test <query> would otherwise write the user's
+        // search term into both local log files, contradicting the privacy statement. Only the fixed
+        // launch mode is recorded.
+        AppLog.Write($"Main entry. mode={GetLaunchMode(args)}");
 
         // Development helper: exercise the es.exe search path without the Command Palette UI.
         // Usage: EverythingPal.exe --search-test "wantai"  (headless; prints to stdout)
@@ -94,6 +97,35 @@ public class Program
     private static bool IsDiagnosticsRequest(string[] args) =>
         string.Equals(args[0], "--about", StringComparison.OrdinalIgnoreCase)
         || string.Equals(args[0], "--diagnostics", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Fixed, non-sensitive name for the log. Arguments beyond this classification are never logged:
+    /// the only non-flag argument the extension accepts is a search query.
+    /// </summary>
+    private static string GetLaunchMode(string[] args)
+    {
+        if (args.Length == 0)
+        {
+            return "diagnostics";
+        }
+
+        if (string.Equals(args[0], "--search-test", StringComparison.Ordinal))
+        {
+            return "search-test";
+        }
+
+        if (IsDiagnosticsRequest(args))
+        {
+            return "diagnostics";
+        }
+
+        if (string.Equals(args[0], "-RegisterProcessAsComServer", StringComparison.Ordinal))
+        {
+            return "com-server";
+        }
+
+        return "unknown";
+    }
 }
 
 

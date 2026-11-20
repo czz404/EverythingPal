@@ -17,10 +17,14 @@ namespace EverythingPal.Core;
 /// Folders carry a trailing separator in <c>filename</c>; that is the folder detection. Zero
 /// results produce an empty file (not <c>[]</c>). The export file is UTF-8, so CJK names survive
 /// (stdout is written in the console code page instead, which is why we do not use it).
+///
+/// <paramref name="sort"/> is the configured Everything order. The default name-ascending order is
+/// re-ranked by relevance (<see cref="ResultRanker"/>); every explicit order is kept exactly as ES
+/// returned it, because re-ranking it would silently undo the user's choice.
 /// </summary>
 public static class EsResultParser
 {
-    public static List<EverythingResult> Parse(Stream utf8Json, string query)
+    public static List<EverythingResult> Parse(Stream utf8Json, string query, string? sort = null)
     {
         ArgumentNullException.ThrowIfNull(utf8Json);
 
@@ -78,10 +82,12 @@ public static class EsResultParser
             });
         }
 
-        return ResultRanker.Rank(results, query);
+        return ResultRanker.UsesRelevanceRanking(sort)
+            ? ResultRanker.Rank(results, query)
+            : results;
     }
 
-    public static List<EverythingResult> ParseFile(string path, string query)
+    public static List<EverythingResult> ParseFile(string path, string query, string? sort = null)
     {
         // With -no-result-error ES may exit 0 without creating the export file at all; an absent
         // file means "no matches", not a failure.
@@ -91,6 +97,6 @@ public static class EsResultParser
         }
 
         using var stream = File.OpenRead(path);
-        return Parse(stream, query);
+        return Parse(stream, query, sort);
     }
 }

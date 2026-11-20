@@ -191,7 +191,7 @@ pwsh -File scripts/pack-store.ps1 -Untrimmed
 | `-DisplayName` | 源码 manifest 的 `Properties/DisplayName` | 只写 staged manifest；Store 要求是已预留产品名之一（同时注入 `uap:VisualElements/@DisplayName`） |
 | `-Architectures` | `x64,arm64` | 支持子集 `x64` / `arm64` |
 | `-OutputDir` | `artifacts/store` | 产物目录（相对仓库根或绝对路径） |
-| `-EsRoot` | `artifacts/es` | es.exe 缓存根；缺失时自动从 voidtools/ES latest 下载 |
+| `-EsRoot` | `artifacts/es` | es.exe 缓存根；版本与 SHA-256 固定在同仓库 `scripts/es-release.ps1`（当前 ES `1.1.1.39`），缓存哈希不符会重新下载 |
 | `-Configuration` | `Release` | 保持 Release |
 | `-SkipBuild` | 关 | 复用 `publish-<arch>/`，不跑 `dotnet publish` |
 | `-Untrimmed` | 关 | `PublishTrimmed=false`（默认 true） |
@@ -214,7 +214,9 @@ pwsh -File scripts/pack-store.ps1 -Untrimmed
 2. **自检 publish 输出**：hostfxr/hostpolicy/coreclr/includedFrameworks/PE machine（见第 1 节）。
 3. **stage 布局**：复制 publish 输出 → 删 `*.pdb` → 放 `Package.appxmanifest` → 用 XML API 注入
    `Identity/@ProcessorArchitecture`、`Identity/@Version`（以及可选的 Name/Publisher/PublisherDisplayName）→ 重新解析校验。
-4. **打包第三方/许可证文件**：`artifacts/es/<arch>/es.exe`（缺失则从 <https://github.com/voidtools/ES> latest 下载，x64/ARM64 zip）
+4. **打包第三方/许可证文件**：`scripts/es-release.ps1` 固定 ES 版本、资产名和每架构 SHA-256（当前
+   `1.1.1.39`：x64 `ES-1.1.1.39.x64.zip`、ARM64 `ES-1.1.1.39.ARM64.zip`）。`artifacts/es/<arch>/es.exe`
+   命中缓存时也重新校验哈希；不符或缺失时从固定 release tag 下载并校验解压后的 `es.exe`，失败即停止打包。
    → `Tools\es.exe`；`THIRD-PARTY-NOTICES.md`、`LICENSE` → 布局根目录。
 5. **makeappx pack** 出每架构 `.msix`，然后 `makeappx bundle /d <只含两个 msix 的目录> /p ... /bv <version>`。
    `/bv` 很重要：不带时 makeappx 会用当前日期生成 bundle 版本（如 `2026.1020.733.0`）。
@@ -349,7 +351,7 @@ pwsh -File scripts/deploy.ps1 -Configuration Release -RestartCmdPal
 | 上传报 publisher / identity 不匹配 | `Identity/@Publisher` 与 Partner Center 的 `CN=...` 必须完全一致（大小写、GUID 格式、无多余空格）；`Identity/@Name` 同理 |
 | 上传报版本非法 | 第 4 段非 0、第 1 段为 0、或版本不高于上次提交。见第 6 节 |
 | `makeappx pack` 报 `Package creation failed` | 多半是 staged manifest 不合法（XML/属性重复/命名空间）。脚本在注入后会重新解析；先看 `artifacts/store/layout-<arch>/AppxManifest.xml` |
-| 下载 es.exe 失败（403 / rate limit） | 设置 `GITHUB_TOKEN` 环境变量重试，或手动把 es.exe 放到 `artifacts/es/<arch>/es.exe`（架构名目录：`x64` / `arm64`） |
+| 下载 es.exe 失败 / 哈希不符 | 检查 `scripts/es-release.ps1` 里的固定版本、资产名与 SHA-256；网络问题可手动把**对应架构**的验证过的 es.exe 放到 `artifacts/es/<arch>/es.exe`（`x64` / `arm64`），脚本仍会校验哈希 |
 | 真实文件图标丢失 / 包内缺 `System.Drawing.Common.dll` 或 `System.Private.Windows.GdiPlus.dll` | trimming 把它们裁掉，或 `System.Drawing.Common` PackageReference 丢了；脚本会直接报错。检查 `src/EverythingPal/EverythingPal.csproj` / `Directory.Packages.props`，必要时加 trimmer root |
 | 包内缺 `LICENSE` / `THIRD-PARTY-NOTICES.md` | 布局阶段漏拷贝；脚本会断言，补回仓库根目录的对应文件 |
 | 上传报 "device family not supported" | 检查 `Dependencies` 是否被误加回 `Windows.Universal`；桌面扩展只保留 `Windows.Desktop` |

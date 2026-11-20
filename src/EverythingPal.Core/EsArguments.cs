@@ -18,7 +18,7 @@ public static class EsArguments
         ArgumentNullException.ThrowIfNull(options);
 
         var max = Math.Clamp(options.MaxResults, 1, 500);
-        var sort = string.IsNullOrWhiteSpace(options.Sort) ? "name-ascending" : options.Sort;
+        var sort = string.IsNullOrWhiteSpace(options.Sort) ? SearchOptions.DefaultSort : options.Sort;
         var ipcTimeout = Math.Clamp(options.IpcTimeoutMs, 100, 10000);
 
         return

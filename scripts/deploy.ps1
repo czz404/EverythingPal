@@ -33,6 +33,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "es-release.ps1")
 $project = Join-Path $root "src\EverythingPal\EverythingPal.csproj"
 $artifacts = Join-Path $root "artifacts"
 $publish = Join-Path $artifacts "publish\$Platform"
@@ -80,28 +81,11 @@ if ($manifestText -notmatch 'ProcessorArchitecture=') {
 
 # ---------------------------------------------------------------------------
 # Bundle es.exe so users only need Everything itself (ES is MIT licensed, see THIRD-PARTY-NOTICES.md).
+# The version and SHA-256 are pinned in scripts/es-release.ps1, exactly like scripts/pack-store.ps1;
+# a local dev install therefore contains the same es.exe as the Store package.
 # ---------------------------------------------------------------------------
-$esCache = Join-Path $artifacts "es\$Platform"
-$esExe = Join-Path $esCache "es.exe"
-if (-not (Test-Path $esExe)) {
-    Write-Host "Downloading latest ES ($Platform) from github.com/voidtools/ES..." -ForegroundColor Cyan
-    New-Item -ItemType Directory -Force -Path $esCache | Out-Null
-    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/voidtools/ES/releases/latest" `
-        -Headers @{ "User-Agent" = "EverythingPal-build" } -TimeoutSec 120
-    $suffix = if ($Platform -eq "ARM64") { "ARM64.zip" } else { "x64.zip" }
-    $asset = $release.assets | Where-Object { $_.name -like "*.$suffix" } | Select-Object -First 1
-    if (-not $asset) { throw "No ES asset '*.$suffix' in release $($release.tag_name)" }
-
-    $zip = Join-Path $esCache "es.zip"
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -TimeoutSec 300
-    $extract = Join-Path $esCache "extract"
-    if (Test-Path $extract) { Remove-Item $extract -Recurse -Force }
-    Expand-Archive -Path $zip -DestinationPath $extract -Force
-    $found = Get-ChildItem $extract -Recurse -Filter "es.exe" | Select-Object -First 1
-    if (-not $found) { throw "es.exe not found in $($asset.name)" }
-    Copy-Item $found.FullName $esExe -Force
-    Write-Host "Bundled ES $($release.tag_name)" -ForegroundColor DarkGray
-}
+$esArch = if ($Platform -eq "ARM64") { "arm64" } else { "x64" }
+$esExe = Resolve-PinnedEsExe -EsRoot (Join-Path $artifacts "es") -Arch $esArch
 
 $toolsDir = Join-Path $layout "Tools"
 New-Item -ItemType Directory -Force -Path $toolsDir | Out-Null

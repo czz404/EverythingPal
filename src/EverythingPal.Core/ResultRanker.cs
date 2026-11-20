@@ -15,6 +15,16 @@ namespace EverythingPal.Core;
 /// </summary>
 public static class ResultRanker
 {
+    /// <summary>
+    /// True when the configured sort should be replaced by relevance ranking. Name ascending is the
+    /// default and has no meaningful user intent behind it, so the extension still prefers term1
+    /// matches for Term 1. Every other order (date modified, path, run count, ...) is an explicit
+    /// choice: ES already sorted that way and re-ranking would silently undo it.
+    /// </summary>
+    public static bool UsesRelevanceRanking(string? sort) =>
+        string.IsNullOrWhiteSpace(sort) ||
+        string.Equals(sort, SearchOptions.DefaultSort, StringComparison.Ordinal);
+
     public static List<EverythingResult> Rank(IEnumerable<EverythingResult> results, string query)
     {
         ArgumentNullException.ThrowIfNull(results);

@@ -18,6 +18,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
     private const int DebounceMilliseconds = 150;
     private IListItem[] _items = [];
     private string _query = string.Empty;
+    private string? _pendingQuery;
     private CancellationTokenSource? _cts;
 
     public EverythingPalPage()
@@ -26,32 +27,101 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
         Title = Strings.PageTitle;
         Name = Strings.PageName;
         PlaceholderText = Strings.PagePlaceholderText;
+
+        // Every result item already carries Details (name, full path, type, size, modified). The
+        // toolkit defaults this to false, which is why the host never showed the details pane.
+        ShowDetails = true;
     }
 
-    public override IListItem[] GetItems() => _items;
+    public override IListItem[] GetItems()
+    {
+        // A home fallback row opened this page with a pre-filled search box. Start that search only
+        // now that the host actually shows the page, so merely hovering the home results does not
+        // spawn a full 50-result query. Consume the marker BEFORE starting: RaiseItemsChanged makes
+        // the host call GetItems() again, and starting a search on every call would loop forever.
+        var pending = _pendingQuery;
+        if (pending is not null)
+        {
+            _pendingQuery = null;
+            StartSearch(pending);
+        }
+
+        return _items;
+    }
 
     /// <summary>
     /// Pre-fills the page search text (used when a home-screen fallback row opens the full result
-    /// list). The dynamic-list page starts its normal debounced search from <see cref="UpdateSearchText"/>.
+    /// list). The search itself runs on the first <see cref="GetItems"/> call: setting SearchText
+    /// through its normal setter would start the debounced query immediately and generate the full
+    /// result page (plus icons) even when the user never opens it.
     /// </summary>
-    internal void SetSearchQuery(string query) => SearchText = query;
+    internal void SetSearchQuery(string query)
+    {
+        var normalized = query?.Trim() ?? string.Empty;
+
+        _pendingQuery = normalized;
+        _query = normalized;
+        _items = [];
+
+        // Drop any search still running for the previously displayed query: this page is only
+        // navigated to from the home rows, so a leftover task must not repopulate the old list.
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+        IsLoading = false;
+
+        // Bypass DynamicListPage.SearchText's setter (which calls UpdateSearchText immediately).
+        SetSearchNoUpdate(normalized);
+    }
+
+    /// <summary>
+    /// Drops a deferred initial query without touching the currently displayed list. Used when a
+    /// newer home search has no results (or fails) and the shared page must not later open with the
+    /// previous query.
+    /// </summary>
+    internal void ClearPendingSearch() => _pendingQuery = null;
 
     public void Dispose()
     {
+        _pendingQuery = null;
         _cts?.Cancel();
         _cts?.Dispose();
     }
 
     public override void UpdateSearchText(string oldSearch, string newSearch)
     {
-        _query = newSearch?.Trim() ?? string.Empty;
+        var query = newSearch?.Trim() ?? string.Empty;
+
+        // The host may fire the activation callback with the old empty text while the deferred
+        // home query is still waiting for GetItems(); do not let that erase the pre-filled query.
+        if (query.Length == 0 && _pendingQuery is { Length: > 0 })
+        {
+            return;
+        }
+
+        // A manual edit supersedes the deferred home-page query.
+        _pendingQuery = null;
+
+        // CmdPal can re-send the text we just pre-filled. That is not a new search: starting one
+        // here would duplicate the deferred search and eventually keep re-querying ES.
+        if (string.Equals(query, _query, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        StartSearch(query);
+    }
+
+    private void StartSearch(string query)
+    {
+        _query = query;
 
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
 
-        if (_query.Length == 0)
+        if (query.Length == 0)
         {
             _items = [];
             IsLoading = false;
@@ -68,7 +138,11 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    var outcome = EverythingSearch.Search(_query, EverythingPalSettings.Instance.ToSearchOptions());
+                    // Capture the query for this task only: _query may change while ES runs.
+                    var outcome = await EverythingSearch.SearchAsync(
+                        query,
+                        EverythingPalSettings.Instance.ToSearchOptions(),
+                        token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
                     var items = await BuildItemsAsync(outcome, token).ConfigureAwait(false);
@@ -83,7 +157,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
                 }
                 catch (OperationCanceledException)
                 {
-                    // A newer keystroke superseded this query; it owns the UI state.
+                    // A newer keystroke (or a closed page) superseded this query; it owns the UI state.
                 }
                 catch (Exception ex)
                 {

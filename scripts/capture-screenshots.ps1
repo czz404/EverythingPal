@@ -63,6 +63,10 @@
     Number of Down-arrow presses after typing (default 0), to scroll the result list so later rows
     (e.g. the EverythingPal fallback rows under "回退") are visible in the screenshot.
 
+.PARAMETER PressEnter
+    Press Enter after the query has settled (and after -ScrollDown) before capturing. Used to verify
+    that a home-screen fallback row opens the full result page rather than the single item.
+
 .PARAMETER SelectFirst
     Press Down once after the results settle so the first result is selected and the details pane
     (size, modified time, clickable path) is populated. Recommended for the page-mode screenshot.
@@ -142,6 +146,7 @@ param(
     [int]$Height = 768,
     [int]$WaitMs = 1800,
     [int]$ScrollDown = 0,
+    [switch]$PressEnter,
     [switch]$SelectFirst,
     [switch]$ClickFirstResult,
     [switch]$OpenContextMenu,
@@ -775,6 +780,10 @@ foreach ($query in $Queries) {
             Start-Sleep -Milliseconds 1200
         }
         if ($ScrollDown -gt 0) { Send-DownArrow -Count $ScrollDown }
+        if ($PressEnter) {
+            [void]$native::TapVirtualKey(0x0D)   # Enter: activate the selected result / open the page
+            Start-Sleep -Milliseconds 1500
+        }
 
         $baseName = if ($Names -and $Names.Count -ge $index) { $Names[$index - 1] } else { "{0:00}-cmdpal-{1}" -f $index, $slug }
         $windowCapture = Capture-Window -Palette $palette
@@ -852,7 +861,7 @@ $manifest = [ordered]@{
         everythingPalPackage      = @(Get-AppxPackage -Name "EverythingPal*" -ErrorAction SilentlyContinue | ForEach-Object { "$($_.Name)_$($_.Version)_$($_.Architecture)__$($_.PackageFamilyName)" })
         inputInjection            = "SendInput (Win+Alt+Space hotkey + Unicode characters)"
     }
-    settings    = [ordered]@{ mode = $Mode; commandSearchText = $CommandSearchText; queries = @($Queries); preQuery = $PreQuery; names = @($Names); selectFirst = [bool]$SelectFirst; targetWidth = $Width; targetHeight = $Height; waitMs = $WaitMs; scrollDown = $ScrollDown; keepPaletteOpen = [bool]$KeepPaletteOpen; backdrop = [bool]$Backdrop }
+    settings    = [ordered]@{ mode = $Mode; commandSearchText = $CommandSearchText; queries = @($Queries); preQuery = $PreQuery; names = @($Names); selectFirst = [bool]$SelectFirst; pressEnter = [bool]$PressEnter; targetWidth = $Width; targetHeight = $Height; waitMs = $WaitMs; scrollDown = $ScrollDown; keepPaletteOpen = [bool]$KeepPaletteOpen; backdrop = [bool]$Backdrop }
     captures    = @($captures | ForEach-Object {
         [ordered]@{
             index          = $_.index

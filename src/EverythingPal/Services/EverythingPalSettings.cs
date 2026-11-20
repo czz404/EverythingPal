@@ -16,6 +16,7 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
 {
     private const string Namespace = "everythingPal";
     private const int DefaultMaxResults = 50;
+    private const int DefaultFallbackRows = 1;
 
     private static readonly List<ChoiceSetSetting.Choice> SortChoices =
     [
@@ -42,7 +43,7 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
         Namespaced(nameof(FallbackRows)),
         Strings.SettingsFallbackRowsLabel,
         Strings.SettingsFallbackRowsDescription,
-        "1");
+        DefaultFallbackRows.ToString(CultureInfo.InvariantCulture));
 
     private readonly ChoiceSetSetting _sort = new(
         Namespaced(nameof(Sort)),
@@ -58,12 +59,15 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
         Directory.CreateDirectory(directory);
         FilePath = Path.Combine(directory, "settings.json");
 
-        LoadSettings();
-
+        // Register the settings BEFORE loading: Settings.Update() only visits the settings that are
+        // already in the collection, so loading first (the previous order) silently dropped every
+        // persisted value and left the defaults in place after a restart.
         Settings.Add(_esExePath);
         Settings.Add(_maxResults);
         Settings.Add(_sort);
         Settings.Add(_fallbackRows);
+
+        LoadSettings();
 
         Settings.SettingsChanged += (_, _) => SaveSettings();
     }
@@ -73,10 +77,10 @@ internal sealed class EverythingPalSettings : JsonSettingsManager
     internal string EsExePath => _esExePath.Value?.Trim() ?? string.Empty;
 
     internal int MaxResults => int.TryParse(_maxResults.Value, out var value) ? Math.Clamp(value, 1, 500) : DefaultMaxResults;
-    internal int FallbackRows => int.TryParse(_fallbackRows.Value, out var value) ? Math.Clamp(value, 0, 5) : 3;
+    internal int FallbackRows => int.TryParse(_fallbackRows.Value, out var value) ? Math.Clamp(value, 0, 5) : DefaultFallbackRows;
 
 
-    internal string Sort => string.IsNullOrWhiteSpace(_sort.Value) ? "name-ascending" : _sort.Value;
+    internal string Sort => string.IsNullOrWhiteSpace(_sort.Value) ? SearchOptions.DefaultSort : _sort.Value;
 
     internal SearchOptions ToSearchOptions(int? maxResultsOverride = null) => new()
     {

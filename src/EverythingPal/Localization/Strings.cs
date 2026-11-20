@@ -58,6 +58,8 @@ internal static class Strings
 
     internal static string FallbackTimeoutTitle => Get("Fallback.TimeoutTitle");
 
+    internal static string FallbackShowMoreResults => Get("Fallback.ShowMoreResults");
+
     internal static string FallbackQueryFailedTitle => Get("Fallback.QueryFailedTitle");
 
     internal static string FallbackRetryHint => Get("Fallback.RetryHint");

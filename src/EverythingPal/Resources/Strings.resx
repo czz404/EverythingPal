@@ -102,6 +102,9 @@
   <data name="Fallback.ResultCountFormat" xml:space="preserve">
     <value>({0} results)</value>
   </data>
+  <data name="Fallback.ShowMoreResults" xml:space="preserve">
+    <value>More results</value>
+  </data>
   <data name="Fallback.RetryHint" xml:space="preserve">
     <value>Please try again later</value>
   </data>
@@ -259,7 +262,7 @@
     <value>Date modified descending</value>
   </data>
   <data name="Settings.SortDescription" xml:space="preserve">
-    <value>Passed to es.exe as -sort; the extension re-ranks results by relevance afterwards.</value>
+    <value>Passed to es.exe as -sort. Name ascending (the default) additionally re-ranks by relevance; every other order keeps Everything's order.</value>
   </data>
   <data name="Settings.SortLabel" xml:space="preserve">
     <value>Sort order</value>
