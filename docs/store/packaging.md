@@ -129,8 +129,8 @@ publish 会更久，主要是下载 runtime pack + 首次 trim）。trim 期间 
 
 | 版本 | 文件 | 大小 | SHA256 | 状态 |
 | --- | --- | --- | --- | --- |
-| **1.0.3.0（当前）** | `artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle` | 21.35 MB（22,390,300 B） | `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D` | Store 更新包（待提交） |
-| 1.0.2.0（Store live） | `artifacts/store-identity-1.0.2/EverythingPal_1.0.2.0_x64_arm64.msixbundle` | 21.32 MB（22,351,336 B） | `DC5D9530B1051303D63FE89823CA343500FA0226E5F41653C471E2A3D7AE378F` | 当前已上架版本（1.0.3.0 待提交） |
+| **1.0.3.0（Store live）** | `artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle` | 21.35 MB（22,390,300 B） | `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D` | 已发布（2026-11-20） |
+| 1.0.2.0（历史） | `artifacts/store-identity-1.0.2/EverythingPal_1.0.2.0_x64_arm64.msixbundle` | 21.32 MB（22,351,336 B） | `DC5D9530B1051303D63FE89823CA343500FA0226E5F41653C471E2A3D7AE378F` | 前一版（已被 1.0.3.0 取代） |
 | 1.0.1.0（历史） | `artifacts/store-identity-1.0.1/EverythingPal_1.0.1.0_x64_arm64.msixbundle` | 21.32 MB（22,350,534 B） | `8A014E6D6155ECD2DFCCA1D06123D6BCE7D0D5283060F8B431CCB428C75E58FB` | 前一版更新包（已被 1.0.2.0 取代） |
 | 1.0.0.0（历史） | `artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle` | 21.31 MB（22,349,304 B） | `82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769` | 首版已提交（历史基线，证据保留） |
 

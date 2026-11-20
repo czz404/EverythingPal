@@ -1,7 +1,7 @@
 # Everything Search for Command Palette — Store 上架材料总览 / Store submission kit
 
-> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。**当前 Store live 1.0.2.0；正在准备 1.0.3.0 更新**（多匹配回车、引号短语、设置恢复、显式排序、详情面板；包已生成，待 Partner Center 上传）。材料 v1 由 brand-materials（task-4）产出。
-> 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、包能力只剩 `runFullTrust`、**v2 截图已启用（1920×1080）**。**1.0.3.0 提交剩余项**：Partner Center 填写 What's new / 认证备注、上传 `artifacts/store-identity-1.0.3/` 的 bundle，见 §3 清单与 §4 风险。
+> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。**Store live 1.0.3.0（2026-11-20 发布）**。材料 v1 由 brand-materials（task-4）产出。
+> 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、包能力只剩 `runFullTrust`、**v2 截图已启用（1920×1080）**。1.0.3.0 已通过认证并上架；后续可选更新 CmdPal Gallery/WinGet 版本信息。
 > 研究依据：[docs/research/platform-and-store-research.md](../research/platform-and-store-research.md)（CmdPal API / Store 认证研究）。
 
 ---
@@ -10,11 +10,11 @@
 
 | 文件 | 内容 | 状态 |
 | --- | --- | --- |
-| [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、可发现性（Gallery）、截图清单、**1.0.3.0 更新说明** | v1.4 更新完成；待提交 |
+| [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、可发现性（Gallery）、截图清单、**1.0.3.0 更新说明** | v1.4 已随 1.0.3.0 提交 |
 | [gallery-submission/](gallery-submission/) | CmdPal 社区 Gallery PR 的 staged 文件（extension.json 已加入 smart matching；256 icon；截图仍为旧 1366 副本，待 QA/Lead 刷新为 v2） | 待提交 PR |
 | `screenshots/` | Store 截图（v2：1920×1080，已启用） | ✅ **v2 已启用**（Lead approved 2026-10-21）：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`；可选 `05-program-files` |
 | [privacy-policy.md](privacy-policy.md) | 中英双语隐私政策（无网络/无遥测、本地设置与日志、第三方 es.exe） | ✅ 已随 public 仓库发布：https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md |
-| [certification-notes.md](certification-notes.md) | 认证备注（1.0.3.0 可粘贴英文版 + 中文版 + 能力/外部进程/headless 解释 + Q&A） | ✅ v2 已更新（2026-11-20）；待提交 |
+| [certification-notes.md](certification-notes.md) | 认证备注（1.0.3.0 可粘贴英文版 + 中文版 + 能力/外部进程/headless 解释 + Q&A） | ✅ v2 已随 1.0.3.0 提交 |
 | [support.md](support.md) | 支持渠道、FAQ（Everything 未运行、fallback 行、Gallery、日志、卸载）、反馈模板 | ✅ 仓库已 public：https://github.com/czz404/EverythingPal/issues |
 | [packaging.md](packaging.md) | 打包/Partner Center 流程（store-packaging 负责） | 由 store-packaging 产出，已存在 |
 | `assets/store-icon-300.png` | Store 列表 1:1 图标（300×300 PNG） | 已生成 |
@@ -89,10 +89,10 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 | 要求/定价/市场 | ✅ | ✅ | — |
 | 商标/版权声明 | ✅ | ✅ | 作者实体名 TBD |
 | 隐私政策 | ✅ 完整 | ✅ 完整 | ✅ 已托管（公开仓库文件，URL 可用） |
-| 认证备注 | ✅ 中文详解 + Q&A | ✅ 可粘贴短版 | 待复核无参启动最终文案；UI 已双语，能力仅 `runFullTrust` |
+| 认证备注 | ✅ 中文详解 + Q&A | ✅ 可粘贴短版（1.0.3.0） | v2 已随 1.0.3.0 提交；能力仅 `runFullTrust` |
 | 支持/FAQ | ✅ 15 个 FAQ（新增 Gallery、智能匹配） | ✅ 摘要 | ✅ 仓库已 public |
 | 截图清单 | ✅ v2：4 张 + 可选 1 张（1920×1080，已启用） | ✅ | `docs/store/screenshots/` 即提交集；旧 1366 套图作废 |
-| 1.0.1.0 更新说明 | ✅ 中英 What's new（listing.md §13） | ✅ | 待提交时粘贴 |
+| 1.0.3.0 更新说明 | ✅ 中英 What's new（listing.md §13） | ✅ | 已随 1.0.3.0 提交 |
 | 商店可发现性（Gallery） | ✅ 文案/FAQ/清单已加；extension.json 已更新 | ✅ | 发布后提交 `microsoft/CmdPal-Extensions`（见 §3.5、R6） |
 | Store 图标 300×300 | ✅ | — | 已生成 |
 | 包/身份/打包 | 由 store-packaging 负责 | — | 见 [packaging.md](packaging.md) |
@@ -102,6 +102,8 @@ $py = "C:\Users\<you>\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\
 ## 3. 提交前清单（Checklist）
 
 ### 3.1 决策（Lead / 用户）
+
+> 以下是首版上架时的历史清单，保留作下一次更新参考；**1.0.3.0 已于 2026-11-20 发布**。
 
 - [ ] 确定 Store 产品名（建议 `Everything Search for Command Palette`；备选见 [listing.md](listing.md) §1）
 - [ ] 确定作者/发布者显示名（与包内 `Properties/PublisherDisplayName` 一致）

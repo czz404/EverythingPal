@@ -220,7 +220,7 @@ arm64 Tools\es.exe 270504 bytes 1F4F79B6...3BA3CF6
 `artifacts/qa/review-2026-11-20/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
 （21.35 MB，SHA256 `2180DB00129E5158EE1D2BB09B93D18730E9BDD90E7FDAC98EFFAA616C3C2FF8`，未签名）。
 
-**1.0.3.0 Store 身份发版包**（2026-11-20 生成）：
+**1.0.3.0 Store 身份发版包**（2026-11-20 生成并发布）：
 `artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle`
 （22,390,300 B，SHA256 `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D`，未签名）。
 Identity `EverythingPal.EverythingPal` / `CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F`，Version `1.0.3.0`；

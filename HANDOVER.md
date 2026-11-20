@@ -3,10 +3,10 @@
 > 给下一个 session 的交接。工作区：`E:\workspace\deepseek\EverythingPal`
 > 先读本文件 + `README.md`；`git status` 当前应干净（本 session 末尾会提交）。
 >
-> **状态：已发布到 Microsoft Store；Store live 1.0.2.0；1.0.3.0 更新包已生成，待上传**
+> **状态：已发布到 Microsoft Store；Store live 1.0.3.0（2026-11-20 发布）**
 > - Store 页面：<https://apps.microsoft.com/detail/9NFD76MCDRJZ>
 > - 产品名 / Store ID：`EverythingPal` / `9NFD76MCDRJZ`
-> - 已上架版本 **`1.0.2.0`**（主页 fallback 多结果时回车打开完整结果页）
+> - 已上架版本 **`1.0.3.0`**（多匹配回车、引号短语、设置恢复、显式排序、详情面板、取消旧搜索）
 > - Gallery PR **#207 已于 2026-10-21 合并**：<https://github.com/microsoft/CmdPal-Extensions/pull/207>；等待维护者重新生成 `extensions.json` 后出现在 CmdPal Gallery（WinGet 的 msstore 源已可直接安装）。
 > - 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
 >   `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
@@ -14,7 +14,7 @@
 
 ## 2026-11-20 最新状态（覆盖下方旧记录）
 
-- **1.0.3.0 更新包已生成并校验**：
+- **1.0.3.0 已发布并校验**：
   `artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle`
   （22,390,300 B，SHA256 `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D`，未签名；
   Identity `EverythingPal.EverythingPal` / `CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F`；x64+ARM64，
@@ -26,9 +26,9 @@
   cancel / timeout / 1.4 retry / 父进程先退出但子进程占管道；已重新部署本机 dev 包做 CmdPal 实测。
 - **提交材料**：`docs/store/listing.md` §13 的 1.0.3.0 中英文 What's new；
   `docs/store/certification-notes.md` §1 的 1.0.3.0 英文认证备注；`docs/store/README.md` 状态已更新。
-- **剩余动作**：在 Partner Center 打开 EverythingPal (9NFD76MCDRJZ) → Update，粘贴上述文案/备注，
-  上传 `artifacts/store-identity-1.0.3/` 的 bundle（Store 重签名）。设置页“保存→重启→再打开”和
-  首页其余矩阵的 UI 点击留作发布前人工冒烟。
+- **已完成的发布动作**：Partner Center 更新已提交并通过认证，Store 已可升级到 **1.0.3.0**（2026-11-20）。
+- **发布后待办**：设置页“保存→重启→再打开”和首页其余矩阵的 UI 点击可留作下次人工冒烟；
+  可选更新 CmdPal Gallery/WinGet 的版本信息。
 
 ## 当前状态（2026-10-22 复核；下方“发布前打磨”为 2026-10-20 记录）
 
@@ -43,7 +43,7 @@
   `nihaoshijie` 也命中（扩展的 `nocase:ignorews:` 会先得到空结果，再由 `SearchRetryPolicy` 用原查询重试）。
   详见 `README.md` 的 *Pinyin search* 段、`docs/store/support.md` Q16、`docs/research/notes/pinyin-search.md`。
 
-- 源码/dev 版本 **0.2.0.0**；Store 已上架 **1.0.2.0**（2026-10-21 更新上线；Store 页面 <https://apps.microsoft.com/detail/9NFD76MCDRJZ>）。`main` 干净、CI 全绿；单元测试 **118/118**（提权跑；最后一次全绿记录 2026-10-21）。
+- 源码/dev 版本 **0.2.0.0**；Store 已上架 **1.0.3.0**（2026-11-20 更新上线；Store 页面 <https://apps.microsoft.com/detail/9NFD76MCDRJZ>）。`main` 干净、CI 全绿；单元测试 **163/163**（提权跑；最后一次全绿记录 2026-11-20）。
 - 已完成一轮“发布前打磨”（用户明确要求不要急着上架）：
   - **真实文件类型图标**（SHGetFileInfo + 每扩展名缓存 PNG；页面与主页 fallback 行都有），
     不再用笼统的文件夹/文件字形。图标类：`src/EverythingPal/Services/ShellIconProvider.cs`。
@@ -73,25 +73,24 @@
   - `Package/Properties/PublisherDisplayName` = `EverythingPal`
   - Store ID = `9NFD76MCDRJZ`；商店链接 `https://apps.microsoft.com/detail/9NFD76MCDRJZ`
   - PFN = `EverythingPal.EverythingPal_33w78pmn50ga4`（换到 Store 身份后 CmdPal 的旧 dev PFN 设置会重置）
-- **待提交的 Store 更新包（未签名，Store 身份）**：
-  `artifacts/store-identity-1.0.2/EverythingPal_1.0.2.0_x64_arm64.msixbundle`
-  size 22,351,336 B，SHA256 `DC5D9530B1051303D63FE89823CA343500FA0226E5F41653C471E2A3D7AE378F`
+- **已发布的 Store 更新包（未签名，Store 身份）**：
+  `artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle`
+  size 22,390,300 B，SHA256 `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D`
   （x64/ARM64 各 ~10.8/10.5 MB；`manifests/` 为解包证据）。
-  已上架版本仍是 `artifacts/store-identity/EverythingPal_1.0.0.0_x64_arm64.msixbundle`
-  （22,349,304 B，SHA256 `82C236BEF6EADD07FDFBA65ED9A4BA5C7766CF26764B274722157F80B5A80769`）。
+  前一版 1.0.2.0 为 `artifacts/store-identity-1.0.2/EverythingPal_1.0.2.0_x64_arm64.msixbundle`
+  （22,351,336 B，SHA256 `DC5D9530B1051303D63FE89823CA343500FA0226E5F41653C471E2A3D7AE378F`）。
   生成命令（版本号按需改）：
   ```powershell
-  pwsh -File scripts/pack-store.ps1 -Version 1.0.2.0 `
+  pwsh -File scripts/pack-store.ps1 -Version 1.0.3.0 `
     -IdentityName "EverythingPal.EverythingPal" `
     -Publisher "CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F" `
     -PublisherDisplayName "EverythingPal" -DisplayName "EverythingPal" `
-    -OutputDir "artifacts\store-identity-1.0.2"
+    -OutputDir "artifacts\store-identity-1.0.3"
   ```
   注意 `-DisplayName EverythingPal` 是必须的：Store 会拒绝“未预留的 Properties/DisplayName”，
   所以 Store 包内显示名用预留产品名 EverythingPal（dev 包仍是 Everything Search）。
-- **1.0.2.0 的新内容**：主页 fallback 行对应多条结果时，回车打开完整结果页（单条仍直接打开，右键可「查看全部结果」）。\n- **1.0.1.0 已上线内容**：单 token 搜索自动使用 `nocase:ignorews:`（`term1` 能找到 `Term 1`），
-  失败自动回退原查询；排序忽略空白；设置里回退行数文案缩短为「主页结果行数（Reload 生效）」。
-  已在 dev 包上实测 `term1` → `E:\BaiduNetdiskDownload\Term 1` 命中并排在首位。
+- **1.0.3.0 的新内容**：多匹配回车、引号短语、设置恢复、显式排序、详情面板、取消旧搜索。
+- **1.0.2.0 的历史内容**：主页 fallback 行对应多条结果时，回车打开完整结果页（单条仍直接打开，右键可「查看全部结果」）。
 - 另有 **dev 包**（`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`，`CN=czz404`）用于本机 CmdPal 验证，
   不要上传；Store 身份包不要在本机签名安装（Publisher 不匹配 dev 证书）。
 - 本机已安装验证：`EverythingPal_0.2.0.0_x64__b32a3jmekh2ja`（Developer 签名，自包含）。
