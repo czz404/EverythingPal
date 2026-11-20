@@ -1,6 +1,6 @@
 # Everything Search for Command Palette — Microsoft Store 上架文案
 
-> 状态：**v1.3（2026-10-21，1.0.2.0 更新）**，供 Partner Center 提交时逐字复制。v1.1 修正 Gallery/免费注册/默认 1 行/能力；v1.2 智能匹配 + 1920×1080 截图 + 1.0.1.0 更新；v1.3 回退行回车打开完整结果页 + 1.0.2.0 更新说明。**当前 Store live 版本 1.0.1.0，本次提交 1.0.2.0。**
+> 状态：**v1.4（2026-11-20，1.0.3.0 更新）**，供 Partner Center 提交时逐字复制。v1.1 修正 Gallery/免费注册/默认 1 行/能力；v1.2 智能匹配 + 1920×1080 截图 + 1.0.1.0 更新；v1.3 回退行回车打开完整结果页 + 1.0.2.0 更新说明；v1.4 多匹配/引号/设置恢复/排序/详情面板 + 1.0.3.0 更新说明。**当前 Store live 版本 1.0.2.0，本次提交 1.0.3.0。**
 > 负责：brand-materials（task-4）；包身份 / 打包由 store-packaging（task-3）负责，见 [packaging.md](packaging.md)。
 > 事实核对来源：Microsoft Learn（见文末「引用与核实」）；未经核实的字段用 **TBD** 标出，提交前必须逐项确认。
 
@@ -16,7 +16,7 @@
 | 市场 | 全部市场（All markets） | 建议 |
 | 语言（商店列表） | 中文（简体，zh-CN/zh-Hans）为主 + English (United States) | 建议；每个语言要单独上传一次截图。UI 已双语（跟随系统显示语言） |
 | 支持的体系结构 | x64 + ARM64（`.msixbundle`） | 由 packaging 提供 |
-| 提交版本 | **1.0.1.0**（Store 当前 live：1.0.0.0） | 更新包；版本递增、第四段 0（打包规则见 packaging.md），更新说明见 §13 |
+| 提交版本 | **1.0.3.0**（Store 当前 live：1.0.2.0） | 更新包；版本递增、第四段 0（打包规则见 packaging.md），更新说明见 §13 |
 | 包内身份 | 用 Partner Center「Product identity」的值逐字替换（Name / Publisher / PublisherDisplayName） | 由 store-packaging 执行；**提交前必须核对** |
 | 商店图标 | `docs/store/assets/store-icon-300.png`（300×300 PNG） | 已生成 |
 | 截图 | `docs/store/screenshots/`（v2：1920×1080，4 张 + 可选 1 张） | ✅ 已启用（Lead approved 2026-10-21）：`01-search-page` / `02-home-inline-result`（默认 1 行）/ `03-context-menu` / `04-zero-result`（+可选 `05-program-files`） |
@@ -274,11 +274,30 @@ Privacy: see the privacy policy link on the Store listing (this app does not col
 
 ---
 
-## 13. 1.0.2.0 / 1.0.1.0 更新说明（What's new，提交时填入 “What's new in this version”）
+## 13. 1.0.3.0 / 1.0.2.0 / 1.0.1.0 更新说明（What's new，提交时填入 “What's new in this version”）
 
-> Store live **1.0.1.0**；本次提交 **1.0.2.0**。提交 1.0.2.0 时使用下面第一段；1.0.1.0 段保留作历史。
+> Store live **1.0.2.0**；本次提交 **1.0.3.0**。提交时使用下面第一段；旧版本段保留作历史。
 
-### 1.0.2.0（本次提交）
+### 1.0.3.0（本次提交）
+
+**中文（zh-CN）**
+```text
+• 主页搜索现在能正确区分单个匹配和多个匹配，即使只显示一行。只有一个匹配时，按回车直接打开；有多个匹配时，按回车查看完整结果列表。
+• 修复了带引号的搜索短语和组合查询。例如，输入 ext:pdf "Annual Report" 可以查找文件名中包含连续短语 Annual Report 的 PDF。
+• 修复了扩展重启后部分设置恢复为默认值的问题。主页结果行数、结果上限、排序方式和自定义 es.exe 路径现在都能正确恢复。
+• 按修改时间、路径或运行次数排序时，结果列表会保留所选顺序。选中结果即可在详情面板查看完整路径、文件大小和修改时间。
+• 改进了连续输入时的搜索响应。打开完整结果页时才加载该页，输入新关键词会取消上一次搜索。
+```
+**English (en-US)**
+```text
+• Home search now handles multiple matches correctly, even when only one row is shown. Press Enter to open a single match or see the full results list when several items match.
+• Fixed quoted phrases and combined queries. For example, ext:pdf "Annual Report" finds PDFs whose names contain the phrase Annual Report.
+• Fixed settings reverting to their defaults after an extension restart. Your home result rows, result limit, sort order, and custom es.exe path are now restored.
+• Results respect your selected sort order for date modified, path, and run count. Select a result to see its full path, file size, and modification time in the details pane.
+• Improved search responsiveness while typing. The full list loads when you open it, and entering a new query cancels the previous search.
+```
+
+### 1.0.2.0（历史）
 
 **中文（zh-CN）**
 ```text

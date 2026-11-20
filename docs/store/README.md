@@ -1,7 +1,7 @@
 # Everything Search for Command Palette — Store 上架材料总览 / Store submission kit
 
-> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。**正在准备 1.0.1.0 更新**（smart matching、v2 1920×1080 截图；当前 live 1.0.0.0）。材料 v1 由 brand-materials（task-4）产出。
-> 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、包能力只剩 `runFullTrust`、**v2 截图已启用（1920×1080）**。**1.0.1.0 提交剩余项**：填 What's new、真实 Store 身份打包、可选更新 Gallery 截图，见 §3 清单与 §4 风险。
+> 状态：**已发布（2026-10-20）** — Microsoft Store: <https://apps.microsoft.com/detail/9NFD76MCDRJZ>（Store ID `9NFD76MCDRJZ`）。**当前 Store live 1.0.2.0；正在准备 1.0.3.0 更新**（多匹配回车、引号短语、设置恢复、显式排序、详情面板；包已生成，待 Partner Center 上传）。材料 v1 由 brand-materials（task-4）产出。
+> 图标资源（A）与 Partner Center 材料（B）已完成；隐私/支持 URL 已公开、包能力只剩 `runFullTrust`、**v2 截图已启用（1920×1080）**。**1.0.3.0 提交剩余项**：Partner Center 填写 What's new / 认证备注、上传 `artifacts/store-identity-1.0.3/` 的 bundle，见 §3 清单与 §4 风险。
 > 研究依据：[docs/research/platform-and-store-research.md](../research/platform-and-store-research.md)（CmdPal API / Store 认证研究）。
 
 ---
@@ -10,11 +10,11 @@
 
 | 文件 | 内容 | 状态 |
 | --- | --- | --- |
-| [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、可发现性（Gallery）、截图清单、**1.0.1.0 更新说明** | v1.2 更新完成；待提交 |
+| [listing.md](listing.md) | 应用名候选、中英简短/长描述、功能、分类、搜索词、商标、定价、可发现性（Gallery）、截图清单、**1.0.3.0 更新说明** | v1.4 更新完成；待提交 |
 | [gallery-submission/](gallery-submission/) | CmdPal 社区 Gallery PR 的 staged 文件（extension.json 已加入 smart matching；256 icon；截图仍为旧 1366 副本，待 QA/Lead 刷新为 v2） | 待提交 PR |
 | `screenshots/` | Store 截图（v2：1920×1080，已启用） | ✅ **v2 已启用**（Lead approved 2026-10-21）：`01-search-page`、`02-home-inline-result`（默认 1 行）、`03-context-menu`、`04-zero-result`；可选 `05-program-files` |
 | [privacy-policy.md](privacy-policy.md) | 中英双语隐私政策（无网络/无遥测、本地设置与日志、第三方 es.exe） | ✅ 已随 public 仓库发布：https://github.com/czz404/EverythingPal/blob/main/docs/store/privacy-policy.md |
-| [certification-notes.md](certification-notes.md) | 认证备注（可粘贴英文版 + 中文版 + 能力/外部进程/headless 解释 + Q&A） | ✅ 已更新（能力只剩 runFullTrust；UI 已双语）；待复核无参启动文案 |
+| [certification-notes.md](certification-notes.md) | 认证备注（1.0.3.0 可粘贴英文版 + 中文版 + 能力/外部进程/headless 解释 + Q&A） | ✅ v2 已更新（2026-11-20）；待提交 |
 | [support.md](support.md) | 支持渠道、FAQ（Everything 未运行、fallback 行、Gallery、日志、卸载）、反馈模板 | ✅ 仓库已 public：https://github.com/czz404/EverythingPal/issues |
 | [packaging.md](packaging.md) | 打包/Partner Center 流程（store-packaging 负责） | 由 store-packaging 产出，已存在 |
 | `assets/store-icon-300.png` | Store 列表 1:1 图标（300×300 PNG） | 已生成 |

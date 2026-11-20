@@ -1,63 +1,26 @@
 # Everything Search for Command Palette — 认证备注 / Notes for Certification
 
-> 状态：**草稿 v1（2026-10-20）**。Partner Center 提交流程：*Submission options → Notes for certification*（即 **Additional testing information**）。
-> 英文短版可直接粘贴；中文版供内部审核/必要时补充。提交前必须复核「无参启动诊断对话框」的**最终实现**（见文末 TBD）。UI 已支持中文/English 双语（跟随系统显示语言）；包能力只有 `runFullTrust`（`unvirtualizedResources` 与 desktop6 写虚拟化已移除并实测通过）。
+> 状态：**v2（2026-11-20，1.0.3.0 更新）**。Partner Center 提交流程：*Submission options → Notes for certification*（即 **Additional testing information**）。
+> 英文短版可直接粘贴；中文版供内部审核/必要时补充。1.0.3.0 重点：多匹配回车、引号短语、设置恢复、显式排序、详情面板。UI 已支持中文/English 双语（跟随系统显示语言）；包能力只有 `runFullTrust`（`unvirtualizedResources` 与 desktop6 写虚拟化已移除并实测通过）。
 
 ---
 
-## 1. 可直接粘贴的英文短版（Notes for certification）
+## 1. 可直接粘贴的英文短版（Notes for certification，1.0.3.0）
 
 ```text
-App type: this is a headless PowerToys Command Palette extension (MSIX, full-trust COM server).
-It has no main window and no functional standalone UI by design; launching it from the Start menu
-shows a small diagnostics dialog (PowerToys/Everything/es.exe checks and how to open Command
-Palette). After installation it appears in Command Palette settings → Extensions and as an
-"Everything Search" command.
+EverythingPal is a file search extension for Microsoft PowerToys Command Palette. Launching it from the Start menu opens a diagnostics dialog. The search interface is inside Command Palette.
 
-PREREQUISITES
-- Windows 11, or Windows 10 version 2004 (build 19041) or later (x64 or ARM64).
-- Microsoft PowerToys with the Command Palette feature enabled (default hotkey: Win+Alt+Space).
-- voidtools Everything 1.4 or 1.5a installed and running (this extension queries Everything's local
-  index; it does not replace Everything). If Everything is not running, the extension shows an
-  actionable message with "Start Everything" / "Download Everything" actions.
+Prerequisites
+Install Microsoft PowerToys and enable Command Palette. Install voidtools Everything 1.4 or 1.5 and keep it running with a local folder indexed. EverythingPal includes the es.exe command-line client. No account or sign-in is required.
 
-HOW TO TEST
-1. Install PowerToys from the Store and enable Command Palette in PowerToys settings.
-2. Install this app from the Store (no other setup is needed; the required es.exe is bundled).
-3. Press Win+Alt+Space, type "Everything", select the "Everything Search" command (on a
-   Chinese-language system: "Everything 搜索"), then type a file or folder name that exists on the
-   device (e.g. "winver"). Results from the local Everything index are listed; Enter opens an item,
-   the context menu can reveal it in Explorer, copy its path, or open it in Everything.
-4. Optional home-screen inline result: Command Palette settings → Extensions → Everything Search →
-   Fallback commands. Third-party fallback rows are disabled for global results by default (CmdPal
-   platform behavior). Enable the row(s) and check "Include in the Global result", then type a file
-   name on the Command Palette home screen to see the inline result (1 row by default; 0–5
-   configurable in the extension settings).
-5. If Everything is not installed, step 3 still shows the actionable error state, which is the
-   expected behavior; installing Everything and running it enables results.
+How to verify this update
+1. Open Command Palette (default shortcut Win+Alt+Space), type Everything Search, and open the command. On a Simplified Chinese system, the command is named “Everything 搜索”.
+2. In an indexed folder, create two empty files named Annual Report.pdf and Annual revised Report.pdf. Once both appear in Everything, enter ext:pdf "Annual Report" in the extension. Of those two files, only Annual Report.pdf should appear. Select it to see its full path and size.
+3. To test home search, open the extension’s fallback commands in Command Palette settings. Enable the first row and “Include in the global result”. With the default one-row setting, search for Annual from the Command Palette home screen. Press Enter on the EverythingPal result to open the full list.
+4. To test settings persistence, change the result limit from 50 to 17, save, restart PowerToys, and reopen the extension settings. The saved value should still be 17.
 
-CAPABILITIES
-- runFullTrust: the only restricted capability declared. It is required to register and run the
-  packaged out-of-process COM server (com:ExeServer / com:Class) that hosts the Command Palette
-  extension. The app does not elevate and runs at normal user integrity.
-- No other restricted capabilities; no unvirtualizedResources / desktop6 write-virtualization
-  declarations. The app writes settings/logs to the normal user paths
-  %LOCALAPPDATA%\EverythingPal and %TEMP% and passes a temporary JSON export path to the bundled
-  es.exe; this has been tested and works without write virtualization.
-- No network capabilities are declared; the app makes no network requests.
-
-EXTERNAL PROCESSES / DATA
-- Bundled Tools\es.exe (MIT license, from github.com/voidtools/ES, notice in
-  THIRD-PARTY-NOTICES.md) is executed per search to query the local Everything instance via
-  Everything's local IPC and export JSON to a temp file. It is not downloaded at runtime.
-- Everything.exe is NOT bundled. It is launched only when the user clicks "Start Everything".
-- No telemetry, no data collection, no network. Settings and logs stay on the device.
-
-The app icon is original artwork generated by this project's script; no third-party logos are used.
-Support: https://github.com/czz404/EverythingPal/issues
+The extension queries the local Everything index through the bundled es.exe client. Search terms and results stay on the device.
 ```
-
-> 字符数：约 2,400（如 Partner Center 该字段有长度上限，删掉 “EXTERNAL PROCESSES / DATA” 段末尾的 “The app icon…” 一句即可；上限 **TBD**）。
 
 ---
 
@@ -118,6 +81,12 @@ Support: https://github.com/czz404/EverythingPal/issues
 > Microsoft 官方文档已明确支持把 Command Palette 扩展发布到 Store（见 [Publish to Microsoft Store](https://learn.microsoft.com/en-us/windows/powertoys/command-palette/publish-extension-store)），并在其中给出“描述要写 integrates with the Windows Command Palette…”与“在认证备注写 PowerToys 前提 + 步骤”的要求；本文即按此准备。**但“headless 扩展能否稳定通过认证”本身没有可验证的公开样本（研究文档 §6 #16 标记为未验证）**，见 `README.md` 风险。
 
 ### 3.2 为什么需要 `runFullTrust`？
+
+> 后台若询问 runFullTrust 用途，可直接粘贴：
+>
+> ```text
+> EverythingPal uses runFullTrust to host the packaged out-of-process COM server through which PowerToys Command Palette loads the extension. The extension runs under the signed-in user’s permissions and launches the bundled es.exe client to query the local Everything index. Administrator privileges are not required.
+> ```
 
 - 包清单通过 `com:ExeServer` + `com:Class` 注册**打包的 out-of-process COM server**，CmdPal 用 `-RegisterProcessAsComServer` 启动它并创建扩展实例；这需要 mediumIL 全信任。
 - 全信任不等于提权：进程以当前用户身份运行，不请求管理员权限，不修改系统设置。

@@ -109,8 +109,11 @@ cancel : OperationCanceledException, cancelElapsedMs=16, childExited=true, lefto
 timeout: Timeout, elapsedMs=1154, childExited=true, leftoverTempFiles=[]
 retry  : Ok, resultCount=1, invocations=[nocase:ignorews:term1, term1]
 normal : Ok, resultCount=1, invocations=[nocase:ignorews:term1]
-orphan : Timeout, elapsedMs=1136, orphanChildPid=..., orphanChildKilled=true, leftoverTempFiles=[]
+orphan : Timeout, elapsedMs=1136, orphanChildPid=..., orphanChildCleanedUpByHarness=true, leftoverTempFiles=[]
 ```
+
+> `orphanChildCleanedUpByHarness` 表示**测试程序**在搜索返回后按 PID 清理了遗留子进程；插件在该用例中
+> 保证的是“按时返回 Timeout 并释放自己的管道”，并不声称能终止包装程序遗弃的后代进程。
 
 **第二轮修复**：同一个截止时间现在同时覆盖 `WaitForExitAsync()` 和 stdout/stderr 读取。
 第一轮只约束了进程退出；如果自定义 ES 包装程序写完 JSON、启动一个继承 stdout 的子进程后自己先退出，
@@ -217,6 +220,12 @@ arm64 Tools\es.exe 270504 bytes 1F4F79B6...3BA3CF6
 `artifacts/qa/review-2026-11-20/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
 （21.35 MB，SHA256 `2180DB00129E5158EE1D2BB09B93D18730E9BDD90E7FDAC98EFFAA616C3C2FF8`，未签名）。
 
+**1.0.3.0 Store 身份发版包**（2026-11-20 生成）：
+`artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle`
+（22,390,300 B，SHA256 `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D`，未签名）。
+Identity `EverythingPal.EverythingPal` / `CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F`，Version `1.0.3.0`；
+两份 `Tools\es.exe` 哈希仍为 `23DCD715…A3BA8ADE` / `1F4F79B6…3BA3CF6`。
+
 ### 任务 8 — 日志隐私
 
 `EverythingPal.exe --search-test EP_LOG_CHECK_8347`（从 workspace 外运行）：
@@ -255,3 +264,4 @@ pwsh -File scripts\deploy.ps1 -Configuration Release -RestartCmdPal
 2. 任务 3A 的 ES 进程调用次数未插桩；首页/结果页行为、宿主三种回传顺序的状态机与代码路径已验证。
 3. 首页 1 行/1 匹配直接打开文件、3 行/2 匹配精确计数等矩阵项由 `FallbackResultPlan` 单测覆盖，
    未逐项做 UI 点击验收。
+

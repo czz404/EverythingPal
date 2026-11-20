@@ -3,7 +3,7 @@
 > 给下一个 session 的交接。工作区：`E:\workspace\deepseek\EverythingPal`
 > 先读本文件 + `README.md`；`git status` 当前应干净（本 session 末尾会提交）。
 >
-> **状态：已发布到 Microsoft Store；Store live 1.0.2.0，Gallery PR 已合并**
+> **状态：已发布到 Microsoft Store；Store live 1.0.2.0；1.0.3.0 更新包已生成，待上传**
 > - Store 页面：<https://apps.microsoft.com/detail/9NFD76MCDRJZ>
 > - 产品名 / Store ID：`EverythingPal` / `9NFD76MCDRJZ`
 > - 已上架版本 **`1.0.2.0`**（主页 fallback 多结果时回车打开完整结果页）
@@ -11,6 +11,24 @@
 > - 上架材料入口：`docs/store/README.md`（提交清单）、`docs/store/packaging.md`（打包/身份）、
 >   `docs/store/listing.md`（商店文案）、`docs/store/certification-notes.md`（审核备注）、
 >   `docs/research/platform-and-store-research.md`（CmdPal API + Store 规则的实证研究）。
+
+## 2026-11-20 最新状态（覆盖下方旧记录）
+
+- **1.0.3.0 更新包已生成并校验**：
+  `artifacts/store-identity-1.0.3/EverythingPal_1.0.3.0_x64_arm64.msixbundle`
+  （22,390,300 B，SHA256 `C4E71F8853BB1A7569CB5631FC16A3842FF53FF78B243AEFB97749D0EA29571D`，未签名；
+  Identity `EverythingPal.EverythingPal` / `CN=A00B5A3A-58E9-4107-9446-154AD6F2B65F`；x64+ARM64，
+  两份 `Tools\es.exe` 哈希分别为 `23DCD715…A3BA8ADE` / `1F4F79B6…3BA3CF6`）。
+- **本轮 1.0.3.0 内容**：首页 1 行也能区分单/多匹配；`ext:pdf "Annual Report"` 等引号/组合查询改为
+  ES `-search*` 原始尾部；设置重启恢复；显式排序保留 ES 顺序；详情面板 `ShowDetails=true`；
+  连续输入取消旧 ES 进程且读取管道受同一 deadline 约束。
+- **测试/构建**：Core **163/163**（提权）；x64 Release 构建 0 警告 0 错误；Windows harness 覆盖
+  cancel / timeout / 1.4 retry / 父进程先退出但子进程占管道；已重新部署本机 dev 包做 CmdPal 实测。
+- **提交材料**：`docs/store/listing.md` §13 的 1.0.3.0 中英文 What's new；
+  `docs/store/certification-notes.md` §1 的 1.0.3.0 英文认证备注；`docs/store/README.md` 状态已更新。
+- **剩余动作**：在 Partner Center 打开 EverythingPal (9NFD76MCDRJZ) → Update，粘贴上述文案/备注，
+  上传 `artifacts/store-identity-1.0.3/` 的 bundle（Store 重签名）。设置页“保存→重启→再打开”和
+  首页其余矩阵的 UI 点击留作发布前人工冒烟。
 
 ## 当前状态（2026-10-22 复核；下方“发布前打磨”为 2026-10-20 记录）
 
