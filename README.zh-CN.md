@@ -27,9 +27,6 @@
 ```powershell
 dotnet test tests\EverythingPal.Core.Tests\EverythingPal.Core.Tests.csproj -c Release -p:Platform=x64
 pwsh -File scripts\deploy.ps1 -Configuration Release -RestartCmdPal
-pwsh -File scripts\pack-store.ps1
 ```
 
-商店打包见 [docs/store/packaging.md](docs/store/packaging.md)，当前发版流程见 [HANDOVER.md](HANDOVER.md)。项目使用 MIT 许可证，第三方声明见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
-
-[反馈问题](https://github.com/czz404/EverythingPal/issues) · [打包指南](docs/store/packaging.md) · [MIT 许可证](LICENSE)
+[反馈问题](https://github.com/czz404/EverythingPal/issues) · [打包指南](docs/store/packaging.md) · [MIT 许可证](LICENSE) · [第三方声明](THIRD-PARTY-NOTICES.md)
