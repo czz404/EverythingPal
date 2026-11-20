@@ -84,6 +84,86 @@ public class FallbackResultPlanTests
     }
 }
 
+public class PageSearchRequestStateTests
+{
+    private static int RunPrefillThenHostEcho(string prefill, string hostEcho)
+    {
+        var state = new PageSearchRequestState();
+        var starts = 0;
+
+        state.SetPrefill(prefill);
+        if (state.OnUpdateSearchText(hostEcho).ShouldStart)
+        {
+            starts++;
+        }
+
+        if (state.TakePendingQuery() is not null)
+        {
+            starts++;
+        }
+
+        // A second GetItems must not start the same deferred query again.
+        if (state.TakePendingQuery() is not null)
+        {
+            starts++;
+        }
+
+        return starts;
+    }
+
+    [Fact]
+    public void Prefill_A_then_host_echo_A_then_two_GetItems_starts_A_once()
+    {
+        Assert.Equal(1, RunPrefillThenHostEcho("A", "A"));
+    }
+
+    [Fact]
+    public void Prefill_A_then_GetItems_then_host_echo_A_starts_A_once()
+    {
+        var state = new PageSearchRequestState();
+        var starts = 0;
+
+        state.SetPrefill("A");
+        if (state.TakePendingQuery() is not null)
+        {
+            starts++;
+        }
+
+        if (state.OnUpdateSearchText("A").ShouldStart)
+        {
+            starts++;
+        }
+
+        Assert.Equal(1, starts);
+    }
+
+    [Fact]
+    public void Prefill_A_then_user_types_B_starts_only_B()
+    {
+        var state = new PageSearchRequestState();
+
+        state.SetPrefill("A");
+        var action = state.OnUpdateSearchText("B");
+
+        Assert.True(action.ShouldStart);
+        Assert.Equal("B", action.Query);
+        Assert.Null(state.TakePendingQuery());
+
+        // The host re-sending B after the search started must not start a second search.
+        Assert.False(state.OnUpdateSearchText("B").ShouldStart);
+    }
+
+    [Fact]
+    public void Activation_with_empty_text_keeps_the_pending_query()
+    {
+        var state = new PageSearchRequestState();
+
+        state.SetPrefill("A");
+        Assert.False(state.OnUpdateSearchText(string.Empty).ShouldStart);
+        Assert.Equal("A", state.TakePendingQuery());
+    }
+}
+
 public class ExplicitSortPreservationTests
 {
     private static MemoryStream Utf8(string json) => new(Encoding.UTF8.GetBytes(json));

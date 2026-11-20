@@ -8,13 +8,13 @@
 
 | 任务 | 状态 | Core 测试 | CmdPal / Windows 实测 |
 |---|---|---|---|
-| 1 设置重启后恢复 | 代码 + 进程级验证 PASS | 154/154 | 设置页保存/重启 UI 流程待验收（同一 `EverythingPalSettings` 在全新进程中的读回已验证） |
-| 2 首页 1 行多结果回车 | PASS | 154/154（`FallbackResultPlan` 矩阵） | PASS：1 行 + 多匹配 → 回车打开 4 条结果页 |
-| 3A 进结果页才完整搜索 | 代码 + UI 行为 PASS | 154/154 | PASS（行为）：首页只显示 1 行，回车后页面才出现 4 条结果；ES 调用次数未插桩 |
-| 3B 取消传到 ES 进程 | PASS | 154/154 | Windows harness PASS（cancel / timeout / 1.4 retry） |
-| 4 用户排序生效 | PASS | 154/154 | 解析器 + 参数测试 PASS |
-| 5 高级查询引号 | 代码 + 透传 PASS | 154/154 | 真实 ES 路径 PASS；短语命中用例受本机 Everything 引号语义限制，见下 |
-| 6 详情面板 | PASS | 154/154 | PASS（截图：文件夹/文件，换选跟随） |
+| 1 设置重启后恢复 | 代码 + 进程级验证 PASS | 163/163 | 设置页保存/重启 UI 流程待验收（同一 `EverythingPalSettings` 在全新进程中的读回已验证） |
+| 2 首页 1 行多结果回车 | PASS | 163/163（`FallbackResultPlan` 矩阵） | PASS：1 行 + 多匹配 → 回车打开 4 条结果页 |
+| 3A 进结果页才完整搜索 | 代码 + UI 行为 PASS | 163/163（宿主回传顺序 4 个回归用例） | PASS（行为）：首页只显示 1 行，回车后页面才出现 4 条结果；ES 调用次数未插桩 |
+| 3B 取消传到 ES 进程 | PASS | 163/163 | Windows harness PASS（cancel / timeout / 1.4 retry / 父进程先退出但子进程占管道） |
+| 4 用户排序生效 | PASS | 163/163 | 解析器 + 参数测试 PASS |
+| 5 高级查询引号 | PASS（第二轮修正） | 163/163 | 真实 ES 短语/OR/带引号路径均 PASS |
+| 6 详情面板 | PASS | 163/163 | PASS（截图：文件夹/文件，换选跟随） |
 | 7 固定 ES 版本 + 哈希 | PASS | — | 缓存矩阵 + 两个架构包内 `Tools\es.exe` 哈希 PASS |
 | 8 日志只写模式名 | PASS | — | `--search-test EP_LOG_CHECK_8347` 两份日志均无标记 PASS |
 
@@ -22,10 +22,13 @@
 
 - `src/EverythingPal/Services/EverythingPalSettings.cs` — 先注册再 `LoadSettings()`；`DefaultFallbackRows = 1`。
 - `src/EverythingPal/Commands/EverythingFallbackItem.cs` — 首页查询取 `N+1`；`FallbackResultPlan` 决定可见条数/回车动作；文案；取消传入 Core。
-- `src/EverythingPal/Pages/EverythingPalPage.cs` — `ShowDetails = true`；延迟到首次 `GetItems()` 才执行首页带入的查询；捕获查询文本；取消传入 Core。
-- `src/EverythingPal.Core/EverythingSearch.cs` — `SearchAsync(..., CancellationToken)`；启动前/兼容重试前检查取消；等待期间读取 stdout/stderr；取消/超时终止本次启动的 `es.exe`；取消不吞成 `QueryFailed`。
+- `src/EverythingPal/Pages/EverythingPalPage.cs` — `ShowDetails = true`；延迟到首次 `GetItems()` 才执行首页带入的查询；第二轮改用 `PageSearchRequestState` 处理宿主回传；取消传入 Core。
+- `src/EverythingPal.Core/EverythingSearch.cs` — `SearchAsync(..., CancellationToken)`；启动前/兼容重试前检查取消；第二轮 `-search*` 原始命令行 + 同一截止时间覆盖进程退出与 stdout/stderr 读取；取消/超时终止本次启动的 `es.exe`；取消不吞成 `QueryFailed`。
 - `src/EverythingPal.Core/EsResultParser.cs`、`ResultRanker.cs`、`SearchOptions.cs`、`EsArguments.cs` — 只有默认 `name-ascending` 走相关性重排；显式排序保留 ES 顺序。
 - `src/EverythingPal.Core/QueryNormalizer.cs` — 保留短语/多短语/布尔表达式；单个普通 token 与单个带引号路径去引号；幂等。
+- `src/EverythingPal.Core/PageSearchRequestState.cs`（第二轮新增）— 宿主预填/回传/用户输入的状态机。
+- `src/EverythingPal.Core/EsCommandLine.cs`（第二轮新增）— `-search*` 原始尾部命令行的构造与 Windows 引号规则。
+- `src/EverythingPal.Core/EsArguments.cs` — 第二轮的 `-search*` 固定参数与原始表达式分离。
 - `src/EverythingPal.Core/FallbackResultPlan.cs`（新增）— 首页返回条数/多匹配/是否触顶的纯逻辑。
 - `src/EverythingPal/Program.cs` — 日志只写 `diagnostics` / `search-test` / `com-server` / `unknown`。
 - `src/EverythingPal/Localization/Strings.cs`、`Resources/Strings.resx`、`Strings.zh-Hans.resx` — `Fallback.ShowMoreResults`；排序说明。
@@ -64,7 +67,7 @@ no file  : {"maxResults":50,"fallbackRows":1,"sort":"name-ascending"}
 - `FallbackResultPlan`：`VisibleCount = min(N, returned)`、`HasMultipleMatches = returned > 1`、`HitFetchLimit = returned == N+1`。
 - 首行文案：触顶时 `查看更多结果`；未触顶时 `（共 N 个结果）`。多匹配时主动作是结果页，右键仍保留“打开此项”。
 
-Core 矩阵（154 个测试中）：
+Core 矩阵（163 个测试中）：
 
 | 首页行数 | ES 返回 | Visible | 多匹配 | 触顶 |
 |---:|---:|---:|---|---|
@@ -81,28 +84,40 @@ CmdPal 实测（临时禁用同时安装的 Store 1.0.2.0 扩展以隔离 dev �
 截图：`artifacts/qa/review-2026-11-20/ui/05-home-store-disabled.png`（首页）、
 `06-home-fallback-enter.png`（回车后结果页）。
 
-### 任务 3A — 进结果页再完整搜索
+### 任务 3A — 进结果页再完整搜索（第二轮修正）
 
-- 首页生成结果行时只 `SetSearchNoUpdate(query)` 并记录 `_pendingQuery`；不触发 `SearchText` setter。
+- 首页生成结果行时只 `SetSearchNoUpdate(query)` 并记录待执行查询；不触发 `SearchText` setter。
 - 页面首次 `GetItems()` 先清标记，再启动原有的防抖搜索；`RaiseItemsChanged()` 后的再次 `GetItems()` 不会重复启动。
-- 手动输入会取消/覆盖待执行查询；共享页每次首页搜索先 `ClearPendingSearch()`。
+- **第二轮修复**：宿主可能在 `GetItems()` 之前用 `UpdateSearchText("", 预填文本)` 回传同一个文本。
+  第一轮代码会先清空 `_pendingQuery`，再因为文本等于 `_query` 而返回，导致页面一次搜索都不执行。
+  现在状态机 [PageSearchRequestState.cs](src/EverythingPal.Core/PageSearchRequestState.cs) 的规则是：
+  与待执行查询相同的回传保留标记；真正不同的新文本才清标记并启动；标记被消费后的相同回传视为重发。
+- 新增 4 个回归用例：预填 A → 回传 A → 两次 GetItems 只执行 1 次；预填 A → GetItems → 回传 A 只执行 1 次；
+  预填 A → 用户改成 B → 只执行 B；激活时空文本不擦除待执行查询。
+- 共享页每次首页搜索先 `ClearPendingSearch()`，避免打开后看到上一个查询。
 
 实测：首页停留 9 秒只看到 1 行；回车后结果页出现 4 条（结果页使用 `MaxResults`，默认 50）。
 ES 调用次数没有插桩（避免在日志里记录查询），因此“恰好 1 次首页查询 + 1 次页面查询”的计数项标为
 **代码/行为验证，计数待验收**。
 
-### 任务 3B — 取消传到 ES 进程
+### 任务 3B — 取消传到 ES 进程（第二轮修正）
 
-用可控的 `FakeEs.exe`（可 sleep、可模拟 1.4 返回 9）验证：
+用可控的 `FakeEs.exe`（可 sleep、可模拟 1.4 返回 9、可写 JSON 后启动继承 stdout 的子进程再退出）验证：
 
 ```text
-cancel : OperationCanceledException, cancelElapsedMs=36, childExited=true, leftoverTempFiles=[]
-timeout: Timeout, elapsedMs=1206, childExited=true, leftoverTempFiles=[]
+cancel : OperationCanceledException, cancelElapsedMs=16, childExited=true, leftoverTempFiles=[]
+timeout: Timeout, elapsedMs=1154, childExited=true, leftoverTempFiles=[]
 retry  : Ok, resultCount=1, invocations=[nocase:ignorews:term1, term1]
 normal : Ok, resultCount=1, invocations=[nocase:ignorews:term1]
+orphan : Timeout, elapsedMs=1136, orphanChildPid=..., orphanChildKilled=true, leftoverTempFiles=[]
 ```
 
-说明：取消时子进程被终止并完成清理；超时仍返回 `SearchStatus.Timeout`；1.4 兼容重试保留。
+**第二轮修复**：同一个截止时间现在同时覆盖 `WaitForExitAsync()` 和 stdout/stderr 读取。
+第一轮只约束了进程退出；如果自定义 ES 包装程序写完 JSON、启动一个继承 stdout 的子进程后自己先退出，
+等待管道 EOF 会突破 1,100 ms 的预算（复审实测 3,653 ms 后才返回 Ok）。现在读取通过
+`WaitForReadAsync` 与进程等待共享同一个 deadline；超时后关闭本次管道读取、返回 `Timeout`，
+调用方取消仍抛 `OperationCanceledException`。实现见
+[EverythingSearch.cs](src/EverythingPal.Core/EverythingSearch.cs)。
 
 ### 任务 4 — 用户排序
 
@@ -120,9 +135,9 @@ Relevance_ranking_is_only_used_for_the_default_sort
 
 设置说明中英文均已改为“默认名称升序会再按相关性调整；其他排序保留 Everything 顺序”。
 
-### 任务 5 — 高级查询引号
+### 任务 5 — 高级查询引号（第二轮修正）
 
-规范化结果（Core 测试 + fake ES 透传）：
+规范化结果（Core 测试）：
 
 ```text
 "wantai"                              -> wantai
@@ -133,16 +148,44 @@ D:\wantai\                            -> D:\wantai
 "C:\...\Annual Report.pdf"            -> C:\...\Annual Report.pdf
 ```
 
-fake ES 日志确认 `-search` 收到的就是上表右侧表达式（`"wantai"` 按旧行为变成 `nocase:ignorews:wantai`），
-即引号在到达 ES 前不再被破坏。幂等性测试覆盖上述样例。
+**第一轮报告的错误归因已撤回。** 真正原因在 ES 的参数解析层：ES 1.1.1.39 的 `-search` / `-q`
+调用 `_es_expect_command_argv()`，该函数明确**删除引号**（上游 `src/es.c:8095-8107`）。所以即使
+`QueryNormalizer` 保住了引号，`-search` 也会在 Everything 求值前破坏
+`ext:pdf "Annual Report"`。FakeEs 之前只验证了 .NET 已经还原的 `string[] args`，覆盖不到这一点。
 
-真实 ES（ES 1.1.1.39 + Everything 1.5.0.1423）：
-- 带引号绝对路径 `"C:\...\Annual Report.pdf"` 规范化后能找到该文件（首个结果即目标）。
-- `"Program Files"` 命中 10 条（文件夹名精确匹配），说明保留引号可用。
-- **异常**：本机 Everything 的 `"..."` 语义是“精确匹配路径段”，不是可匹配文件名的短语；
-  `ext:pdf "Annual Report"` 与 `"Program Files" | "Windows Kits"` 在本机均返回 0。
-  这不是本次规范化造成的损坏（fake ES 已证明表达式原样到达 ES），但 review 中
-  “`Annual Report.pdf` 命中、`Annual revised Report.pdf` 不命中”的短语验收在本机 **待验收/环境限制**。
+第二轮修复：固定选项仍由 Core 构造，搜索表达式改为 `-search*` 的**原始命令行尾部**：
+`-search*` 在 ES 源码中是“eat the rest”，不删除引号（`src/es.c:8110-8129`）。
+`ProcessStartInfo` 使用 `Arguments` 字符串而不是 `ArgumentList`，表达式逐字符附加在
+`-search* ` 之后；固定路径/选项按 Windows 引号规则单独转义。实现见
+[EsCommandLine.cs](src/EverythingPal.Core/EsCommandLine.cs) 与
+[EsArguments.cs](src/EverythingPal.Core/EsArguments.cs)。
+
+真实 ES（ES 1.1.1.39 + Everything 1.5.0.1423）验收，查询限定到测试目录：
+
+```text
+path:C:\Users\...\ep-review-5 ext:pdf "Annual Report"
+  -> Ok, 1 条: Annual Report.pdf（Annual revised Report.pdf 未命中）
+"Program Files"
+  -> Ok, 4 条（C:\Program Files、C:\Program Files (x86) 等）
+"Program Files" | "Windows Kits"
+  -> Ok, 8 条
+"C:\Users\...\ep-review-5\Annual Report.pdf"
+  -> 规范化去引号后 Ok，首个结果即目标文件
+```
+
+`--search-test` 走同一 Core 路径也再次验证：
+
+```text
+status: Ok
+FILE C:\Users\Lenovo\AppData\Local\Temp\ep-review-5\Annual Report.pdf
+```
+
+最终源码构建重新部署后，在 CmdPal 结果页输入 `ext:pdf "Annual Report"` 只显示
+`Annual Report.pdf`，`Annual revised Report.pdf` 不在列表中：
+`artifacts/qa/review-2026-11-20/ui/11-final-quoted-phrase.png`。
+
+因此 review 要求的“`Annual Report.pdf` 命中、`Annual revised Report.pdf` 不命中”现已 PASS，
+不再有环境限制待验收。
 
 ### 任务 6 — 详情面板
 
@@ -170,9 +213,9 @@ x64   Tools\es.exe 262824 bytes 23DCD715...8A7A3BA8ADE
 arm64 Tools\es.exe 270504 bytes 1F4F79B6...3BA3CF6
 ```
 
-完整打包（x64+arm64）通过脚本内置校验：
+完整打包（x64+arm64，第二轮修复后重打）通过脚本内置校验：
 `artifacts/qa/review-2026-11-20/store/EverythingPal_0.2.0.0_x64_arm64.msixbundle`
-（21.35 MB，SHA256 `8C2F66BB129610FFA9B028C82DB4D7B7A173A1D2B1FEE5B022E5488CB4C3CA20`，未签名）。
+（21.35 MB，SHA256 `2180DB00129E5158EE1D2BB09B93D18730E9BDD90E7FDAC98EFFAA616C3C2FF8`，未签名）。
 
 ### 任务 8 — 日志隐私
 
@@ -188,7 +231,7 @@ arm64 Tools\es.exe 270504 bytes 1F4F79B6...3BA3CF6
 ```powershell
 # 非提权 testhost 会 Win32Exception(5)，按仓库约定提权运行；以下为提权结果
 dotnet test .\tests\EverythingPal.Core.Tests\EverythingPal.Core.Tests.csproj -c Release -p:Platform=x64
-# 154 passed, 0 failed, 0 skipped
+# 第二轮：163 passed, 0 failed, 0 skipped
 
 dotnet build src\EverythingPal\EverythingPal.csproj -c Release -p:Platform=x64 `
   -p:EnableMsixTooling=false -p:WindowsPackageType=None -p:EnableMsixPackaging=false
@@ -202,12 +245,13 @@ pwsh -File scripts\deploy.ps1 -Configuration Release -RestartCmdPal
 ```
 
 附带的 Windows harness（均在 `artifacts/qa/review-2026-11-20/`，未入库）：
-`settings-harness`、`FakeEs`、`CancelHarness`。
+`settings-harness`、`FakeEs`、`CancelHarness`。第二轮 `CancelHarness` 覆盖
+`cancel` / `timeout` / `retry` / `normal` / `orphan` / `passthrough` / `reales` 七种模式，
+其中 `orphan` 就是“父进程先退出、子进程继续持有管道”的新回归用例。
 
 ## 待验收 / 环境限制
 
 1. 设置页 UI 的“保存 → 重启扩展 → 再开设置页”表单流程未自动化；同一设置类的全新进程读回已验证。
-2. 任务 3A 的 ES 进程调用次数未插桩；首页/结果页行为与代码路径已验证。
-3. 任务 5 的短语命中验收受本机 Everything 1.5.0.1423 引号语义限制（见上）；引号透传与路径查询已实测。
-4. 首页 1 行/1 匹配直接打开文件、3 行/2 匹配精确计数等矩阵项由 `FallbackResultPlan` 单测覆盖，
+2. 任务 3A 的 ES 进程调用次数未插桩；首页/结果页行为、宿主三种回传顺序的状态机与代码路径已验证。
+3. 首页 1 行/1 匹配直接打开文件、3 行/2 匹配精确计数等矩阵项由 `FallbackResultPlan` 单测覆盖，
    未逐项做 UI 点击验收。

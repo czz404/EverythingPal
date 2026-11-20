@@ -35,23 +35,23 @@ public class EsArgumentsTests
     [Fact]
     public void Build_uses_export_json_and_never_the_bogus_folder_switch()
     {
-        var arguments = EsArguments.Build("wantai", @"C:\temp\out.json", DefaultOptions);
+        var commandLine = EsArguments.Build("wantai", @"C:\temp\out.json", DefaultOptions);
 
-        Assert.Equal("-export-json", arguments[0]);
-        Assert.Equal(@"C:\temp\out.json", arguments[1]);
-        Assert.DoesNotContain("-folder", arguments);
-        Assert.DoesNotContain("-select", arguments);
-        Assert.Contains("-no-result-error", arguments);
-        Assert.Equal("-search", arguments[^2]);
-        Assert.Equal("wantai", arguments[^1]);
+        Assert.Equal("-export-json", commandLine.FixedArguments[0]);
+        Assert.Equal(@"C:\temp\out.json", commandLine.FixedArguments[1]);
+        Assert.DoesNotContain("-folder", commandLine.FixedArguments);
+        Assert.DoesNotContain("-select", commandLine.FixedArguments);
+        Assert.Contains("-no-result-error", commandLine.FixedArguments);
+        Assert.Equal("wantai", commandLine.SearchExpression);
+        Assert.EndsWith("-search* wantai", commandLine.ToCommandLine());
     }
 
     [Fact]
     public void Build_clamps_result_limit_and_honours_sort()
     {
-        var arguments = EsArguments.Build("x", "out.json", new SearchOptions { MaxResults = 9999, Sort = "date-modified-descending" });
+        var commandLine = EsArguments.Build("x", "out.json", new SearchOptions { MaxResults = 9999, Sort = "date-modified-descending" });
 
-        var argumentList = arguments.ToList();
+        var argumentList = commandLine.FixedArguments.ToList();
         var limitIndex = argumentList.IndexOf("-n");
         Assert.Equal("500", argumentList[limitIndex + 1]);
 
@@ -67,10 +67,41 @@ public class EsArgumentsTests
     }
 
     [Fact]
-    public void Build_keeps_query_as_one_single_argument()
+    public void Build_keeps_the_query_as_a_raw_tail()
     {
-        var arguments = EsArguments.Build("want ai", "out.json", DefaultOptions);
-        Assert.Equal("want ai", arguments[^1]);
+        var commandLine = EsArguments.Build("want ai", "out.json", DefaultOptions);
+
+        Assert.Equal("want ai", commandLine.SearchExpression);
+        Assert.DoesNotContain("want ai", commandLine.FixedArguments);
+        Assert.EndsWith("-search* want ai", commandLine.ToCommandLine());
+    }
+
+    [Theory]
+    [InlineData("ext:pdf \"Annual Report\"")]
+    [InlineData("\"Program Files\" | \"Windows Kits\"")]
+    [InlineData("\"C:\\Program Files\\App\\a.exe\"")]
+    [InlineData("D:\\wantai\\")]
+    public void Build_appends_the_expression_verbatim_after_search_star(string expression)
+    {
+        // `-search` removes quotes (upstream es.c); `-search*` consumes the raw tail. The exact
+        // expression, including quotes and trailing backslashes, must reach the Windows command line.
+        var commandLine = EsArguments.Build(expression, "out.json", DefaultOptions);
+
+        Assert.Equal(expression, commandLine.SearchExpression);
+        Assert.EndsWith("-search* " + expression, commandLine.ToCommandLine());
+    }
+
+    [Fact]
+    public void Build_quotes_fixed_paths_with_spaces_but_not_the_search_tail()
+    {
+        var commandLine = EsArguments.Build(
+            "\"Program Files\" | \"Windows Kits\"",
+            @"C:\Temp Folder\out.json",
+            DefaultOptions);
+
+        var line = commandLine.ToCommandLine();
+        Assert.Contains("\"C:\\Temp Folder\\out.json\"", line);
+        Assert.EndsWith("-search* \"Program Files\" | \"Windows Kits\"", line);
     }
 }
 

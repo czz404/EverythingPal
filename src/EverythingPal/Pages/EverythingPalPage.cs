@@ -17,8 +17,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
 {
     private const int DebounceMilliseconds = 150;
     private IListItem[] _items = [];
-    private string _query = string.Empty;
-    private string? _pendingQuery;
+    private readonly PageSearchRequestState _searchState = new();
     private CancellationTokenSource? _cts;
 
     public EverythingPalPage()
@@ -39,10 +38,9 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
         // now that the host actually shows the page, so merely hovering the home results does not
         // spawn a full 50-result query. Consume the marker BEFORE starting: RaiseItemsChanged makes
         // the host call GetItems() again, and starting a search on every call would loop forever.
-        var pending = _pendingQuery;
+        var pending = _searchState.TakePendingQuery();
         if (pending is not null)
         {
-            _pendingQuery = null;
             StartSearch(pending);
         }
 
@@ -59,8 +57,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
     {
         var normalized = query?.Trim() ?? string.Empty;
 
-        _pendingQuery = normalized;
-        _query = normalized;
+        _searchState.SetPrefill(normalized);
         _items = [];
 
         // Drop any search still running for the previously displayed query: this page is only
@@ -79,43 +76,26 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
     /// newer home search has no results (or fails) and the shared page must not later open with the
     /// previous query.
     /// </summary>
-    internal void ClearPendingSearch() => _pendingQuery = null;
+    internal void ClearPendingSearch() => _searchState.ClearPending();
 
     public void Dispose()
     {
-        _pendingQuery = null;
+        _searchState.ClearPending();
         _cts?.Cancel();
         _cts?.Dispose();
     }
 
     public override void UpdateSearchText(string oldSearch, string newSearch)
     {
-        var query = newSearch?.Trim() ?? string.Empty;
-
-        // The host may fire the activation callback with the old empty text while the deferred
-        // home query is still waiting for GetItems(); do not let that erase the pre-filled query.
-        if (query.Length == 0 && _pendingQuery is { Length: > 0 })
+        var action = _searchState.OnUpdateSearchText(newSearch);
+        if (action.ShouldStart)
         {
-            return;
+            StartSearch(action.Query);
         }
-
-        // A manual edit supersedes the deferred home-page query.
-        _pendingQuery = null;
-
-        // CmdPal can re-send the text we just pre-filled. That is not a new search: starting one
-        // here would duplicate the deferred search and eventually keep re-querying ES.
-        if (string.Equals(query, _query, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        StartSearch(query);
     }
 
     private void StartSearch(string query)
     {
-        _query = query;
-
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -138,7 +118,7 @@ internal sealed partial class EverythingPalPage : DynamicListPage, IDisposable
                     await Task.Delay(DebounceMilliseconds, token).ConfigureAwait(false);
                     token.ThrowIfCancellationRequested();
 
-                    // Capture the query for this task only: _query may change while ES runs.
+                    // Capture the query for this task only: the search box may change while ES runs.
                     var outcome = await EverythingSearch.SearchAsync(
                         query,
                         EverythingPalSettings.Instance.ToSearchOptions(),

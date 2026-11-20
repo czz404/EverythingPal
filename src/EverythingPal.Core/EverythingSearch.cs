@@ -203,6 +203,13 @@ public sealed class EverythingSearch
 
         var tempFile = Path.Combine(Path.GetTempPath(), $"EverythingPal-{Guid.NewGuid():N}.json");
         Process? process = null;
+        Task<string>? stdoutTask = null;
+        Task<string>? stderrTask = null;
+
+        // ONE deadline covers both "wait for es.exe to exit" and "drain stdout/stderr". A custom ES
+        // wrapper can exit while a child it spawned keeps the inherited pipe open; awaiting the reads
+        // without this deadline used to exceed the configured timeout by an arbitrary amount.
+        using var deadlineCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         try
         {
@@ -212,12 +219,11 @@ public sealed class EverythingSearch
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-            };
 
-            foreach (var argument in EsArguments.Build(searchExpression, tempFile, options))
-            {
-                psi.ArgumentList.Add(argument);
-            }
+                // -search* consumes the raw command-line tail, so the expression must not be passed
+                // through ArgumentList (which would add its own quotes).
+                Arguments = EsArguments.Build(searchExpression, tempFile, options).ToCommandLine(),
+            };
 
             process = Process.Start(psi);
             if (process is null)
@@ -225,42 +231,44 @@ public sealed class EverythingSearch
                 return new SearchOutcome { Status = SearchStatus.QueryFailed, Error = "Failed to start es.exe." };
             }
 
-            // Read both pipes while the child runs. ES prints its help dump to stdout for some
-            // failures; leaving that pipe unread can fill the buffer and block the process until the
-            // timeout fires. This also keeps the redirect from interfering with cancellation.
-            // CancellationToken.None is intentional: the reads are drained only after the process is
-            // gone, so cancelling them would discard the stderr that explains a failure.
-            var stdoutTask = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
-            var stderrTask = process.StandardError.ReadToEndAsync(CancellationToken.None);
-
             // ES can block for the full -timeout when Everything's IPC is unhealthy, so cap it.
             var deadline = Math.Clamp(options.IpcTimeoutMs, 100, 10000) + 1000;
-            using var waitCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            waitCts.CancelAfter(deadline);
+            deadlineCts.CancelAfter(deadline);
+
+            // Start reading both pipes immediately. ES prints its help dump to stdout for some
+            // failures; leaving that pipe unread can fill the buffer and block the process.
+            stdoutTask = process.StandardOutput.ReadToEndAsync(deadlineCts.Token);
+            stderrTask = process.StandardError.ReadToEndAsync(deadlineCts.Token);
 
             try
             {
-                await process.WaitForExitAsync(waitCts.Token).ConfigureAwait(false);
+                await process.WaitForExitAsync(deadlineCts.Token).ConfigureAwait(false);
+
+                // The process has exited, but a wrapper's child may still hold the pipe. Both reads
+                // stay under the same absolute deadline as the process wait.
+                var stderr = await WaitForReadAsync(stderrTask, deadlineCts.Token).ConfigureAwait(false);
+                _ = await WaitForReadAsync(stdoutTask, deadlineCts.Token).ConfigureAwait(false);
+
+                var exitCode = process.ExitCode;
+
+                // Only parse the export for exit 0; other codes produce no usable JSON. Exit 0 with zero
+                // parsed items means "no matches" because of -no-result-error (see SearchOutcomeMapper).
+                var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, rankingQuery, options.Sort) : null;
+
+                return SearchOutcomeMapper.FromExitCode(exitCode, stderr, parsed);
             }
             catch (OperationCanceledException)
             {
-                await KillAndDrainAsync(process, stdoutTask, stderrTask).ConfigureAwait(false);
+                KillProcess(process);
+                DisposeStandardStreams(process);
+                Observe(stdoutTask);
+                Observe(stderrTask);
 
                 // A fresh keystroke must stay quiet; only a genuine deadline is a Timeout. Check the
-                // caller token after the process is gone so the UI never shows a stale timeout.
+                // caller token after the pipes are released so the UI never shows a stale timeout.
                 cancellationToken.ThrowIfCancellationRequested();
                 return new SearchOutcome { Status = SearchStatus.Timeout, Error = "es.exe did not finish in time." };
             }
-
-            var stderr = await stderrTask.ConfigureAwait(false);
-            _ = await stdoutTask.ConfigureAwait(false);
-            var exitCode = process.ExitCode;
-
-            // Only parse the export for exit 0; other codes produce no usable JSON. Exit 0 with zero
-            // parsed items means "no matches" because of -no-result-error (see SearchOutcomeMapper).
-            var parsed = exitCode == 0 ? EsResultParser.ParseFile(tempFile, rankingQuery, options.Sort) : null;
-
-            return SearchOutcomeMapper.FromExitCode(exitCode, stderr, parsed);
         }
         catch (OperationCanceledException)
         {
@@ -278,7 +286,10 @@ public sealed class EverythingSearch
             // the kill happens above, but an unexpected exception can also leave it running.
             if (process is not null)
             {
-                await WaitForExitOrKillAsync(process).ConfigureAwait(false);
+                KillProcess(process);
+                DisposeStandardStreams(process);
+                Observe(stdoutTask);
+                Observe(stderrTask);
                 process.Dispose();
             }
 
@@ -286,22 +297,34 @@ public sealed class EverythingSearch
         }
     }
 
-    /// <summary>Kills this invocation's es.exe, waits for it to exit and drains its redirected pipes.</summary>
-    private static async Task KillAndDrainAsync(Process process, Task<string> stdout, Task<string> stderr)
+    /// <summary>
+    /// Awaits a pipe read under the same deadline as the process wait. If the deadline fires first,
+    /// the read is left to the caller to dispose/cancel and an <see cref="OperationCanceledException"/>
+    /// is thrown; this method never waits for a pipe held by an unrelated child process.
+    /// </summary>
+    private static async Task<string> WaitForReadAsync(Task<string> readTask, CancellationToken deadlineToken)
     {
-        await WaitForExitOrKillAsync(process).ConfigureAwait(false);
+        if (readTask.IsCompleted)
+        {
+            return await readTask.ConfigureAwait(false);
+        }
 
-        // The tasks are expected to complete once the process (and its inherited pipe handles) are
-        // gone; swallow failures because their content is irrelevant to a cancelled/timed-out run.
-        try { _ = await stdout.ConfigureAwait(false); } catch { /* ignored */ }
-        try { _ = await stderr.ConfigureAwait(false); } catch { /* ignored */ }
+        var deadlineTask = Task.Delay(Timeout.InfiniteTimeSpan, deadlineToken);
+        var completed = await Task.WhenAny(readTask, deadlineTask).ConfigureAwait(false);
+        if (!ReferenceEquals(completed, readTask))
+        {
+            deadlineToken.ThrowIfCancellationRequested();
+        }
+
+        return await readTask.ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Waits for the process to exit, terminating the exact Process object started by this call if it
-    /// is still running. Handles the race where it exited just before the kill.
+    /// Kills this invocation's es.exe if it is still running, then waits a bounded time for it to
+    /// exit. Handles the race where it exited just before the kill and a child that already outlived
+    /// the process (the latter cannot be killed through this Process object).
     /// </summary>
-    private static Task WaitForExitOrKillAsync(Process process)
+    private static void KillProcess(Process process)
     {
         try
         {
@@ -328,7 +351,33 @@ public sealed class EverythingSearch
         {
             // No process associated / already exited.
         }
+    }
 
-        return Task.CompletedTask;
+    /// <summary>Closes the read ends of this invocation's pipes so lingering reads cannot hang.</summary>
+    private static void DisposeStandardStreams(Process process)
+    {
+        try { process.StandardOutput.Dispose(); } catch { /* ignore */ }
+        try { process.StandardError.Dispose(); } catch { /* ignore */ }
+    }
+
+    /// <summary>Marks a read task's exception as observed when it is abandoned after a timeout.</summary>
+    private static void Observe(Task? task)
+    {
+        if (task is null)
+        {
+            return;
+        }
+
+        if (task.IsCompleted)
+        {
+            _ = task.Exception;
+            return;
+        }
+
+        _ = task.ContinueWith(
+            static completed => _ = completed.Exception,
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
     }
 }
